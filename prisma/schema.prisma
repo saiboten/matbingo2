@@ -1,0 +1,175 @@
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id             String     @id @default(uuid())
+  email          String     @unique
+  name           String
+  image          String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  familyId       String?
+  accounts       Account[]
+  mealPlans      MealPlan[]
+  createdRecipes Recipe[]   @relation("CreatedBy")
+  sessions       Session[]
+  family         Family?    @relation(fields: [familyId], references: [id])
+  emailVerified  Boolean    @default(false)
+
+  @@map("user")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+  @@map("account")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Family {
+  id         String     @id @default(uuid())
+  name       String
+  inviteCode String     @unique
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  eatenLogs  EatenLog[]
+  mealPlans  MealPlan[]
+  recipes    Recipe[]
+  members    User[]
+}
+
+model Recipe {
+  id           String       @id @default(uuid())
+  name         String
+  ingredients  String
+  description  String?
+  externalUrl  String?
+  score        Int
+  type         DishType
+  suitableDays Day[]
+  familyId     String
+  createdById  String
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  eatenLogs    EatenLog[]
+  mealPlans    MealPlan[]
+  createdBy    User         @relation("CreatedBy", fields: [createdById], references: [id])
+  family       Family       @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  image        RecipeImage?
+
+  @@index([familyId])
+  @@index([type])
+  @@index([score])
+}
+
+model RecipeImage {
+  id        String   @id @default(uuid())
+  base64    String
+  mimeType  String
+  recipeId  String   @unique
+  createdAt DateTime @default(now())
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+}
+
+model MealPlan {
+  id          String     @id @default(uuid())
+  date        DateTime   @db.Date
+  option      PlanOption
+  recipeId    String?
+  otherText   String?
+  familyId    String
+  plannedById String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  family      Family     @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  plannedBy   User       @relation(fields: [plannedById], references: [id])
+  recipe      Recipe?    @relation(fields: [recipeId], references: [id])
+
+  @@unique([familyId, date])
+  @@index([familyId, date])
+}
+
+model EatenLog {
+  id        String   @id @default(uuid())
+  date      DateTime @db.Date
+  recipeId  String
+  familyId  String
+  createdAt DateTime @default(now())
+  family    Family   @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@index([familyId, recipeId, date])
+  @@index([familyId, date])
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+enum DishType {
+  MEAT
+  FISH
+  VEGAN
+  OTHER
+}
+
+enum Day {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+enum PlanOption {
+  MANUAL
+  ALGORITHM
+  OTHER
+}
