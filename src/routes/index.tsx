@@ -7,8 +7,8 @@ import { Badge } from '../components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog'
 import { Input } from '../components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
-import { formatDate, createImageUrl } from '../lib/utils'
-import { Plus, Sparkles, Utensils, Filter } from 'lucide-react'
+import { formatDate, createImageUrl, dateKey, utcMidnight } from '../lib/utils'
+import { Plus, Sparkles, Utensils, Filter, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
 import type { MealPlan, Recipe, PlanOption, DishType } from '../types'
 import { DISH_TYPE_OPTIONS } from '../types'
 
@@ -19,11 +19,33 @@ export const Route = createFileRoute('/')({
   },
 })
 
+const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+
+// Monday of the week `weekOffset` weeks from the current week (UTC calendar days).
+function getWeekStart(weekOffset: number): Date {
+  const now = new Date()
+  const today = utcMidnight(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  const dayOfWeek = today.getUTCDay() // 0 = Sunday, 1 = Monday, ...
+  const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
+  today.setUTCDate(today.getUTCDate() + diffToMonday + weekOffset * 7)
+  return today
+}
+
+function getWeekDays(weekOffset: number): Date[] {
+  const monday = getWeekStart(weekOffset)
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday)
+    d.setUTCDate(monday.getUTCDate() + i)
+    return d
+  })
+}
+
 function HomePage() {
   const { data: session, isPending } = useSession()
   const [mealPlans, setMealPlans] = useState<MealPlan[]>([])
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [loading, setLoading] = useState(true)
+  const [weekOffset, setWeekOffset] = useState(0)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [suggestions, setSuggestions] = useState<Record<string, Recipe>>({})
@@ -38,6 +60,9 @@ function HomePage() {
     .map(i => i.trim())
     .filter(Boolean)
 
+  const weekDays = getWeekDays(weekOffset)
+  const todayKey = dateKey(new Date())
+
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!isPending && !session) {
@@ -50,20 +75,24 @@ function HomePage() {
   useEffect(() => {
     if (session?.user.familyId) {
       fetchMealPlans()
+    }
+  }, [session, weekOffset])
+
+  useEffect(() => {
+    if (session?.user.familyId) {
       fetchRecipes()
     }
   }, [session])
 
   const fetchMealPlans = async () => {
     if (!session?.user.familyId) return
-    
-    const today = new Date()
-    const endDate = new Date(today)
-    endDate.setDate(today.getDate() + 7)
+
+    const startDate = weekDays[0]
+    const endDate = weekDays[6]
 
     try {
       const response = await fetch(
-        `/api/meal-plans?familyId=${session.user.familyId}&startDate=${today.toISOString()}&endDate=${endDate.toISOString()}`
+        `/api/meal-plans?familyId=${session.user.familyId}&startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`
       )
       const data = await response.json()
       setMealPlans(data.mealPlans || [])
@@ -76,7 +105,7 @@ function HomePage() {
 
   const fetchRecipes = async () => {
     if (!session?.user.familyId) return
-    
+
     try {
       const response = await fetch(`/api/recipes?familyId=${session.user.familyId}`)
       const data = await response.json()
@@ -112,11 +141,29 @@ function HomePage() {
     }
   }
 
+  const handleDeleteMealPlan = async (date: Date) => {
+    if (!session?.user.familyId) return
+    if (!confirm('Remove the planned meal for this day?')) return
+
+    try {
+      const response = await fetch(
+        `/api/meal-plans?familyId=${session.user.familyId}&date=${encodeURIComponent(date.toISOString())}`,
+        { method: 'DELETE' }
+      )
+
+      if (response.ok) {
+        fetchMealPlans()
+      }
+    } catch (error) {
+      console.error('Error removing meal plan:', error)
+    }
+  }
+
   const fetchSuggestion = async (date: Date, excludeIds: string[]) => {
     if (!session?.user.familyId) return
-    const dateKey = date.toDateString()
+    const key = dateKey(date)
 
-    setSuggestionLoading(prev => ({ ...prev, [dateKey]: true }))
+    setSuggestionLoading(prev => ({ ...prev, [key]: true }))
     try {
       const response = await fetch('/api/algorithm', {
         method: 'POST',
@@ -133,12 +180,12 @@ function HomePage() {
       if (response.ok) {
         const data = await response.json()
         if (data.recipe) {
-          setSuggestions(prev => ({ ...prev, [dateKey]: data.recipe }))
+          setSuggestions(prev => ({ ...prev, [key]: data.recipe }))
         }
       } else {
         setSuggestions(prev => {
           const next = { ...prev }
-          delete next[dateKey]
+          delete next[key]
           return next
         })
         if (response.status === 404) {
@@ -148,77 +195,61 @@ function HomePage() {
     } catch (error) {
       console.error('Error running algorithm:', error)
     } finally {
-      setSuggestionLoading(prev => ({ ...prev, [dateKey]: false }))
+      setSuggestionLoading(prev => ({ ...prev, [key]: false }))
     }
   }
 
   const handleAutoPick = (date: Date) => {
-    const dateKey = date.toDateString()
-    setDeclinedIds(prev => ({ ...prev, [dateKey]: [] }))
+    const key = dateKey(date)
+    setDeclinedIds(prev => ({ ...prev, [key]: [] }))
     fetchSuggestion(date, [])
   }
 
   const handleAcceptSuggestion = async (date: Date) => {
-    const dateKey = date.toDateString()
-    const suggestion = suggestions[dateKey]
+    const key = dateKey(date)
+    const suggestion = suggestions[key]
     if (!suggestion) return
 
     await handlePlanMeal(date, 'ALGORITHM', suggestion.id)
     setSuggestions(prev => {
       const next = { ...prev }
-      delete next[dateKey]
+      delete next[key]
       return next
     })
     setDeclinedIds(prev => {
       const next = { ...prev }
-      delete next[dateKey]
+      delete next[key]
       return next
     })
   }
 
   const handleDeclineSuggestion = (date: Date) => {
-    const dateKey = date.toDateString()
-    const suggestion = suggestions[dateKey]
+    const key = dateKey(date)
+    const suggestion = suggestions[key]
     const nextDeclined = suggestion
-      ? [...(declinedIds[dateKey] || []), suggestion.id]
-      : declinedIds[dateKey] || []
-    setDeclinedIds(prev => ({ ...prev, [dateKey]: nextDeclined }))
+      ? [...(declinedIds[key] || []), suggestion.id]
+      : declinedIds[key] || []
+    setDeclinedIds(prev => ({ ...prev, [key]: nextDeclined }))
     fetchSuggestion(date, nextDeclined)
   }
 
   const handleCancelSuggestion = (date: Date) => {
-    const dateKey = date.toDateString()
+    const key = dateKey(date)
     setSuggestions(prev => {
       const next = { ...prev }
-      delete next[dateKey]
+      delete next[key]
       return next
     })
     setDeclinedIds(prev => {
       const next = { ...prev }
-      delete next[dateKey]
+      delete next[key]
       return next
     })
   }
 
-  const getNext8Days = () => {
-    const days = []
-    const today = new Date()
-    for (let i = 0; i < 8; i++) {
-      const date = new Date(today)
-      date.setDate(today.getDate() + i)
-      days.push(date)
-    }
-    return days
-  }
-
   const getPlanForDate = (date: Date) => {
-    const dateStr = date.toDateString()
-    return mealPlans.find(plan => new Date(plan.date).toDateString() === dateStr)
-  }
-
-  const getDayName = (date: Date) => {
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-    return days[date.getDay()]
+    const key = dateKey(date)
+    return mealPlans.find(plan => dateKey(new Date(plan.date)) === key)
   }
 
   if (isPending || loading) {
@@ -230,15 +261,28 @@ function HomePage() {
     return null
   }
 
-  const next8Days = getNext8Days()
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Meal Planner</h1>
-        <p className="text-muted-foreground">
-          {formatDate(new Date())} - {formatDate(next8Days[7])}
-        </p>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="icon" onClick={() => setWeekOffset(o => o - 1)}>
+            <ChevronLeft className="h-4 w-4" />
+            <span className="sr-only">Previous week</span>
+          </Button>
+          <p className="text-muted-foreground w-44 text-center">
+            {formatDate(weekDays[0])} - {formatDate(weekDays[6])}
+          </p>
+          <Button variant="outline" size="icon" onClick={() => setWeekOffset(o => o + 1)}>
+            <ChevronRight className="h-4 w-4" />
+            <span className="sr-only">Next week</span>
+          </Button>
+          {weekOffset !== 0 && (
+            <Button variant="ghost" size="sm" onClick={() => setWeekOffset(0)}>
+              Today
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2 p-3 bg-muted/50 rounded-lg">
@@ -267,14 +311,15 @@ function HomePage() {
         />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {next8Days.map((date, index) => {
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+        {weekDays.map((date, index) => {
           const plan = getPlanForDate(date)
-          const isToday = index === 0
-          const dayName = getDayName(date)
+          const key = dateKey(date)
+          const isToday = key === todayKey
+          const dayName = DAY_NAMES[index]
 
           return (
-            <Card key={date.toISOString()} className={isToday ? 'border-primary' : ''}>
+            <Card key={key} className={isToday ? 'border-primary' : ''}>
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <div>
@@ -282,7 +327,7 @@ function HomePage() {
                       {isToday ? 'Today' : dayName}
                     </CardTitle>
                     <p className="text-sm text-muted-foreground">
-                      {date.getDate()} {date.toLocaleDateString('en-US', { month: 'short' })}
+                      {date.getUTCDate()} {date.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' })}
                     </p>
                   </div>
                   {isToday && <Badge variant="default">Today</Badge>}
@@ -299,14 +344,14 @@ function HomePage() {
                     ) : plan.recipe ? (
                       <div className="space-y-2">
                         {plan.recipe.image && (
-                          <img 
-                            src={createImageUrl(plan.recipe.image)} 
+                          <img
+                            src={createImageUrl(plan.recipe.image)}
                             alt={plan.recipe.name}
                             className="w-full h-32 object-cover rounded-lg"
                           />
                         )}
                         <h3 className="font-medium">{plan.recipe.name}</h3>
-                        <Badge 
+                        <Badge
                           variant="secondary"
                           className={
                             plan.recipe.type === 'MEAT' ? 'bg-red-100 text-red-800' :
@@ -338,26 +383,35 @@ function HomePage() {
                       >
                         Change
                       </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => handleDeleteMealPlan(date)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span className="sr-only">Remove</span>
+                      </Button>
                     </div>
                   </div>
-                ) : suggestions[date.toDateString()] ? (
+                ) : suggestions[key] ? (
                   <div className="space-y-2">
                     <p className="text-sm text-muted-foreground">Suggestion</p>
                     <div className="p-3 bg-muted rounded-lg space-y-2">
                       <div className="flex items-center gap-2">
                         <Sparkles className="h-4 w-4 text-muted-foreground" />
-                        <h3 className="font-medium">{suggestions[date.toDateString()].name}</h3>
+                        <h3 className="font-medium">{suggestions[key].name}</h3>
                       </div>
                       <Badge
                         variant="secondary"
                         className={
-                          suggestions[date.toDateString()].type === 'MEAT' ? 'bg-red-100 text-red-800' :
-                          suggestions[date.toDateString()].type === 'FISH' ? 'bg-blue-100 text-blue-800' :
-                          suggestions[date.toDateString()].type === 'VEGAN' ? 'bg-green-100 text-green-800' :
+                          suggestions[key].type === 'MEAT' ? 'bg-red-100 text-red-800' :
+                          suggestions[key].type === 'FISH' ? 'bg-blue-100 text-blue-800' :
+                          suggestions[key].type === 'VEGAN' ? 'bg-green-100 text-green-800' :
                           'bg-gray-100 text-gray-800'
                         }
                       >
-                        {suggestions[date.toDateString()].type.toLowerCase()}
+                        {suggestions[key].type.toLowerCase()}
                       </Badge>
                     </div>
                     <Button
@@ -372,10 +426,10 @@ function HomePage() {
                         variant="outline"
                         size="sm"
                         className="flex-1"
-                        disabled={suggestionLoading[date.toDateString()]}
+                        disabled={suggestionLoading[key]}
                         onClick={() => handleDeclineSuggestion(date)}
                       >
-                        {suggestionLoading[date.toDateString()] ? 'Finding...' : 'Try Another'}
+                        {suggestionLoading[key] ? 'Finding...' : 'Try Another'}
                       </Button>
                       <Button
                         variant="ghost"
@@ -405,11 +459,11 @@ function HomePage() {
                       <Button
                         variant="secondary"
                         size="sm"
-                        disabled={suggestionLoading[date.toDateString()]}
+                        disabled={suggestionLoading[key]}
                         onClick={() => handleAutoPick(date)}
                       >
                         <Sparkles className="h-4 w-4 mr-1" />
-                        {suggestionLoading[date.toDateString()] ? 'Finding...' : 'Auto Pick'}
+                        {suggestionLoading[key] ? 'Finding...' : 'Auto Pick'}
                       </Button>
                       <Button
                         variant="ghost"
@@ -458,13 +512,13 @@ function HomePage() {
                       />
                     ) : (
                       <div className="h-12 w-12 bg-muted rounded flex items-center justify-center">
-                        <Utensils className="h-6 w-6 text-muted-foreground" />  
+                        <Utensils className="h-6 w-6 text-muted-foreground" />
                       </div>
                     )}
                     <div className="flex-1">
                       <p className="font-medium">{recipe.name}</p>
                       <Badge variant="secondary" className="text-xs">
-                        {recipe.type.toLowerCase()} • Score: {recipe.score}     
+                        {recipe.type.toLowerCase()} • Score: {recipe.score}
                       </Badge>
                     </div>
                   </div>

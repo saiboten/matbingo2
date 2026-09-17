@@ -20,7 +20,10 @@ export async function selectOptimalRecipe(
   excludeRecipeIds: string[] = [],
   filters: SuggestionFilters = {}
 ): Promise<Recipe | null> {
-  const dayOfWeek = date.getDay()
+  // Use the UTC day-of-week since dates are normalized to UTC midnight
+  // calendar days; using local getDay() would drift by a day depending on
+  // the server process's timezone relative to UTC.
+  const dayOfWeek = date.getUTCDay()
   const dayEnum = DAYS_ARRAY[dayOfWeek]
 
   // Get all recipes suitable for this day
@@ -56,7 +59,7 @@ export async function selectOptimalRecipe(
   
   // Get recent meal types (last 7 days)
   const sevenDaysAgo = new Date(date)
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+  sevenDaysAgo.setUTCDate(sevenDaysAgo.getUTCDate() - 7)
   
   const recentMeals = await prisma.eatenLog.findMany({
     where: {

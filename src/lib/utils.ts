@@ -9,8 +9,21 @@ export function formatDate(date: Date): string {
   return new Intl.DateTimeFormat('en-US', {
     weekday: 'short',
     month: 'short',
-    day: 'numeric'
+    day: 'numeric',
+    timeZone: 'UTC'
   }).format(date)
+}
+
+// Calendar-day identity, independent of the browser's/server's local timezone.
+// Dates in this app represent whole days (meal plans), so all day comparisons
+// and lookups should key off the UTC calendar date rather than local Date
+// methods like toDateString(), which can disagree between client and server.
+export function dateKey(date: Date): string {
+  return date.toISOString().slice(0, 10)
+}
+
+export function utcMidnight(year: number, month: number, day: number): Date {
+  return new Date(Date.UTC(year, month, day))
 }
 
 export function generateInviteCode(): string {

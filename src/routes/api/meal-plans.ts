@@ -90,6 +90,43 @@ export const Route = createFileRoute('/api/meal-plans')({
           console.error('Error creating meal plan:', error)
           return json({ error: 'Failed to create meal plan' }, { status: 500 })
         }
+      },
+
+      DELETE: async ({ request }) => {
+        try {
+          const url = new URL(request.url)
+          const familyId = url.searchParams.get('familyId')
+          const date = url.searchParams.get('date')
+
+          if (!familyId || !date) {
+            return json({ error: 'Missing required parameters' }, { status: 400 })
+          }
+
+          const parsedDate = new Date(date)
+          const mealPlan = await prisma.mealPlan.findUnique({
+            where: { familyId_date: { familyId, date: parsedDate } }
+          })
+
+          if (!mealPlan) {
+            return json({ error: 'Meal plan not found' }, { status: 404 })
+          }
+
+          await prisma.$transaction([
+            ...(mealPlan.recipeId
+              ? [
+                  prisma.eatenLog.deleteMany({
+                    where: { familyId, recipeId: mealPlan.recipeId, date: parsedDate }
+                  })
+                ]
+              : []),
+            prisma.mealPlan.delete({ where: { id: mealPlan.id } })
+          ])
+
+          return json({ success: true })
+        } catch (error) {
+          console.error('Error deleting meal plan:', error)
+          return json({ error: 'Failed to delete meal plan' }, { status: 500 })
+        }
       }
     }
   }
