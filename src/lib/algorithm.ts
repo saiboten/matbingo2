@@ -10,19 +10,21 @@ interface RecipeWithScore {
 const DAYS_ARRAY: Day[] = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY']
 
 export async function selectOptimalRecipe(
-  familyId: string, 
-  date: Date
+  familyId: string,
+  date: Date,
+  excludeRecipeIds: string[] = []
 ): Promise<Recipe | null> {
   const dayOfWeek = date.getDay()
   const dayEnum = DAYS_ARRAY[dayOfWeek]
-  
+
   // Get all recipes suitable for this day
   const recipes = await prisma.recipe.findMany({
     where: {
       familyId,
       suitableDays: {
         has: dayEnum
-      }
+      },
+      ...(excludeRecipeIds.length > 0 && { id: { notIn: excludeRecipeIds } })
     },
     include: {
       image: true,

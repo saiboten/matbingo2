@@ -23,6 +23,9 @@ function HomePage() {
   const [loading, setLoading] = useState(true)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [suggestions, setSuggestions] = useState<Record<string, Recipe>>({})
+  const [suggestionLoading, setSuggestionLoading] = useState<Record<string, boolean>>({})
+  const [declinedIds, setDeclinedIds] = useState<Record<string, string[]>>({})
   const navigate = useNavigate()
 
   // Redirect to login if not authenticated
@@ -99,28 +102,76 @@ function HomePage() {
     }
   }
 
-  const handleAlgorithmSelect = async (date: Date) => {
+  const fetchSuggestion = async (date: Date, excludeIds: string[]) => {
     if (!session?.user.familyId) return
+    const dateKey = date.toDateString()
 
+    setSuggestionLoading(prev => ({ ...prev, [dateKey]: true }))
     try {
       const response = await fetch('/api/algorithm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           familyId: session.user.familyId,
-          date: date.toISOString()
+          date: date.toISOString(),
+          excludeRecipeIds: excludeIds
         })
       })
 
       if (response.ok) {
         const data = await response.json()
         if (data.recipe) {
-          handlePlanMeal(date, 'ALGORITHM', data.recipe.id)
+          setSuggestions(prev => ({ ...prev, [dateKey]: data.recipe }))
+        }
+      } else {
+        setSuggestions(prev => {
+          const next = { ...prev }
+          delete next[dateKey]
+          return next
+        })
+        if (response.status === 404) {
+          alert('No more suggestions available for this day')
         }
       }
     } catch (error) {
       console.error('Error running algorithm:', error)
+    } finally {
+      setSuggestionLoading(prev => ({ ...prev, [dateKey]: false }))
     }
+  }
+
+  const handleAutoPick = (date: Date) => {
+    const dateKey = date.toDateString()
+    setDeclinedIds(prev => ({ ...prev, [dateKey]: [] }))
+    fetchSuggestion(date, [])
+  }
+
+  const handleAcceptSuggestion = async (date: Date) => {
+    const dateKey = date.toDateString()
+    const suggestion = suggestions[dateKey]
+    if (!suggestion) return
+
+    await handlePlanMeal(date, 'ALGORITHM', suggestion.id)
+    setSuggestions(prev => {
+      const next = { ...prev }
+      delete next[dateKey]
+      return next
+    })
+    setDeclinedIds(prev => {
+      const next = { ...prev }
+      delete next[dateKey]
+      return next
+    })
+  }
+
+  const handleDeclineSuggestion = (date: Date) => {
+    const dateKey = date.toDateString()
+    const suggestion = suggestions[dateKey]
+    const nextDeclined = suggestion
+      ? [...(declinedIds[dateKey] || []), suggestion.id]
+      : declinedIds[dateKey] || []
+    setDeclinedIds(prev => ({ ...prev, [dateKey]: nextDeclined }))
+    fetchSuggestion(date, nextDeclined)
   }
 
   const getNext8Days = () => {
@@ -237,6 +288,45 @@ function HomePage() {
                       </Button>
                     </div>
                   </div>
+                ) : suggestions[date.toDateString()] ? (
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">Suggestion</p>
+                    <div className="p-3 bg-muted rounded-lg space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="h-4 w-4 text-muted-foreground" />
+                        <h3 className="font-medium">{suggestions[date.toDateString()].name}</h3>
+                      </div>
+                      <Badge
+                        variant="secondary"
+                        className={
+                          suggestions[date.toDateString()].type === 'MEAT' ? 'bg-red-100 text-red-800' :
+                          suggestions[date.toDateString()].type === 'FISH' ? 'bg-blue-100 text-blue-800' :
+                          suggestions[date.toDateString()].type === 'VEGAN' ? 'bg-green-100 text-green-800' :
+                          'bg-gray-100 text-gray-800'
+                        }
+                      >
+                        {suggestions[date.toDateString()].type.toLowerCase()}
+                      </Badge>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => handleAcceptSuggestion(date)}
+                      >
+                        Accept
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        disabled={suggestionLoading[date.toDateString()]}
+                        onClick={() => handleDeclineSuggestion(date)}
+                      >
+                        {suggestionLoading[date.toDateString()] ? 'Finding...' : 'Try Another'}
+                      </Button>
+                    </div>
+                  </div>
                 ) : (
                   <div className="space-y-2">
                     <p className="text-sm text-muted-foreground">No meal planned</p>
@@ -255,17 +345,18 @@ function HomePage() {
                       <Button
                         variant="secondary"
                         size="sm"
-                        onClick={() => handleAlgorithmSelect(date)}
+                        disabled={suggestionLoading[date.toDateString()]}
+                        onClick={() => handleAutoPick(date)}
                       >
                         <Sparkles className="h-4 w-4 mr-1" />
-                        Auto Pick
+                        {suggestionLoading[date.toDateString()] ? 'Finding...' : 'Auto Pick'}
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => {
                           setSelectedDate(date)
-                          // Open dialog with "Other" option pre-selected       
+                          // Open dialog with "Other" option pre-selected
                         }}
                       >
                         <Utensils className="h-4 w-4 mr-1" />
@@ -326,7 +417,12 @@ function HomePage() {
               <div className="flex gap-2">
                 <Button
                   variant="secondary"
-                  onClick={() => selectedDate && handleAlgorithmSelect(selectedDate)}
+                  onClick={() => {
+                    if (selectedDate) {
+                      handleAutoPick(selectedDate)
+                      setDialogOpen(false)
+                    }
+                  }}
                 >
                   <Sparkles className="h-4 w-4 mr-2" />
                   Let Algorithm Choose
