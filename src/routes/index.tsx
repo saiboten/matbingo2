@@ -5,9 +5,12 @@ import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog'
+import { Input } from '../components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import { formatDate, createImageUrl } from '../lib/utils'
-import { Plus, Sparkles, Utensils } from 'lucide-react'
-import type { MealPlan, Recipe, PlanOption } from '../types'
+import { Plus, Sparkles, Utensils, Filter } from 'lucide-react'
+import type { MealPlan, Recipe, PlanOption, DishType } from '../types'
+import { DISH_TYPE_OPTIONS } from '../types'
 
 export const Route = createFileRoute('/')({
   component: HomePage,
@@ -26,7 +29,14 @@ function HomePage() {
   const [suggestions, setSuggestions] = useState<Record<string, Recipe>>({})
   const [suggestionLoading, setSuggestionLoading] = useState<Record<string, boolean>>({})
   const [declinedIds, setDeclinedIds] = useState<Record<string, string[]>>({})
+  const [suggestionType, setSuggestionType] = useState<DishType | 'ALL'>('ALL')
+  const [suggestionIngredients, setSuggestionIngredients] = useState('')
   const navigate = useNavigate()
+
+  const parsedIngredientFilters = suggestionIngredients
+    .split(',')
+    .map(i => i.trim())
+    .filter(Boolean)
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -114,7 +124,9 @@ function HomePage() {
         body: JSON.stringify({
           familyId: session.user.familyId,
           date: date.toISOString(),
-          excludeRecipeIds: excludeIds
+          excludeRecipeIds: excludeIds,
+          type: suggestionType !== 'ALL' ? suggestionType : undefined,
+          ingredients: parsedIngredientFilters.length > 0 ? parsedIngredientFilters : undefined
         })
       })
 
@@ -130,7 +142,7 @@ function HomePage() {
           return next
         })
         if (response.status === 404) {
-          alert('No more suggestions available for this day')
+          alert('No matching recipe found for this day with the current filters')
         }
       }
     } catch (error) {
@@ -174,6 +186,20 @@ function HomePage() {
     fetchSuggestion(date, nextDeclined)
   }
 
+  const handleCancelSuggestion = (date: Date) => {
+    const dateKey = date.toDateString()
+    setSuggestions(prev => {
+      const next = { ...prev }
+      delete next[dateKey]
+      return next
+    })
+    setDeclinedIds(prev => {
+      const next = { ...prev }
+      delete next[dateKey]
+      return next
+    })
+  }
+
   const getNext8Days = () => {
     const days = []
     const today = new Date()
@@ -213,6 +239,32 @@ function HomePage() {
         <p className="text-muted-foreground">
           {formatDate(new Date())} - {formatDate(next8Days[7])}
         </p>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2 p-3 bg-muted/50 rounded-lg">
+        <div className="flex items-center gap-1 text-sm text-muted-foreground mr-1">
+          <Filter className="h-4 w-4" />
+          Suggestion filters
+        </div>
+        <Select value={suggestionType} onValueChange={(value) => setSuggestionType(value as DishType | 'ALL')}>
+          <SelectTrigger className="w-36">
+            <SelectValue placeholder="Any type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">Any type</SelectItem>
+            {DISH_TYPE_OPTIONS.map((type) => (
+              <SelectItem key={type.value} value={type.value}>
+                {type.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Input
+          placeholder="Ingredients, e.g. chicken, rice"
+          value={suggestionIngredients}
+          onChange={(e) => setSuggestionIngredients(e.target.value)}
+          className="w-64"
+        />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -308,14 +360,14 @@ function HomePage() {
                         {suggestions[date.toDateString()].type.toLowerCase()}
                       </Badge>
                     </div>
+                    <Button
+                      size="sm"
+                      className="w-full"
+                      onClick={() => handleAcceptSuggestion(date)}
+                    >
+                      Accept
+                    </Button>
                     <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        className="flex-1"
-                        onClick={() => handleAcceptSuggestion(date)}
-                      >
-                        Accept
-                      </Button>
                       <Button
                         variant="outline"
                         size="sm"
@@ -324,6 +376,14 @@ function HomePage() {
                         onClick={() => handleDeclineSuggestion(date)}
                       >
                         {suggestionLoading[date.toDateString()] ? 'Finding...' : 'Try Another'}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => handleCancelSuggestion(date)}
+                      >
+                        Cancel
                       </Button>
                     </div>
                   </div>

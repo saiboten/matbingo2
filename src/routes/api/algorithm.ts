@@ -8,13 +8,16 @@ export const Route = createFileRoute('/api/algorithm')({
       POST: async ({ request }) => {
         try {
           const body = await request.json()
-          const { familyId, date, excludeRecipeIds } = body
+          const { familyId, date, excludeRecipeIds, type, ingredients } = body
 
           if (!familyId || !date) {
             return json({ error: 'Missing required parameters' }, { status: 400 })
           }
 
-          const recipe = await selectOptimalRecipe(familyId, new Date(date), excludeRecipeIds || [])
+          const recipe = await selectOptimalRecipe(familyId, new Date(date), excludeRecipeIds || [], {
+            type: type || undefined,
+            ingredients: ingredients || undefined
+          })
 
           if (!recipe) {
             return json({ error: 'No suitable recipe found' }, { status: 404 })

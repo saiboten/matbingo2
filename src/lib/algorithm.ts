@@ -7,12 +7,18 @@ interface RecipeWithScore {
   score: number
 }
 
+export interface SuggestionFilters {
+  type?: DishType
+  ingredients?: string[]
+}
+
 const DAYS_ARRAY: Day[] = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY']
 
 export async function selectOptimalRecipe(
   familyId: string,
   date: Date,
-  excludeRecipeIds: string[] = []
+  excludeRecipeIds: string[] = [],
+  filters: SuggestionFilters = {}
 ): Promise<Recipe | null> {
   const dayOfWeek = date.getDay()
   const dayEnum = DAYS_ARRAY[dayOfWeek]
@@ -24,7 +30,13 @@ export async function selectOptimalRecipe(
       suitableDays: {
         has: dayEnum
       },
-      ...(excludeRecipeIds.length > 0 && { id: { notIn: excludeRecipeIds } })
+      ...(excludeRecipeIds.length > 0 && { id: { notIn: excludeRecipeIds } }),
+      ...(filters.type && { type: filters.type }),
+      ...(filters.ingredients && filters.ingredients.length > 0 && {
+        AND: filters.ingredients.map((ingredient) => ({
+          ingredients: { contains: ingredient, mode: 'insensitive' as const }
+        }))
+      })
     },
     include: {
       image: true,
