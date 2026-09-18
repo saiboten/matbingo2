@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ApiAlgorithmRouteImport } from './routes/api/algorithm'
 import { Route as ApiFamilyRouteImport } from './routes/api/family'
+import { Route as ApiIngredientsRouteImport } from './routes/api/ingredients'
 import { Route as ApiJoinFamilyRouteImport } from './routes/api/join-family'
 import { Route as ApiMealPlansRouteImport } from './routes/api/meal-plans'
 import { Route as ApiRecipesRouteImport } from './routes/api/recipes'
@@ -41,6 +42,11 @@ const ApiAlgorithmRoute = ApiAlgorithmRouteImport.update({
 const ApiFamilyRoute = ApiFamilyRouteImport.update({
   id: '/api/family',
   path: '/api/family',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiIngredientsRoute = ApiIngredientsRouteImport.update({
+  id: '/api/ingredients',
+  path: '/api/ingredients',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiJoinFamilyRoute = ApiJoinFamilyRouteImport.update({
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/api/algorithm': typeof ApiAlgorithmRoute
   '/api/family': typeof ApiFamilyRoute
+  '/api/ingredients': typeof ApiIngredientsRoute
   '/api/join-family': typeof ApiJoinFamilyRoute
   '/api/meal-plans': typeof ApiMealPlansRoute
   '/api/recipes': typeof ApiRecipesRoute
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/api/algorithm': typeof ApiAlgorithmRoute
   '/api/family': typeof ApiFamilyRoute
+  '/api/ingredients': typeof ApiIngredientsRoute
   '/api/join-family': typeof ApiJoinFamilyRoute
   '/api/meal-plans': typeof ApiMealPlansRoute
   '/api/recipes': typeof ApiRecipesRoute
@@ -125,6 +133,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/api/algorithm': typeof ApiAlgorithmRoute
   '/api/family': typeof ApiFamilyRoute
+  '/api/ingredients': typeof ApiIngredientsRoute
   '/api/join-family': typeof ApiJoinFamilyRoute
   '/api/meal-plans': typeof ApiMealPlansRoute
   '/api/recipes': typeof ApiRecipesRoute
@@ -142,6 +151,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/api/algorithm'
     | '/api/family'
+    | '/api/ingredients'
     | '/api/join-family'
     | '/api/meal-plans'
     | '/api/recipes'
@@ -157,6 +167,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/api/algorithm'
     | '/api/family'
+    | '/api/ingredients'
     | '/api/join-family'
     | '/api/meal-plans'
     | '/api/recipes'
@@ -172,6 +183,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/api/algorithm'
     | '/api/family'
+    | '/api/ingredients'
     | '/api/join-family'
     | '/api/meal-plans'
     | '/api/recipes'
@@ -188,6 +200,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ApiAlgorithmRoute: typeof ApiAlgorithmRoute
   ApiFamilyRoute: typeof ApiFamilyRoute
+  ApiIngredientsRoute: typeof ApiIngredientsRoute
   ApiJoinFamilyRoute: typeof ApiJoinFamilyRoute
   ApiMealPlansRoute: typeof ApiMealPlansRoute
   ApiRecipesRoute: typeof ApiRecipesRoute
@@ -227,6 +240,13 @@ declare module '@tanstack/react-router' {
       path: '/api/family'
       fullPath: '/api/family'
       preLoaderRoute: typeof ApiFamilyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ingredients': {
+      id: '/api/ingredients'
+      path: '/api/ingredients'
+      fullPath: '/api/ingredients'
+      preLoaderRoute: typeof ApiIngredientsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/join-family': {
@@ -300,6 +320,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ApiAlgorithmRoute: ApiAlgorithmRoute,
   ApiFamilyRoute: ApiFamilyRoute,
+  ApiIngredientsRoute: ApiIngredientsRoute,
   ApiJoinFamilyRoute: ApiJoinFamilyRoute,
   ApiMealPlansRoute: ApiMealPlansRoute,
   ApiRecipesRoute: ApiRecipesRoute,

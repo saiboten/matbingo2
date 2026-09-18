@@ -5,8 +5,8 @@ import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog'
-import { Input } from '../components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
+import { IngredientMultiSelect } from '../components/ingredient-multi-select'
 import { formatDate, createImageUrl, dateKey, utcMidnight } from '../lib/utils'
 import { Plus, Sparkles, Utensils, Filter, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
 import type { MealPlan, Recipe, PlanOption, DishType } from '../types'
@@ -52,13 +52,9 @@ function HomePage() {
   const [suggestionLoading, setSuggestionLoading] = useState<Record<string, boolean>>({})
   const [declinedIds, setDeclinedIds] = useState<Record<string, string[]>>({})
   const [suggestionType, setSuggestionType] = useState<DishType | 'ALL'>('ALL')
-  const [suggestionIngredients, setSuggestionIngredients] = useState('')
+  const [suggestionIngredients, setSuggestionIngredients] = useState<string[]>([])
+  const [availableIngredients, setAvailableIngredients] = useState<string[]>([])
   const navigate = useNavigate()
-
-  const parsedIngredientFilters = suggestionIngredients
-    .split(',')
-    .map(i => i.trim())
-    .filter(Boolean)
 
   const weekDays = getWeekDays(weekOffset)
   const todayKey = dateKey(new Date())
@@ -81,6 +77,7 @@ function HomePage() {
   useEffect(() => {
     if (session?.user.familyId) {
       fetchRecipes()
+      fetchIngredients()
     }
   }, [session])
 
@@ -112,6 +109,18 @@ function HomePage() {
       setRecipes(data.recipes || [])
     } catch (error) {
       console.error('Error fetching recipes:', error)
+    }
+  }
+
+  const fetchIngredients = async () => {
+    if (!session?.user.familyId) return
+
+    try {
+      const response = await fetch(`/api/ingredients?familyId=${session.user.familyId}`)
+      const data = await response.json()
+      setAvailableIngredients(data.ingredients || [])
+    } catch (error) {
+      console.error('Error fetching ingredients:', error)
     }
   }
 
@@ -173,7 +182,7 @@ function HomePage() {
           date: date.toISOString(),
           excludeRecipeIds: excludeIds,
           type: suggestionType !== 'ALL' ? suggestionType : undefined,
-          ingredients: parsedIngredientFilters.length > 0 ? parsedIngredientFilters : undefined
+          ingredients: suggestionIngredients.length > 0 ? suggestionIngredients : undefined
         })
       })
 
@@ -303,11 +312,12 @@ function HomePage() {
             ))}
           </SelectContent>
         </Select>
-        <Input
-          placeholder="Ingredients, e.g. chicken, rice"
-          value={suggestionIngredients}
-          onChange={(e) => setSuggestionIngredients(e.target.value)}
-          className="w-64"
+        <IngredientMultiSelect
+          options={availableIngredients}
+          selected={suggestionIngredients}
+          onChange={setSuggestionIngredients}
+          placeholder="Ingredients..."
+          className="w-72"
         />
       </div>
 
