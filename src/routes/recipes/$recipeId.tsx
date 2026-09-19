@@ -5,7 +5,9 @@ import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
 import { Textarea } from '../../components/ui/textarea'
 import { IngredientListInput } from '../../components/ingredient-list-input'
+import { RecipeStepsEditor } from '../../components/recipe-steps-editor'
 import { parseIngredients, formatIngredients } from '../../lib/ingredient-text'
+import type { StepDraft } from '../../lib/recipe-steps'
 import { Slider } from '../../components/ui/slider'
 import { Checkbox } from '../../components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
@@ -46,6 +48,7 @@ function RecipeDetailPage() {
   const [name, setName] = useState('')
   const [ingredients, setIngredients] = useState<string[]>([])
   const [ingredientOptions, setIngredientOptions] = useState<string[]>([])
+  const [steps, setSteps] = useState<StepDraft[]>([])
   const [description, setDescription] = useState('')
   const [externalUrl, setExternalUrl] = useState('')
   const [score, setScore] = useState(5)
@@ -76,6 +79,7 @@ function RecipeDetailPage() {
         setScore(data.recipe.score)
         setType(data.recipe.type)
         setSuitableDays(data.recipe.suitableDays)
+        setSteps((data.recipe.steps ?? []).map((step: { title?: string | null; text: string }) => ({ title: step.title ?? '', text: step.text })))
         if (data.recipe.image) {
           setImagePreview(createImageUrl(data.recipe.image))
         }
@@ -127,6 +131,7 @@ function RecipeDetailPage() {
           score,
           type,
           suitableDays,
+          steps,
           image: imageData || undefined
         })
       })
@@ -284,6 +289,13 @@ function RecipeDetailPage() {
             </CardContent>
           </Card>
 
+          <Card>
+            <CardHeader><CardTitle>Fremgangsmåte</CardTitle></CardHeader>
+            <CardContent>
+              <RecipeStepsEditor steps={steps} onChange={setSteps} />
+            </CardContent>
+          </Card>
+
           <div className="flex gap-4">
             <Button type="submit" disabled={saving || ingredients.length === 0} className="flex-1">
               <Save className="h-4 w-4 mr-2" />
@@ -362,6 +374,29 @@ function RecipeDetailPage() {
           </ul>
         </CardContent>
       </Card>
+
+      {recipe.steps && recipe.steps.length > 0 && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Fremgangsmåte</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ol className="space-y-3">
+              {recipe.steps.map((step, index) => (
+                <li key={step.id} className="flex gap-3">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-sm font-semibold text-muted-foreground">
+                    {index + 1}
+                  </span>
+                  <div className="min-w-0">
+                    {step.title && <p className="font-semibold">{step.title}</p>}
+                    <p className="whitespace-pre-wrap">{step.text}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </CardContent>
+        </Card>
+      )}
 
       {recipe.description && (
         <Card className="mb-6">

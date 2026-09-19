@@ -1,6 +1,7 @@
 import { json } from '@tanstack/react-start'
 import { createFileRoute } from '@tanstack/react-router'
 import { prisma } from '../../../lib/prisma'
+import { normalizeSteps } from '../../../lib/recipe-steps'
 import type { Day, DishType } from '../../../types'
 
 export const Route = createFileRoute('/api/recipe/$recipeId')({
@@ -41,7 +42,8 @@ export const Route = createFileRoute('/api/recipe/$recipeId')({
             score,
             type,
             suitableDays,
-            image
+            image,
+            steps
           } = body
 
           const updateData: any = {
@@ -70,11 +72,28 @@ export const Route = createFileRoute('/api/recipe/$recipeId')({
             })
           }
 
+          // Steps are replaced as a whole when the editor sends them; left alone when it doesn't
+          if (steps !== undefined) {
+            const cleanSteps = normalizeSteps(steps)
+            await prisma.$transaction([
+              prisma.recipeStep.deleteMany({ where: { recipeId: params.recipeId } }),
+              prisma.recipeStep.createMany({
+                data: cleanSteps.map((step, index) => ({
+                  recipeId: params.recipeId,
+                  position: index + 1,
+                  title: step.title || null,
+                  text: step.text
+                }))
+              })
+            ])
+          }
+
           const recipe = await prisma.recipe.update({
             where: { id: params.recipeId },
             data: updateData,
             include: {
-              image: true
+              image: true,
+              steps: { orderBy: { position: 'asc' } }
             }
           })
 
