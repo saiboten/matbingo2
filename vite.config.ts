@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
+import { nitro } from 'nitro/vite'
 import viteReact from '@vitejs/plugin-react'
 import viteTsConfigPaths from 'vite-tsconfig-paths'
 import { fileURLToPath, URL } from 'url'
@@ -17,6 +18,8 @@ const config = defineConfig({
     }),
 
     tanstackStart(),
+    // Produces the server build Vercel deploys (auto-selects the Vercel preset there)
+    nitro(),
     viteReact(),
   ],
 })
