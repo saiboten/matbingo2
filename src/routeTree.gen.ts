@@ -17,12 +17,14 @@ import { Route as ApiIngredientAislesRouteImport } from './routes/api/ingredient
 import { Route as ApiIngredientsRouteImport } from './routes/api/ingredients'
 import { Route as ApiJoinFamilyRouteImport } from './routes/api/join-family'
 import { Route as ApiMealPlansRouteImport } from './routes/api/meal-plans'
+import { Route as ApiRecipeOverviewRouteImport } from './routes/api/recipe-overview'
 import { Route as ApiRecipesRouteImport } from './routes/api/recipes'
 import { Route as ApiShoppingListsRouteImport } from './routes/api/shopping-lists'
 import { Route as IngredientsIndexRouteImport } from './routes/ingredients/index'
 import { Route as RecipesIndexRouteImport } from './routes/recipes/index'
 import { Route as RecipesRecipeIdRouteImport } from './routes/recipes/$recipeId'
 import { Route as RecipesNewRouteImport } from './routes/recipes/new'
+import { Route as RecipesOverviewRouteImport } from './routes/recipes/overview'
 import { Route as SettingsIndexRouteImport } from './routes/settings/index'
 import { Route as ShoppingListsIndexRouteImport } from './routes/shopping-lists/index'
 import { Route as ShoppingListsListIdRouteImport } from './routes/shopping-lists/$listId'
@@ -70,6 +72,11 @@ const ApiMealPlansRoute = ApiMealPlansRouteImport.update({
   path: '/api/meal-plans',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiRecipeOverviewRoute = ApiRecipeOverviewRouteImport.update({
+  id: '/api/recipe-overview',
+  path: '/api/recipe-overview',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiRecipesRoute = ApiRecipesRouteImport.update({
   id: '/api/recipes',
   path: '/api/recipes',
@@ -98,6 +105,11 @@ const RecipesRecipeIdRoute = RecipesRecipeIdRouteImport.update({
 const RecipesNewRoute = RecipesNewRouteImport.update({
   id: '/recipes/new',
   path: '/recipes/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecipesOverviewRoute = RecipesOverviewRouteImport.update({
+  id: '/recipes/overview',
+  path: '/recipes/overview',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsIndexRoute = SettingsIndexRouteImport.update({
@@ -140,10 +152,12 @@ export interface FileRoutesByFullPath {
   '/api/ingredients': typeof ApiIngredientsRoute
   '/api/join-family': typeof ApiJoinFamilyRoute
   '/api/meal-plans': typeof ApiMealPlansRoute
+  '/api/recipe-overview': typeof ApiRecipeOverviewRoute
   '/api/recipes': typeof ApiRecipesRoute
   '/api/shopping-lists': typeof ApiShoppingListsRouteWithChildren
   '/recipes/$recipeId': typeof RecipesRecipeIdRoute
   '/recipes/new': typeof RecipesNewRoute
+  '/recipes/overview': typeof RecipesOverviewRoute
   '/shopping-lists/$listId': typeof ShoppingListsListIdRoute
   '/ingredients/': typeof IngredientsIndexRoute
   '/recipes/': typeof RecipesIndexRoute
@@ -162,10 +176,12 @@ export interface FileRoutesByTo {
   '/api/ingredients': typeof ApiIngredientsRoute
   '/api/join-family': typeof ApiJoinFamilyRoute
   '/api/meal-plans': typeof ApiMealPlansRoute
+  '/api/recipe-overview': typeof ApiRecipeOverviewRoute
   '/api/recipes': typeof ApiRecipesRoute
   '/api/shopping-lists': typeof ApiShoppingListsRouteWithChildren
   '/recipes/$recipeId': typeof RecipesRecipeIdRoute
   '/recipes/new': typeof RecipesNewRoute
+  '/recipes/overview': typeof RecipesOverviewRoute
   '/shopping-lists/$listId': typeof ShoppingListsListIdRoute
   '/ingredients': typeof IngredientsIndexRoute
   '/recipes': typeof RecipesIndexRoute
@@ -185,10 +201,12 @@ export interface FileRoutesById {
   '/api/ingredients': typeof ApiIngredientsRoute
   '/api/join-family': typeof ApiJoinFamilyRoute
   '/api/meal-plans': typeof ApiMealPlansRoute
+  '/api/recipe-overview': typeof ApiRecipeOverviewRoute
   '/api/recipes': typeof ApiRecipesRoute
   '/api/shopping-lists': typeof ApiShoppingListsRouteWithChildren
   '/recipes/$recipeId': typeof RecipesRecipeIdRoute
   '/recipes/new': typeof RecipesNewRoute
+  '/recipes/overview': typeof RecipesOverviewRoute
   '/shopping-lists/$listId': typeof ShoppingListsListIdRoute
   '/ingredients/': typeof IngredientsIndexRoute
   '/recipes/': typeof RecipesIndexRoute
@@ -209,10 +227,12 @@ export interface FileRouteTypes {
     | '/api/ingredients'
     | '/api/join-family'
     | '/api/meal-plans'
+    | '/api/recipe-overview'
     | '/api/recipes'
     | '/api/shopping-lists'
     | '/recipes/$recipeId'
     | '/recipes/new'
+    | '/recipes/overview'
     | '/shopping-lists/$listId'
     | '/ingredients/'
     | '/recipes/'
@@ -231,10 +251,12 @@ export interface FileRouteTypes {
     | '/api/ingredients'
     | '/api/join-family'
     | '/api/meal-plans'
+    | '/api/recipe-overview'
     | '/api/recipes'
     | '/api/shopping-lists'
     | '/recipes/$recipeId'
     | '/recipes/new'
+    | '/recipes/overview'
     | '/shopping-lists/$listId'
     | '/ingredients'
     | '/recipes'
@@ -253,10 +275,12 @@ export interface FileRouteTypes {
     | '/api/ingredients'
     | '/api/join-family'
     | '/api/meal-plans'
+    | '/api/recipe-overview'
     | '/api/recipes'
     | '/api/shopping-lists'
     | '/recipes/$recipeId'
     | '/recipes/new'
+    | '/recipes/overview'
     | '/shopping-lists/$listId'
     | '/ingredients/'
     | '/recipes/'
@@ -276,10 +300,12 @@ export interface RootRouteChildren {
   ApiIngredientsRoute: typeof ApiIngredientsRoute
   ApiJoinFamilyRoute: typeof ApiJoinFamilyRoute
   ApiMealPlansRoute: typeof ApiMealPlansRoute
+  ApiRecipeOverviewRoute: typeof ApiRecipeOverviewRoute
   ApiRecipesRoute: typeof ApiRecipesRoute
   ApiShoppingListsRoute: typeof ApiShoppingListsRouteWithChildren
   RecipesRecipeIdRoute: typeof RecipesRecipeIdRoute
   RecipesNewRoute: typeof RecipesNewRoute
+  RecipesOverviewRoute: typeof RecipesOverviewRoute
   ShoppingListsListIdRoute: typeof ShoppingListsListIdRoute
   IngredientsIndexRoute: typeof IngredientsIndexRoute
   RecipesIndexRoute: typeof RecipesIndexRoute
@@ -347,6 +373,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiMealPlansRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/recipe-overview': {
+      id: '/api/recipe-overview'
+      path: '/api/recipe-overview'
+      fullPath: '/api/recipe-overview'
+      preLoaderRoute: typeof ApiRecipeOverviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/recipes': {
       id: '/api/recipes'
       path: '/api/recipes'
@@ -387,6 +420,13 @@ declare module '@tanstack/react-router' {
       path: '/recipes/new'
       fullPath: '/recipes/new'
       preLoaderRoute: typeof RecipesNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recipes/overview': {
+      id: '/recipes/overview'
+      path: '/recipes/overview'
+      fullPath: '/recipes/overview'
+      preLoaderRoute: typeof RecipesOverviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings/': {
@@ -454,10 +494,12 @@ const rootRouteChildren: RootRouteChildren = {
   ApiIngredientsRoute: ApiIngredientsRoute,
   ApiJoinFamilyRoute: ApiJoinFamilyRoute,
   ApiMealPlansRoute: ApiMealPlansRoute,
+  ApiRecipeOverviewRoute: ApiRecipeOverviewRoute,
   ApiRecipesRoute: ApiRecipesRoute,
   ApiShoppingListsRoute: ApiShoppingListsRouteWithChildren,
   RecipesRecipeIdRoute: RecipesRecipeIdRoute,
   RecipesNewRoute: RecipesNewRoute,
+  RecipesOverviewRoute: RecipesOverviewRoute,
   ShoppingListsListIdRoute: ShoppingListsListIdRoute,
   IngredientsIndexRoute: IngredientsIndexRoute,
   RecipesIndexRoute: RecipesIndexRoute,

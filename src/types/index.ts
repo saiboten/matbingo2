@@ -15,6 +15,7 @@ export interface Recipe {
   score: number
   type: DishType
   suitableDays: Day[]
+  hibernating?: boolean
   familyId: string
   createdById: string
   createdAt: Date

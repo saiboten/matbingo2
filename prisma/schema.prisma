@@ -86,6 +86,7 @@ model Recipe {
   score        Int
   type         DishType
   suitableDays Day[]
+  hibernating  Boolean      @default(false)
   familyId     String
   createdById  String
   createdAt    DateTime     @default(now())

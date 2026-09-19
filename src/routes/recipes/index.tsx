@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/ca
 import { Badge } from '../../components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
 import { createImageUrl } from '../../lib/utils'
-import { Plus, Search, ChefHat } from 'lucide-react'
+import { Plus, Search, ChefHat, ListChecks, Moon } from 'lucide-react'
 import type { Recipe, DishType } from '../../types'
 import { DISH_TYPE_OPTIONS, DISH_TYPE_COLORS, DISH_TYPE_LABELS } from '../../types'
 
@@ -64,14 +64,22 @@ function RecipesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Oppskrifter</h1>
-        <Link to="/recipes/new">
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Legg til oppskrift
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl sm:text-3xl font-bold">Oppskrifter</h1>
+        <div className="flex flex-wrap gap-2">
+          <Button asChild variant="outline">
+            <Link to="/recipes/overview">
+              <ListChecks className="h-4 w-4 mr-2" />
+              Oversikt og dvale
+            </Link>
           </Button>
-        </Link>
+          <Link to="/recipes/new">
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Legg til oppskrift
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Filters */}
@@ -146,6 +154,12 @@ function RecipesPage() {
                     <Badge variant="secondary">
                       Poeng: {recipe.score}
                     </Badge>
+                    {recipe.hibernating && (
+                      <Badge variant="outline">
+                        <Moon className="h-3 w-3 mr-1" />
+                        I dvale
+                      </Badge>
+                    )}
                   </div>
                   {recipe.description && (
                     <p className="mt-2 text-sm text-muted-foreground line-clamp-2">

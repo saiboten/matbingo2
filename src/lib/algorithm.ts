@@ -30,6 +30,8 @@ export async function selectOptimalRecipe(
   const recipes = await prisma.recipe.findMany({
     where: {
       familyId,
+      // Recipes the family has put to sleep are never suggested
+      hibernating: false,
       suitableDays: {
         has: dayEnum
       },
