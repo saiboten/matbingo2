@@ -1,6 +1,7 @@
 import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
 import React from 'react'
 import Header from '../components/Header'
+import { isChunkLoadError, reloadOnceForNewVersion } from '../lib/chunk-reload'
 import appCss from '../styles.css?url'
 
 function NotFoundComponent() {
@@ -14,6 +15,30 @@ function NotFoundComponent() {
 }
 
 function RootErrorComponent({ error }: { error: unknown }) {
+  const staleVersion = isChunkLoadError(error)
+
+  // A script of the app couldn't be loaded, usually because a newer version was deployed since
+  // this page was opened: fetch the current version once instead of showing an error
+  React.useEffect(() => {
+    if (staleVersion) reloadOnceForNewVersion()
+  }, [staleVersion])
+
+  if (staleVersion) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh] p-8 text-center">
+        <h1 className="text-2xl font-bold mb-4">Ny versjon tilgjengelig</h1>
+        <p className="text-muted-foreground mb-6">Laster siden på nytt ...</p>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="text-primary hover:underline"
+        >
+          Last siden på nytt
+        </button>
+      </div>
+    )
+  }
+
   // Handle thrown Response (redirects or fetch errors)
   if (error instanceof Response) {
     if (error.status === 404) {
@@ -73,6 +98,16 @@ export const Route = createRootRoute({
 })
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+  // Vite reports a failed dynamic import (e.g. a file from an older deployment) with this event
+  React.useEffect(() => {
+    const handlePreloadError = (event: Event) => {
+      event.preventDefault()
+      reloadOnceForNewVersion()
+    }
+    window.addEventListener('vite:preloadError', handlePreloadError)
+    return () => window.removeEventListener('vite:preloadError', handlePreloadError)
+  }, [])
+
   return (
     <html lang="nb">
       <head>
