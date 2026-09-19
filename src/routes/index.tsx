@@ -172,6 +172,7 @@ function WeekSelectList({
 }
 
 const DAY_NAMES = ['Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør', 'Søn']
+const DAY_NAMES_FULL = ['Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag', 'Søndag']
 
 // Monday of the week `weekOffset` weeks from the current week (UTC calendar days).
 function getWeekStart(weekOffset: number): Date {
@@ -575,21 +576,19 @@ function HomePage() {
             const plan = getPlanForDate(date)
             const key = dateKey(date)
             const isToday = key === todayKey
-            const dayName = DAY_NAMES[index]
+            const dayName = DAY_NAMES_FULL[index]
 
             return (
               <Card key={key} className={isToday ? 'border-primary' : ''}>
                 <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-lg">
-                        {isToday ? 'I dag' : dayName}
-                      </CardTitle>
-                      <p className="text-sm text-muted-foreground">
-                        {date.getUTCDate()} {date.toLocaleDateString('nb-NO', { month: 'short', timeZone: 'UTC' })}
-                      </p>
-                    </div>
-                    {isToday && <Badge variant="default">I dag</Badge>}
+                  <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+                    <CardTitle className="flex flex-wrap items-baseline gap-x-2 text-lg">
+                      {dayName}
+                      <span className="text-sm font-normal text-muted-foreground">
+                        {date.getUTCDate()}. {date.toLocaleDateString('nb-NO', { month: 'short', timeZone: 'UTC' })}
+                      </span>
+                    </CardTitle>
+                    {isToday && <Badge variant="default" className="whitespace-nowrap">I dag</Badge>}
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -724,17 +723,6 @@ function HomePage() {
                       <p className="text-sm text-muted-foreground">Ingen middag planlagt</p>
                       <div className="flex flex-col gap-2">
                         <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedDate(date)
-                            setDialogOpen(true)
-                          }}
-                        >
-                          <Plus className="h-4 w-4 mr-1" />
-                          Legg til oppskrift
-                        </Button>
-                        <Button
                           variant="secondary"
                           size="sm"
                           disabled={suggestionLoading[key]}
@@ -744,15 +732,15 @@ function HomePage() {
                           {suggestionLoading[key] ? 'Finner ...' : 'Foreslå middag'}
                         </Button>
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
                           onClick={() => {
                             setSelectedDate(date)
-                            // Open dialog with "Other" option pre-selected
+                            setDialogOpen(true)
                           }}
                         >
-                          <Utensils className="h-4 w-4 mr-1" />
-                          Annet
+                          <Plus className="h-4 w-4 mr-1" />
+                          Legg til oppskrift
                         </Button>
                       </div>
                     </div>
