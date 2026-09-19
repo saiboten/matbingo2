@@ -20,12 +20,12 @@ export const Route = createFileRoute('/api/recipe/$recipeId')({
           })
 
           if (!recipe) {
-            return json({ error: 'Recipe not found' }, { status: 404 })
+            return json({ error: 'Fant ikke oppskriften' }, { status: 404 })
           }
 
           return json({ recipe })
         } catch (error) {
-          return json({ error: 'Failed to fetch recipe' }, { status: 500 })
+          return json({ error: 'Kunne ikke hente oppskriften' }, { status: 500 })
         }
       },
 
@@ -80,7 +80,7 @@ export const Route = createFileRoute('/api/recipe/$recipeId')({
           return json({ recipe })
         } catch (error) {
           console.error('Error updating recipe:', error)
-          return json({ error: 'Failed to update recipe' }, { status: 500 })
+          return json({ error: 'Kunne ikke oppdatere oppskriften' }, { status: 500 })
         }
       },
 
@@ -93,7 +93,7 @@ export const Route = createFileRoute('/api/recipe/$recipeId')({
           return json({ success: true })
         } catch (error) {
           console.error('Error deleting recipe:', error)
-          return json({ error: 'Failed to delete recipe' }, { status: 500 })
+          return json({ error: 'Kunne ikke slette oppskriften' }, { status: 500 })
         }
       }
     }

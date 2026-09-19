@@ -33,9 +33,9 @@ function LoginPage() {
           <div className="flex justify-center mb-4">
             <ChefHat className="h-12 w-12 text-primary" />
           </div>
-          <CardTitle className="text-2xl">Family Recipe Planner</CardTitle>
+          <CardTitle className="text-2xl">Matbingo</CardTitle>
           <CardDescription>
-            Plan your family's meals with smart suggestions
+            Planlegg familiens middager med smarte forslag
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -62,7 +62,7 @@ function LoginPage() {
                 fill="#EA4335"
               />
             </svg>
-            Continue with Google
+            Fortsett med Google
           </Button>
         </CardContent>
       </Card>

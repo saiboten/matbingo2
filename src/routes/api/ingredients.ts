@@ -10,7 +10,7 @@ export const Route = createFileRoute('/api/ingredients')({
         const familyId = url.searchParams.get('familyId')
 
         if (!familyId) {
-          return json({ error: 'Family ID required' }, { status: 400 })
+          return json({ error: 'Familie-ID må oppgis' }, { status: 400 })
         }
 
         const recipes = await prisma.recipe.findMany({

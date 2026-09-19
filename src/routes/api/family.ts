@@ -11,7 +11,7 @@ export const Route = createFileRoute('/api/family')({
         const familyId = url.searchParams.get('familyId')
 
         if (!familyId) {
-          return json({ error: 'Family ID required' }, { status: 400 })
+          return json({ error: 'Familie-ID må oppgis' }, { status: 400 })
         }
 
         try {
@@ -35,13 +35,13 @@ export const Route = createFileRoute('/api/family')({
           })
 
           if (!family) {
-            return json({ error: 'Family not found' }, { status: 404 })
+            return json({ error: 'Fant ikke familien' }, { status: 404 })
           }
 
           return json({ family })
         } catch (error) {
           console.error('Error fetching family:', error)
-          return json({ error: 'Failed to fetch family' }, { status: 500 })
+          return json({ error: 'Kunne ikke hente familien' }, { status: 500 })
         }
       },
 
@@ -66,7 +66,7 @@ export const Route = createFileRoute('/api/family')({
           return json({ family })
         } catch (error) {
           console.error('Error creating family:', error)
-          return json({ error: 'Failed to create family' }, { status: 500 })
+          return json({ error: 'Kunne ikke opprette familien' }, { status: 500 })
         }
       }
     }

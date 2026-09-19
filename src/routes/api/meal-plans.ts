@@ -14,7 +14,7 @@ export const Route = createFileRoute('/api/meal-plans')({
         const endDate = url.searchParams.get('endDate')
 
         if (!familyId || !startDate || !endDate) {
-          return json({ error: 'Missing required parameters' }, { status: 400 })
+          return json({ error: 'Mangler påkrevde parametere' }, { status: 400 })
         }
 
         try {
@@ -41,7 +41,7 @@ export const Route = createFileRoute('/api/meal-plans')({
           return json({ mealPlans })
         } catch (error) {
           console.error('Error fetching meal plans:', error)
-          return json({ error: 'Failed to fetch meal plans' }, { status: 500 })
+          return json({ error: 'Kunne ikke hente ukesmenyen' }, { status: 500 })
         }
       },
 
@@ -88,7 +88,7 @@ export const Route = createFileRoute('/api/meal-plans')({
           return json({ mealPlan })
         } catch (error) {
           console.error('Error creating meal plan:', error)
-          return json({ error: 'Failed to create meal plan' }, { status: 500 })
+          return json({ error: 'Kunne ikke lagre middagen' }, { status: 500 })
         }
       },
 
@@ -99,7 +99,7 @@ export const Route = createFileRoute('/api/meal-plans')({
           const date = url.searchParams.get('date')
 
           if (!familyId || !date) {
-            return json({ error: 'Missing required parameters' }, { status: 400 })
+            return json({ error: 'Mangler påkrevde parametere' }, { status: 400 })
           }
 
           const parsedDate = new Date(date)
@@ -108,7 +108,7 @@ export const Route = createFileRoute('/api/meal-plans')({
           })
 
           if (!mealPlan) {
-            return json({ error: 'Meal plan not found' }, { status: 404 })
+            return json({ error: 'Fant ikke middagen' }, { status: 404 })
           }
 
           await prisma.$transaction([
@@ -125,7 +125,7 @@ export const Route = createFileRoute('/api/meal-plans')({
           return json({ success: true })
         } catch (error) {
           console.error('Error deleting meal plan:', error)
-          return json({ error: 'Failed to delete meal plan' }, { status: 500 })
+          return json({ error: 'Kunne ikke fjerne middagen' }, { status: 500 })
         }
       }
     }

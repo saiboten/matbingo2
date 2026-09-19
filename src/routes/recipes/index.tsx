@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { createImageUrl } from '../../lib/utils'
 import { Plus, Search, ChefHat } from 'lucide-react'
 import type { Recipe, DishType } from '../../types'
-import { DISH_TYPE_OPTIONS, DISH_TYPE_COLORS } from '../../types'
+import { DISH_TYPE_OPTIONS, DISH_TYPE_COLORS, DISH_TYPE_LABELS } from '../../types'
 
 export const Route = createFileRoute('/recipes/')({
   component: RecipesPage,
@@ -59,17 +59,17 @@ function RecipesPage() {
   }, [searchQuery, selectedType])
 
   if (loading) {
-    return <div className="flex justify-center p-8">Loading recipes...</div>
+    return <div className="flex justify-center p-8">Laster oppskrifter ...</div>
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Recipes</h1>
+        <h1 className="text-3xl font-bold">Oppskrifter</h1>
         <Link to="/recipes/new">
           <Button>
             <Plus className="h-4 w-4 mr-2" />
-            Add Recipe
+            Legg til oppskrift
           </Button>
         </Link>
       </div>
@@ -79,7 +79,7 @@ function RecipesPage() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search recipes..."
+            placeholder="Søk i oppskrifter ..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
@@ -87,10 +87,10 @@ function RecipesPage() {
         </div>
         <Select value={selectedType} onValueChange={(value) => setSelectedType(value as DishType | 'ALL')}>
           <SelectTrigger className="w-40">
-            <SelectValue placeholder="Filter by type" />
+            <SelectValue placeholder="Filtrer på type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="ALL">All Types</SelectItem>
+            <SelectItem value="ALL">Alle typer</SelectItem>
             {DISH_TYPE_OPTIONS.map((type) => (
               <SelectItem key={type.value} value={type.value}>
                 {type.label}
@@ -104,14 +104,14 @@ function RecipesPage() {
       {recipes.length === 0 ? (
         <div className="text-center py-12">
           <ChefHat className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium mb-2">No recipes yet</h3>
+          <h3 className="text-lg font-medium mb-2">Ingen oppskrifter ennå</h3>
           <p className="text-muted-foreground mb-4">
-            Add your first recipe to start planning meals
+            Legg til din første oppskrift for å begynne å planlegge middager
           </p>
           <Link to="/recipes/new">
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              Add Recipe
+              Legg til oppskrift
             </Button>
           </Link>
         </div>
@@ -141,10 +141,10 @@ function RecipesPage() {
                 <CardContent>
                   <div className="flex items-center gap-2 flex-wrap">
                     <Badge className={DISH_TYPE_COLORS[recipe.type]}>
-                      {recipe.type.toLowerCase()}
+                      {DISH_TYPE_LABELS[recipe.type]}
                     </Badge>
                     <Badge variant="secondary">
-                      Score: {recipe.score}
+                      Poeng: {recipe.score}
                     </Badge>
                   </div>
                   {recipe.description && (

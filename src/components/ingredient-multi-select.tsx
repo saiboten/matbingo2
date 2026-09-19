@@ -16,7 +16,7 @@ export function IngredientMultiSelect({
   options,
   selected,
   onChange,
-  placeholder = 'Select ingredients...',
+  placeholder = 'Velg ingredienser ...',
   className
 }: IngredientMultiSelectProps) {
   const [open, setOpen] = useState(false)
@@ -66,7 +66,7 @@ export function IngredientMultiSelect({
               className="rounded-full hover:bg-muted-foreground/20"
             >
               <X className="h-3 w-3" />
-              <span className="sr-only">Remove {s}</span>
+              <span className="sr-only">Fjern {s}</span>
             </button>
           </Badge>
         ))}
@@ -86,7 +86,7 @@ export function IngredientMultiSelect({
       {open && (
         <div className="absolute z-50 mt-1 w-full max-h-60 overflow-y-auto rounded-md border bg-popover text-popover-foreground shadow-md">
           {filtered.length === 0 ? (
-            <p className="p-3 text-sm text-muted-foreground">No ingredients found</p>
+            <p className="p-3 text-sm text-muted-foreground">Fant ingen ingredienser</p>
           ) : (
             filtered.map(option => (
               <label

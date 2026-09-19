@@ -6,9 +6,9 @@ import appCss from '../styles.css?url'
 function NotFoundComponent() {
   return (
     <div className="flex flex-col items-center justify-center min-h-[50vh] p-8">
-      <h1 className="text-4xl font-bold mb-4">404 - Page Not Found</h1>
-      <p className="text-muted-foreground mb-6">The page you're looking for doesn't exist.</p>
-      <a href="/" className="text-primary hover:underline">Go back home</a>
+      <h1 className="text-4xl font-bold mb-4">404 – Siden finnes ikke</h1>
+      <p className="text-muted-foreground mb-6">Siden du leter etter finnes ikke.</p>
+      <a href="/" className="text-primary hover:underline">Tilbake til forsiden</a>
     </div>
   )
 }
@@ -22,17 +22,17 @@ function RootErrorComponent({ error }: { error: unknown }) {
     // For redirects, let the router handle it, but show a fallback if not
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] p-8">
-        <h1 className="text-3xl font-bold mb-4">Redirecting...</h1>
-        <p className="text-muted-foreground mb-6">You are being redirected. If nothing happens, <a href="/" className="text-primary hover:underline">click here</a>.</p>
+        <h1 className="text-3xl font-bold mb-4">Videresender ...</h1>
+        <p className="text-muted-foreground mb-6">Du blir videresendt. Hvis ingenting skjer, <a href="/" className="text-primary hover:underline">klikk her</a>.</p>
       </div>
     )
   }
   // Generic error fallback
   return (
     <div className="flex flex-col items-center justify-center min-h-[50vh] p-8">
-      <h1 className="text-4xl font-bold mb-4">Something went wrong!</h1>
+      <h1 className="text-4xl font-bold mb-4">Noe gikk galt!</h1>
       <p className="text-muted-foreground mb-6">{error instanceof Error ? error.message : String(error)}</p>
-      <a href="/" className="text-primary hover:underline">Go back home</a>
+      <a href="/" className="text-primary hover:underline">Tilbake til forsiden</a>
     </div>
   )
 }
@@ -48,7 +48,7 @@ export const Route = createRootRoute({
         content: 'width=device-width, initial-scale=1',
       },
       {
-        title: 'Family Recipe Planner',
+        title: 'Matbingo – familiens matplanlegger',
       },
     ],
     links: [
@@ -74,14 +74,14 @@ export const Route = createRootRoute({
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="nb">
       <head>
         <HeadContent />
       </head>
       <body>
         <div className="min-h-screen bg-background">
           <Header />
-          <main className="container mx-auto px-4 py-8">
+          <main className="container mx-auto px-4 py-4 sm:py-8">
             {children}
           </main>
         </div>

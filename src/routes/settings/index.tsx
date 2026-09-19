@@ -73,11 +73,11 @@ function SettingsPage() {
         window.location.reload()
       } else {
         const error = await response.json()
-        alert(error.error || 'Invalid invite code')
+        alert(error.error || 'Ugyldig invitasjonskode')
       }
     } catch (error) {
       console.error('Error joining family:', error)
-      alert('Error joining family')
+      alert('Noe gikk galt da du skulle bli med i familien')
     } finally {
       setJoining(false)
     }
@@ -100,51 +100,51 @@ function SettingsPage() {
       if (response.ok) {
         window.location.reload()
       } else {
-        alert('Failed to create family')
+        alert('Kunne ikke opprette familien')
       }
     } catch (error) {
       console.error('Error creating family:', error)
-      alert('Error creating family')
+      alert('Noe gikk galt da familien skulle opprettes')
     } finally {
       setCreatingFamily(false)
     }
   }
 
   const handleLeaveFamily = async () => {
-    if (!confirm('Are you sure you want to leave this family?')) return
+    if (!confirm('Er du sikker på at du vil forlate denne familien?')) return
 
     try {
       // In a real app, you'd have an API endpoint for this
-      alert('Feature coming soon')
+      alert('Kommer snart')
     } catch (error) {
       console.error('Error leaving family:', error)
     }
   }
 
   if (isPending || loading) {
-    return <div className="flex justify-center p-8">Loading...</div>
+    return <div className="flex justify-center p-8">Laster ...</div>
   }
 
   // Not in a family - show join/create options
   if (!family) {
     return (
       <div className="max-w-md mx-auto space-y-6">
-        <h1 className="text-3xl font-bold text-center">Family Settings</h1>
+        <h1 className="text-3xl font-bold text-center">Familieinnstillinger</h1>
         
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <UserPlus className="h-5 w-5" />
-              Join a Family
+              Bli med i en familie
             </CardTitle>
             <CardDescription>
-              Enter an invite code to join an existing family
+              Skriv inn en invitasjonskode for å bli med i en eksisterende familie
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex gap-2">
               <Input
-                placeholder="Enter 8-character code"
+                placeholder="Skriv inn koden på 8 tegn"
                 value={joinCode}
                 onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
                 maxLength={8}
@@ -153,7 +153,7 @@ function SettingsPage() {
                 onClick={handleJoinFamily}
                 disabled={joining || joinCode.length !== 8}
               >
-                {joining ? 'Joining...' : 'Join'}
+                {joining ? 'Blir med ...' : 'Bli med'}
               </Button>
             </div>
           </CardContent>
@@ -164,7 +164,7 @@ function SettingsPage() {
             <span className="w-full border-t" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">Or</span>
+            <span className="bg-background px-2 text-muted-foreground">Eller</span>
           </div>
         </div>
 
@@ -172,18 +172,18 @@ function SettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <ChefHat className="h-5 w-5" />
-              Create New Family
+              Opprett ny familie
             </CardTitle>
             <CardDescription>
-              Start your own family and invite others
+              Start din egen familie og inviter andre
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="family-name">Family Name</Label>
+              <Label htmlFor="family-name">Familienavn</Label>
               <Input
                 id="family-name"
-                placeholder="e.g., The Smiths"
+                placeholder="f.eks. Familien Hansen"
                 value={newFamilyName}
                 onChange={(e) => setNewFamilyName(e.target.value)}
               />
@@ -193,7 +193,7 @@ function SettingsPage() {
               disabled={creatingFamily || !newFamilyName.trim()}
               className="w-full"
             >
-              {creatingFamily ? 'Creating...' : 'Create Family'}
+              {creatingFamily ? 'Oppretter ...' : 'Opprett familie'}
             </Button>
           </CardContent>
         </Card>
@@ -204,7 +204,7 @@ function SettingsPage() {
   // In a family - show family details
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <h1 className="text-3xl font-bold">Family Settings</h1>
+      <h1 className="text-3xl font-bold">Familieinnstillinger</h1>
 
       <Card>
         <CardHeader>
@@ -213,13 +213,13 @@ function SettingsPage() {
             {family.name}
           </CardTitle>
           <CardDescription>
-            Manage your family and invite members
+            Administrer familien og inviter medlemmer
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Invite Code */}
           <div className="space-y-2">
-            <Label>Invite Code</Label>
+            <Label>Invitasjonskode</Label>
             <div className="flex gap-2">
               <div className="flex-1 flex items-center gap-2 p-3 bg-muted rounded-lg font-mono text-lg tracking-wider">
                 {inviteCode}
@@ -233,7 +233,7 @@ function SettingsPage() {
               </Button>
             </div>
             <p className="text-sm text-muted-foreground">
-              Share this code with family members to invite them
+              Del denne koden med familiemedlemmer for å invitere dem
             </p>
           </div>
 
@@ -241,7 +241,7 @@ function SettingsPage() {
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
               <Users className="h-4 w-4" />
-              Family Members ({family.members?.length || 0})
+              Familiemedlemmer ({family.members?.length || 0})
             </Label>
             <div className="space-y-2">
               {family.members?.map((member) => (
@@ -265,7 +265,7 @@ function SettingsPage() {
                     <p className="text-sm text-muted-foreground">{member.email}</p>
                   </div>
                   {member.id === session?.user.id && (
-                    <Badge variant="secondary">You</Badge>
+                    <Badge variant="secondary">Deg</Badge>
                   )}
                 </div>
               ))}
@@ -280,7 +280,7 @@ function SettingsPage() {
               onClick={handleLeaveFamily}
             >
               <LogOut className="h-4 w-4 mr-2" />
-              Leave Family
+              Forlat familien
             </Button>
           </div>
         </CardContent>

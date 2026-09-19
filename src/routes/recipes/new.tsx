@@ -39,7 +39,7 @@ function NewRecipePage() {
     if (!file) return
 
     if (!validateImage(file)) {
-      alert('Please select an image file under 2MB')
+      alert('Velg en bildefil under 2 MB')
       return
     }
 
@@ -49,7 +49,7 @@ function NewRecipePage() {
       setImagePreview(`data:${data.mimeType};base64,${data.base64}`)
     } catch (error) {
       console.error('Error processing image:', error)
-      alert('Error processing image')
+      alert('Noe gikk galt under behandlingen av bildet')
     }
   }
 
@@ -88,11 +88,11 @@ function NewRecipePage() {
         navigate({ to: '/recipes' })
       } else {
         const error = await response.json()
-        alert(error.error || 'Failed to create recipe')
+        alert(error.error || 'Kunne ikke opprette oppskriften')
       }
     } catch (error) {
       console.error('Error creating recipe:', error)
-      alert('Error creating recipe')
+      alert('Noe gikk galt da oppskriften skulle opprettes')
     } finally {
       setLoading(false)
     }
@@ -104,14 +104,14 @@ function NewRecipePage() {
         <Button variant="outline" size="icon" onClick={() => navigate({ to: '/recipes' })}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <h1 className="text-3xl font-bold">Add New Recipe</h1>
+        <h1 className="text-3xl font-bold">Ny oppskrift</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Image Upload */}
         <Card>
           <CardHeader>
-            <CardTitle>Recipe Image</CardTitle>
+            <CardTitle>Bilde</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-4">
@@ -119,7 +119,7 @@ function NewRecipePage() {
                 <div className="relative">
                   <img 
                     src={imagePreview} 
-                    alt="Preview" 
+                    alt="Forhåndsvisning" 
                     className="h-32 w-32 object-cover rounded-lg"
                   />
                   <Button
@@ -152,7 +152,7 @@ function NewRecipePage() {
                   <Button type="button" variant="outline" asChild>
                     <span>
                       <Upload className="h-4 w-4 mr-2" />
-                      Upload Image
+                      Last opp bilde
                     </span>
                   </Button>
                 </Label>
@@ -167,25 +167,25 @@ function NewRecipePage() {
         {/* Basic Info */}
         <Card>
           <CardHeader>
-            <CardTitle>Basic Information</CardTitle>
+            <CardTitle>Grunnleggende informasjon</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Recipe Name *</Label>
+              <Label htmlFor="name">Navn på oppskrift *</Label>
               <Input
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g., Spaghetti Carbonara"
+                placeholder="f.eks. Spaghetti carbonara"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="type">Dish Type *</Label>
+              <Label htmlFor="type">Type rett *</Label>
               <Select value={type} onValueChange={(value) => setType(value as DishType)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
+                  <SelectValue placeholder="Velg type" />
                 </SelectTrigger>
                 <SelectContent>
                   {DISH_TYPE_OPTIONS.map((option) => (
@@ -199,9 +199,9 @@ function NewRecipePage() {
 
             <div className="space-y-2">
               <Label htmlFor="score">
-                Frequency Score: {score} 
+                Hyppighet: {score} 
                 <span className="text-muted-foreground text-sm ml-2">
-                  ({score === 0 ? 'Never' : score === 10 ? 'Very often' : 'Occasionally'})
+                  ({score === 0 ? 'Aldri' : score === 10 ? 'Veldig ofte' : 'Av og til'})
                 </span>
               </Label>
               <Slider
@@ -212,7 +212,7 @@ function NewRecipePage() {
                 step={1}
               />
               <p className="text-sm text-muted-foreground">
-                0 = Never suggest automatically, 10 = Suggest very often
+                0 = Foreslås aldri automatisk, 10 = Foreslås veldig ofte
               </p>
             </div>
           </CardContent>
@@ -221,7 +221,7 @@ function NewRecipePage() {
         {/* Suitable Days */}
         <Card>
           <CardHeader>
-            <CardTitle>Suitable Days</CardTitle>
+            <CardTitle>Passende dager</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-4">
@@ -244,34 +244,34 @@ function NewRecipePage() {
         {/* Details */}
         <Card>
           <CardHeader>
-            <CardTitle>Details</CardTitle>
+            <CardTitle>Detaljer</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="ingredients">Ingredients *</Label>
+              <Label htmlFor="ingredients">Ingredienser *</Label>
               <Textarea
                 id="ingredients"
                 value={ingredients}
                 onChange={(e) => setIngredients(e.target.value)}
-                placeholder="List the ingredients needed..."
+                placeholder="List opp ingrediensene, adskilt med komma ..."
                 rows={4}
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">Beskrivelse</Label>
               <Textarea
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Brief description or cooking notes..."
+                placeholder="Kort beskrivelse eller notater ..."
                 rows={3}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="externalUrl">External Recipe URL</Label>
+              <Label htmlFor="externalUrl">Lenke til oppskrift</Label>
               <Input
                 id="externalUrl"
                 type="url"
@@ -290,14 +290,14 @@ function NewRecipePage() {
             disabled={loading || !name || !ingredients || suitableDays.length === 0}
             className="flex-1"
           >
-            {loading ? 'Creating...' : 'Create Recipe'}
+            {loading ? 'Oppretter ...' : 'Opprett oppskrift'}
           </Button>
           <Button 
             type="button" 
             variant="outline" 
             onClick={() => navigate({ to: '/recipes' })}
           >
-            Cancel
+            Avbryt
           </Button>
         </div>
       </form>

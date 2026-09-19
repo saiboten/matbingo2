@@ -6,11 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
+import { Checkbox } from '../components/ui/checkbox'
 import { IngredientMultiSelect } from '../components/ingredient-multi-select'
 import { formatDate, createImageUrl, dateKey, utcMidnight } from '../lib/utils'
-import { Plus, Sparkles, Utensils, Filter, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Plus, Sparkles, Utensils, Filter, Trash2, ChevronLeft, ChevronRight, ShoppingCart } from 'lucide-react'
 import type { MealPlan, Recipe, PlanOption, DishType } from '../types'
-import { DISH_TYPE_OPTIONS } from '../types'
+import { DISH_TYPE_OPTIONS, DISH_TYPE_LABELS } from '../types'
 
 export const Route = createFileRoute('/')({
   component: HomePage,
@@ -19,7 +20,7 @@ export const Route = createFileRoute('/')({
   },
 })
 
-const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+const DAY_NAMES = ['Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør', 'Søn']
 
 // Monday of the week `weekOffset` weeks from the current week (UTC calendar days).
 function getWeekStart(weekOffset: number): Date {
@@ -54,6 +55,9 @@ function HomePage() {
   const [suggestionType, setSuggestionType] = useState<DishType | 'ALL'>('ALL')
   const [suggestionIngredients, setSuggestionIngredients] = useState<string[]>([])
   const [availableIngredients, setAvailableIngredients] = useState<string[]>([])
+  const [selectMode, setSelectMode] = useState(false)
+  const [selectedDates, setSelectedDates] = useState<Set<string>>(new Set())
+  const [creatingList, setCreatingList] = useState(false)
   const navigate = useNavigate()
 
   const weekDays = getWeekDays(weekOffset)
@@ -152,7 +156,7 @@ function HomePage() {
 
   const handleDeleteMealPlan = async (date: Date) => {
     if (!session?.user.familyId) return
-    if (!confirm('Remove the planned meal for this day?')) return
+    if (!confirm('Fjerne middagen for denne dagen?')) return
 
     try {
       const response = await fetch(
@@ -198,7 +202,7 @@ function HomePage() {
           return next
         })
         if (response.status === 404) {
-          alert('No matching recipe found for this day with the current filters')
+          alert('Fant ingen passende oppskrift for denne dagen med gjeldende filtre')
         }
       }
     } catch (error) {
@@ -256,13 +260,62 @@ function HomePage() {
     })
   }
 
+  const exitSelectMode = () => {
+    setSelectMode(false)
+    setSelectedDates(new Set())
+  }
+
+  const toggleSelectedDate = (key: string) => {
+    setSelectedDates(prev => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
+  const handleCreateShoppingList = async () => {
+    if (!session?.user.familyId || selectedDates.size === 0) return
+
+    // dateKeys are UTC calendar days (YYYY-MM-DD), same convention as the meal plan dates
+    const dates = Array.from(selectedDates).map(key => {
+      const [y, m, d] = key.split('-').map(Number)
+      return utcMidnight(y, m - 1, d).toISOString()
+    })
+
+    setCreatingList(true)
+    try {
+      const response = await fetch('/api/shopping-lists', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          familyId: session.user.familyId,
+          createdById: session.user.id,
+          dates
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        exitSelectMode()
+        navigate({ to: '/shopping-lists/$listId', params: { listId: data.shoppingList.id } })
+      } else {
+        alert('Kunne ikke lage handlelisten')
+      }
+    } catch (error) {
+      console.error('Error creating shopping list:', error)
+    } finally {
+      setCreatingList(false)
+    }
+  }
+
   const getPlanForDate = (date: Date) => {
     const key = dateKey(date)
     return mealPlans.find(plan => dateKey(new Date(plan.date)) === key)
   }
 
   if (isPending || loading) {
-    return <div className="flex justify-center p-8">Loading...</div>
+    return <div className="flex justify-center p-8">Laster ...</div>
   }
 
   // Prevent rendering if redirecting
@@ -272,39 +325,66 @@ function HomePage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Meal Planner</h1>
-        <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl sm:text-3xl font-bold">Ukesmeny</h1>
+        <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" size="icon" onClick={() => setWeekOffset(o => o - 1)}>
             <ChevronLeft className="h-4 w-4" />
-            <span className="sr-only">Previous week</span>
+            <span className="sr-only">Forrige uke</span>
           </Button>
-          <p className="text-muted-foreground w-44 text-center">
+          <p className="text-muted-foreground text-sm sm:text-base sm:w-44 text-center">
             {formatDate(weekDays[0])} - {formatDate(weekDays[6])}
           </p>
           <Button variant="outline" size="icon" onClick={() => setWeekOffset(o => o + 1)}>
             <ChevronRight className="h-4 w-4" />
-            <span className="sr-only">Next week</span>
+            <span className="sr-only">Neste uke</span>
           </Button>
           {weekOffset !== 0 && (
             <Button variant="ghost" size="sm" onClick={() => setWeekOffset(0)}>
-              Today
+              I dag
+            </Button>
+          )}
+          {!selectMode && (
+            <Button variant="secondary" size="sm" onClick={() => setSelectMode(true)}>
+              <ShoppingCart className="h-4 w-4 mr-1" />
+              Lag handleliste
             </Button>
           )}
         </div>
       </div>
 
+      {selectMode && (
+        <div className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-2 p-3 bg-muted border rounded-lg shadow-sm">
+          <p className="text-sm">
+            Velg dagene du vil handle til
+            <span className="text-muted-foreground"> ({selectedDates.size} valgt)</span>
+          </p>
+          <div className="flex gap-2">
+            <Button variant="ghost" size="sm" onClick={exitSelectMode} disabled={creatingList}>
+              Avbryt
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleCreateShoppingList}
+              disabled={selectedDates.size === 0 || creatingList}
+            >
+              {creatingList ? 'Lager ...' : 'Ferdig'}
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center gap-2 p-3 bg-muted/50 rounded-lg">
         <div className="flex items-center gap-1 text-sm text-muted-foreground mr-1">
           <Filter className="h-4 w-4" />
-          Suggestion filters
+          Filtre for forslag
         </div>
         <Select value={suggestionType} onValueChange={(value) => setSuggestionType(value as DishType | 'ALL')}>
           <SelectTrigger className="w-36">
-            <SelectValue placeholder="Any type" />
+            <SelectValue placeholder="Alle typer" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="ALL">Any type</SelectItem>
+            <SelectItem value="ALL">Alle typer</SelectItem>
             {DISH_TYPE_OPTIONS.map((type) => (
               <SelectItem key={type.value} value={type.value}>
                 {type.label}
@@ -316,7 +396,7 @@ function HomePage() {
           options={availableIngredients}
           selected={suggestionIngredients}
           onChange={setSuggestionIngredients}
-          placeholder="Ingredients..."
+          placeholder="Ingredienser ..."
           className="w-72"
         />
       </div>
@@ -327,20 +407,38 @@ function HomePage() {
           const key = dateKey(date)
           const isToday = key === todayKey
           const dayName = DAY_NAMES[index]
+          const selectable = !!plan?.recipe
+          const selected = selectedDates.has(key)
 
           return (
-            <Card key={key} className={isToday ? 'border-primary' : ''}>
+            <Card
+              key={key}
+              className={`${isToday ? 'border-primary' : ''} ${selected ? 'ring-2 ring-primary' : ''} ${
+                selectMode && selectable ? 'cursor-pointer' : ''
+              }`}
+              onClick={selectMode && selectable ? () => toggleSelectedDate(key) : undefined}
+            >
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
-                  <div>
+                  {selectMode && (
+                    <Checkbox
+                      checked={selected}
+                      disabled={!selectable}
+                      onCheckedChange={() => toggleSelectedDate(key)}
+                      onClick={(e) => e.stopPropagation()}
+                      aria-label={`Velg ${dayName}`}
+                      className="mr-3"
+                    />
+                  )}
+                  <div className="flex-1">
                     <CardTitle className="text-lg">
-                      {isToday ? 'Today' : dayName}
+                      {isToday ? 'I dag' : dayName}
                     </CardTitle>
                     <p className="text-sm text-muted-foreground">
-                      {date.getUTCDate()} {date.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' })}
+                      {date.getUTCDate()} {date.toLocaleDateString('nb-NO', { month: 'short', timeZone: 'UTC' })}
                     </p>
                   </div>
-                  {isToday && <Badge variant="default">Today</Badge>}
+                  {isToday && <Badge variant="default">I dag</Badge>}
                 </div>
               </CardHeader>
               <CardContent>
@@ -349,7 +447,7 @@ function HomePage() {
                     {plan.option === 'OTHER' ? (
                       <div className="p-3 bg-muted rounded-lg">
                         <p className="text-sm font-medium">{plan.otherText}</p>
-                        <Badge variant="outline" className="mt-2">Custom</Badge>
+                        <Badge variant="outline" className="mt-2">Egendefinert</Badge>
                       </div>
                     ) : plan.recipe ? (
                       <div className="space-y-2">
@@ -370,43 +468,47 @@ function HomePage() {
                             'bg-gray-100 text-gray-800'
                           }
                         >
-                          {plan.recipe.type.toLowerCase()}
+                          {DISH_TYPE_LABELS[plan.recipe.type]}
                         </Badge>
                         {plan.option === 'ALGORITHM' && (
                           <Badge variant="outline" className="ml-2">
                             <Sparkles className="h-3 w-3 mr-1" />
-                            AI
+                            Forslag
                           </Badge>
                         )}
                       </div>
                     ) : null}
 
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1"
-                        onClick={() => {
-                          setSelectedDate(date)
-                          setDialogOpen(true)
-                        }}
-                      >
-                        Change
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => handleDeleteMealPlan(date)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        <span className="sr-only">Remove</span>
-                      </Button>
-                    </div>
+                    {!selectMode && (
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => {
+                            setSelectedDate(date)
+                            setDialogOpen(true)
+                          }}
+                        >
+                          Endre
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => handleDeleteMealPlan(date)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          <span className="sr-only">Fjern</span>
+                        </Button>
+                      </div>
+                    )}
                   </div>
+                ) : selectMode ? (
+                  <p className="text-sm text-muted-foreground">Ingen oppskrift å handle til</p>
                 ) : suggestions[key] ? (
                   <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">Suggestion</p>
+                    <p className="text-sm text-muted-foreground">Forslag</p>
                     <div className="p-3 bg-muted rounded-lg space-y-2">
                       <div className="flex items-center gap-2">
                         <Sparkles className="h-4 w-4 text-muted-foreground" />
@@ -421,7 +523,7 @@ function HomePage() {
                           'bg-gray-100 text-gray-800'
                         }
                       >
-                        {suggestions[key].type.toLowerCase()}
+                        {DISH_TYPE_LABELS[suggestions[key].type]}
                       </Badge>
                     </div>
                     <Button
@@ -429,7 +531,7 @@ function HomePage() {
                       className="w-full"
                       onClick={() => handleAcceptSuggestion(date)}
                     >
-                      Accept
+                      Godta
                     </Button>
                     <div className="flex gap-2">
                       <Button
@@ -439,7 +541,7 @@ function HomePage() {
                         disabled={suggestionLoading[key]}
                         onClick={() => handleDeclineSuggestion(date)}
                       >
-                        {suggestionLoading[key] ? 'Finding...' : 'Try Another'}
+                        {suggestionLoading[key] ? 'Finner ...' : 'Prøv et annet'}
                       </Button>
                       <Button
                         variant="ghost"
@@ -447,13 +549,13 @@ function HomePage() {
                         className="flex-1"
                         onClick={() => handleCancelSuggestion(date)}
                       >
-                        Cancel
+                        Avbryt
                       </Button>
                     </div>
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">No meal planned</p>
+                    <p className="text-sm text-muted-foreground">Ingen middag planlagt</p>
                     <div className="flex flex-col gap-2">
                       <Button
                         variant="outline"
@@ -464,7 +566,7 @@ function HomePage() {
                         }}
                       >
                         <Plus className="h-4 w-4 mr-1" />
-                        Add Recipe
+                        Legg til oppskrift
                       </Button>
                       <Button
                         variant="secondary"
@@ -473,7 +575,7 @@ function HomePage() {
                         onClick={() => handleAutoPick(date)}
                       >
                         <Sparkles className="h-4 w-4 mr-1" />
-                        {suggestionLoading[key] ? 'Finding...' : 'Auto Pick'}
+                        {suggestionLoading[key] ? 'Finner ...' : 'Foreslå middag'}
                       </Button>
                       <Button
                         variant="ghost"
@@ -484,7 +586,7 @@ function HomePage() {
                         }}
                       >
                         <Utensils className="h-4 w-4 mr-1" />
-                        Other
+                        Annet
                       </Button>
                     </div>
                   </div>
@@ -500,13 +602,13 @@ function HomePage() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              Plan Meal for {selectedDate && formatDate(selectedDate)}
+              Planlegg middag for {selectedDate && formatDate(selectedDate)}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
             <div className="grid gap-4">
-              <h3 className="font-medium">Choose a Recipe</h3>
+              <h3 className="font-medium">Velg en oppskrift</h3>
               <div className="grid gap-2 max-h-64 overflow-y-auto">
                 {recipes.map(recipe => (
                   <div
@@ -528,7 +630,7 @@ function HomePage() {
                     <div className="flex-1">
                       <p className="font-medium">{recipe.name}</p>
                       <Badge variant="secondary" className="text-xs">
-                        {recipe.type.toLowerCase()} • Score: {recipe.score}
+                        {DISH_TYPE_LABELS[recipe.type]} • Poeng: {recipe.score}
                       </Badge>
                     </div>
                   </div>
@@ -537,7 +639,7 @@ function HomePage() {
             </div>
 
             <div className="border-t pt-4">
-              <h3 className="font-medium mb-2">Or</h3>
+              <h3 className="font-medium mb-2">Eller</h3>
               <div className="flex gap-2">
                 <Button
                   variant="secondary"
@@ -549,19 +651,19 @@ function HomePage() {
                   }}
                 >
                   <Sparkles className="h-4 w-4 mr-2" />
-                  Let Algorithm Choose
+                  La appen foreslå
                 </Button>
                 <Button
                   variant="outline"
                   onClick={() => {
-                    const otherText = prompt('What are you eating?')
+                    const otherText = prompt('Hva skal dere spise?')
                     if (otherText && selectedDate) {
                       handlePlanMeal(selectedDate, 'OTHER', undefined, otherText)
                     }
                   }}
                 >
                   <Utensils className="h-4 w-4 mr-2" />
-                  Something Else
+                  Noe annet
                 </Button>
               </div>
             </div>

@@ -14,7 +14,7 @@ export const Route = createFileRoute('/api/recipes')({
         const search = url.searchParams.get('search')
 
         if (!familyId) {
-          return json({ error: 'Family ID required' }, { status: 400 })
+          return json({ error: 'Familie-ID må oppgis' }, { status: 400 })
         }
 
         const where: any = { familyId }
@@ -93,7 +93,7 @@ export const Route = createFileRoute('/api/recipes')({
           return json({ recipe })
         } catch (error) {
           console.error('Error creating recipe:', error)
-          return json({ error: 'Failed to create recipe' }, { status: 500 })
+          return json({ error: 'Kunne ikke opprette oppskriften' }, { status: 500 })
         }
       }
     }

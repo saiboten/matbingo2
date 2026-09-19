@@ -11,7 +11,7 @@ export const Route = createFileRoute('/api/algorithm')({
           const { familyId, date, excludeRecipeIds, type, ingredients } = body
 
           if (!familyId || !date) {
-            return json({ error: 'Missing required parameters' }, { status: 400 })
+            return json({ error: 'Mangler påkrevde parametere' }, { status: 400 })
           }
 
           const recipe = await selectOptimalRecipe(familyId, new Date(date), excludeRecipeIds || [], {
@@ -20,13 +20,13 @@ export const Route = createFileRoute('/api/algorithm')({
           })
 
           if (!recipe) {
-            return json({ error: 'No suitable recipe found' }, { status: 404 })
+            return json({ error: 'Fant ingen passende oppskrift' }, { status: 404 })
           }
 
           return json({ recipe })
         } catch (error) {
           console.error('Error running algorithm:', error)
-          return json({ error: 'Failed to run algorithm' }, { status: 500 })
+          return json({ error: 'Kunne ikke kjøre forslagsalgoritmen' }, { status: 500 })
         }
       }
     }

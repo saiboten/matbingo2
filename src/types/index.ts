@@ -1,3 +1,5 @@
+import type { Aisle } from '../lib/aisle'
+
 export type DishType = 'MEAT' | 'FISH' | 'VEGAN' | 'OTHER'
 
 export type Day = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY'
@@ -64,25 +66,61 @@ export interface User {
 }
 
 export const DISH_TYPE_OPTIONS: { value: DishType; label: string }[] = [
-  { value: 'MEAT', label: 'Meat' },
-  { value: 'FISH', label: 'Fish' },
-  { value: 'VEGAN', label: 'Vegan' },
-  { value: 'OTHER', label: 'Other' },
+  { value: 'MEAT', label: 'Kjøtt' },
+  { value: 'FISH', label: 'Fisk' },
+  { value: 'VEGAN', label: 'Vegansk' },
+  { value: 'OTHER', label: 'Annet' },
 ]
 
+export const DISH_TYPE_LABELS: Record<DishType, string> = {
+  MEAT: 'Kjøtt',
+  FISH: 'Fisk',
+  VEGAN: 'Vegansk',
+  OTHER: 'Annet',
+}
+
 export const DAYS: { value: Day; label: string }[] = [
-  { value: 'MONDAY', label: 'Monday' },
-  { value: 'TUESDAY', label: 'Tuesday' },
-  { value: 'WEDNESDAY', label: 'Wednesday' },
-  { value: 'THURSDAY', label: 'Thursday' },
-  { value: 'FRIDAY', label: 'Friday' },
-  { value: 'SATURDAY', label: 'Saturday' },
-  { value: 'SUNDAY', label: 'Sunday' },
+  { value: 'MONDAY', label: 'Mandag' },
+  { value: 'TUESDAY', label: 'Tirsdag' },
+  { value: 'WEDNESDAY', label: 'Onsdag' },
+  { value: 'THURSDAY', label: 'Torsdag' },
+  { value: 'FRIDAY', label: 'Fredag' },
+  { value: 'SATURDAY', label: 'Lørdag' },
+  { value: 'SUNDAY', label: 'Søndag' },
 ]
+
+export const DAY_LABELS: Record<Day, string> = {
+  MONDAY: 'mandag',
+  TUESDAY: 'tirsdag',
+  WEDNESDAY: 'onsdag',
+  THURSDAY: 'torsdag',
+  FRIDAY: 'fredag',
+  SATURDAY: 'lørdag',
+  SUNDAY: 'søndag',
+}
 
 export const DISH_TYPE_COLORS: Record<DishType, string> = {
   MEAT: 'bg-red-100 text-red-800 border-red-200',
   FISH: 'bg-blue-100 text-blue-800 border-blue-200',
   VEGAN: 'bg-green-100 text-green-800 border-green-200',
   OTHER: 'bg-gray-100 text-gray-800 border-gray-200',
+}
+
+export interface ShoppingListItem {
+  id: string
+  shoppingListId: string
+  name: string
+  sources: string[]
+  aisle: Aisle
+  checked: boolean
+}
+
+export interface ShoppingList {
+  id: string
+  familyId: string
+  createdById: string
+  createdAt: string
+  dates: string[]
+  items?: ShoppingListItem[]
+  _count?: { items: number }
 }

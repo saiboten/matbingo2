@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card'
 import { Badge } from '../../components/ui/badge'
 import { fileToBase64, validateImage, createImageUrl, formatDate } from '../../lib/utils'
-import { DISH_TYPE_OPTIONS, DAYS, DISH_TYPE_COLORS } from '../../types'
+import { DISH_TYPE_OPTIONS, DAYS, DISH_TYPE_COLORS, DISH_TYPE_LABELS, DAY_LABELS } from '../../types'
 import type { Recipe, Day, DishType } from '../../types'
 import { ArrowLeft, Upload, ChefHat, ExternalLink, Trash2, Save } from 'lucide-react'
 
@@ -73,7 +73,7 @@ function RecipeDetailPage() {
     if (!file) return
 
     if (!validateImage(file)) {
-      alert('Please select an image file under 2MB')
+      alert('Velg en bildefil under 2 MB')
       return
     }
 
@@ -116,7 +116,7 @@ function RecipeDetailPage() {
         setIsEditing(false)
         fetchRecipe()
       } else {
-        alert('Failed to update recipe')
+        alert('Kunne ikke oppdatere oppskriften')
       }
     } catch (error) {
       console.error('Error updating recipe:', error)
@@ -126,7 +126,7 @@ function RecipeDetailPage() {
   }
 
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this recipe?')) return
+    if (!confirm('Er du sikker på at du vil slette denne oppskriften?')) return
 
     try {
       const response = await fetch(`/api/recipe/${recipeId}`, {
@@ -136,7 +136,7 @@ function RecipeDetailPage() {
       if (response.ok) {
         navigate({ to: '/recipes' })
       } else {
-        alert('Failed to delete recipe')
+        alert('Kunne ikke slette oppskriften')
       }
     } catch (error) {
       console.error('Error deleting recipe:', error)
@@ -144,11 +144,11 @@ function RecipeDetailPage() {
   }
 
   if (loading) {
-    return <div className="flex justify-center p-8">Loading...</div>
+    return <div className="flex justify-center p-8">Laster ...</div>
   }
 
   if (!recipe) {
-    return <div className="text-center p-8">Recipe not found</div>
+    return <div className="text-center p-8">Fant ikke oppskriften</div>
   }
 
   if (isEditing) {
@@ -159,7 +159,7 @@ function RecipeDetailPage() {
             <Button variant="outline" size="icon" onClick={() => setIsEditing(false)}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h1 className="text-3xl font-bold">Edit Recipe</h1>
+            <h1 className="text-3xl font-bold">Rediger oppskrift</h1>
           </div>
         </div>
 
@@ -167,13 +167,13 @@ function RecipeDetailPage() {
           {/* Image Upload */}
           <Card>
             <CardHeader>
-              <CardTitle>Recipe Image</CardTitle>
+              <CardTitle>Bilde</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-4">
                 {imagePreview ? (
                   <div className="relative">
-                    <img src={imagePreview} alt="Preview" className="h-32 w-32 object-cover rounded-lg" />
+                    <img src={imagePreview} alt="Forhåndsvisning" className="h-32 w-32 object-cover rounded-lg" />
                     <Button
                       type="button"
                       variant="destructive"
@@ -193,7 +193,7 @@ function RecipeDetailPage() {
                   <Input type="file" accept="image/*" onChange={handleImageChange} className="hidden" id="image-upload" />
                   <Label htmlFor="image-upload">
                     <Button type="button" variant="outline" asChild>
-                      <span><Upload className="h-4 w-4 mr-2" /> Change Image</span>
+                      <span><Upload className="h-4 w-4 mr-2" /> Bytt bilde</span>
                     </Button>
                   </Label>
                 </div>
@@ -203,14 +203,14 @@ function RecipeDetailPage() {
 
           {/* Basic Info */}
           <Card>
-            <CardHeader><CardTitle>Basic Information</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Grunnleggende informasjon</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>Recipe Name</Label>
+                <Label>Navn på oppskrift</Label>
                 <Input value={name} onChange={(e) => setName(e.target.value)} required />
               </div>
               <div className="space-y-2">
-                <Label>Dish Type</Label>
+                <Label>Type rett</Label>
                 <Select value={type} onValueChange={(value) => setType(value as DishType)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -221,7 +221,7 @@ function RecipeDetailPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Frequency Score: {score}</Label>
+                <Label>Hyppighet: {score}</Label>
                 <Slider value={score} onChange={setScore} min={0} max={10} step={1} />
               </div>
             </CardContent>
@@ -229,7 +229,7 @@ function RecipeDetailPage() {
 
           {/* Days */}
           <Card>
-            <CardHeader><CardTitle>Suitable Days</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Passende dager</CardTitle></CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-4">
                 {DAYS.map((day) => (
@@ -248,18 +248,18 @@ function RecipeDetailPage() {
 
           {/* Details */}
           <Card>
-            <CardHeader><CardTitle>Details</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Detaljer</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>Ingredients</Label>
+                <Label>Ingredienser</Label>
                 <Textarea value={ingredients} onChange={(e) => setIngredients(e.target.value)} rows={4} required />
               </div>
               <div className="space-y-2">
-                <Label>Description</Label>
+                <Label>Beskrivelse</Label>
                 <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
               </div>
               <div className="space-y-2">
-                <Label>External URL</Label>
+                <Label>Lenke til oppskrift</Label>
                 <Input type="url" value={externalUrl} onChange={(e) => setExternalUrl(e.target.value)} />
               </div>
             </CardContent>
@@ -268,9 +268,9 @@ function RecipeDetailPage() {
           <div className="flex gap-4">
             <Button type="submit" disabled={saving} className="flex-1">
               <Save className="h-4 w-4 mr-2" />
-              {saving ? 'Saving...' : 'Save Changes'}
+              {saving ? 'Lagrer ...' : 'Lagre endringer'}
             </Button>
-            <Button type="button" variant="outline" onClick={() => setIsEditing(false)}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => setIsEditing(false)}>Avbryt</Button>
           </div>
         </form>
       </div>
@@ -288,7 +288,7 @@ function RecipeDetailPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setIsEditing(true)}>
-            Edit
+            Rediger
           </Button>
           <Button variant="destructive" onClick={handleDelete}>
             <Trash2 className="h-4 w-4" />
@@ -306,19 +306,19 @@ function RecipeDetailPage() {
 
       <div className="flex flex-wrap gap-2 mb-6">
         <Badge className={DISH_TYPE_COLORS[recipe.type]}>
-          {recipe.type.toLowerCase()}
+          {DISH_TYPE_LABELS[recipe.type]}
         </Badge>
-        <Badge variant="secondary">Score: {recipe.score}</Badge>
+        <Badge variant="secondary">Poeng: {recipe.score}</Badge>
       </div>
 
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Suitable Days</CardTitle>
+          <CardTitle>Passende dager</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
             {recipe.suitableDays.map((day) => (
-              <Badge key={day} variant="outline">{day.toLowerCase()}</Badge>
+              <Badge key={day} variant="outline">{DAY_LABELS[day]}</Badge>
             ))}
           </div>
         </CardContent>
@@ -326,7 +326,7 @@ function RecipeDetailPage() {
 
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Ingredients</CardTitle>
+          <CardTitle>Ingredienser</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="whitespace-pre-wrap">{recipe.ingredients}</p>
@@ -336,7 +336,7 @@ function RecipeDetailPage() {
       {recipe.description && (
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Description</CardTitle>
+            <CardTitle>Beskrivelse</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="whitespace-pre-wrap">{recipe.description}</p>
@@ -347,7 +347,7 @@ function RecipeDetailPage() {
       {recipe.externalUrl && (
         <Card>
           <CardHeader>
-            <CardTitle>External Link</CardTitle>
+            <CardTitle>Ekstern lenke</CardTitle>
           </CardHeader>
           <CardContent>
             <a 
@@ -357,7 +357,7 @@ function RecipeDetailPage() {
               className="flex items-center gap-2 text-primary hover:underline"
             >
               <ExternalLink className="h-4 w-4" />
-              View Full Recipe
+              Se hele oppskriften
             </a>
           </CardContent>
         </Card>
@@ -366,7 +366,7 @@ function RecipeDetailPage() {
       {recipe.eatenLogs && recipe.eatenLogs.length > 0 && (
         <Card className="mt-6">
           <CardHeader>
-            <CardTitle>Recently Eaten</CardTitle>
+            <CardTitle>Nylig spist</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">

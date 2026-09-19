@@ -11,7 +11,7 @@ export const Route = createFileRoute('/api/join-family')({
           const { inviteCode, userId } = body
 
           if (!inviteCode || !userId) {
-            return json({ error: 'Invite code and user ID required' }, { status: 400 })
+            return json({ error: 'Invitasjonskode og bruker-ID må oppgis' }, { status: 400 })
           }
 
           const family = await prisma.family.findUnique({
@@ -19,7 +19,7 @@ export const Route = createFileRoute('/api/join-family')({
           })
 
           if (!family) {
-            return json({ error: 'Invalid invite code' }, { status: 404 })
+            return json({ error: 'Ugyldig invitasjonskode' }, { status: 404 })
           }
 
           // Add user to family
@@ -31,7 +31,7 @@ export const Route = createFileRoute('/api/join-family')({
           return json({ family })
         } catch (error) {
           console.error('Error joining family:', error)
-          return json({ error: 'Failed to join family' }, { status: 500 })
+          return json({ error: 'Kunne ikke bli med i familien' }, { status: 500 })
         }
       }
     }

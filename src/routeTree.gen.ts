@@ -13,16 +13,22 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ApiAlgorithmRouteImport } from './routes/api/algorithm'
 import { Route as ApiFamilyRouteImport } from './routes/api/family'
+import { Route as ApiIngredientAislesRouteImport } from './routes/api/ingredient-aisles'
 import { Route as ApiIngredientsRouteImport } from './routes/api/ingredients'
 import { Route as ApiJoinFamilyRouteImport } from './routes/api/join-family'
 import { Route as ApiMealPlansRouteImport } from './routes/api/meal-plans'
 import { Route as ApiRecipesRouteImport } from './routes/api/recipes'
+import { Route as ApiShoppingListsRouteImport } from './routes/api/shopping-lists'
+import { Route as IngredientsIndexRouteImport } from './routes/ingredients/index'
 import { Route as RecipesIndexRouteImport } from './routes/recipes/index'
 import { Route as RecipesRecipeIdRouteImport } from './routes/recipes/$recipeId'
 import { Route as RecipesNewRouteImport } from './routes/recipes/new'
 import { Route as SettingsIndexRouteImport } from './routes/settings/index'
+import { Route as ShoppingListsIndexRouteImport } from './routes/shopping-lists/index'
+import { Route as ShoppingListsListIdRouteImport } from './routes/shopping-lists/$listId'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiRecipeRecipeIdRouteImport } from './routes/api/recipe/$recipeId'
+import { Route as ApiShoppingListsListIdRouteImport } from './routes/api/shopping-lists/$listId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -42,6 +48,11 @@ const ApiAlgorithmRoute = ApiAlgorithmRouteImport.update({
 const ApiFamilyRoute = ApiFamilyRouteImport.update({
   id: '/api/family',
   path: '/api/family',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiIngredientAislesRoute = ApiIngredientAislesRouteImport.update({
+  id: '/api/ingredient-aisles',
+  path: '/api/ingredient-aisles',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiIngredientsRoute = ApiIngredientsRouteImport.update({
@@ -64,6 +75,16 @@ const ApiRecipesRoute = ApiRecipesRouteImport.update({
   path: '/api/recipes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiShoppingListsRoute = ApiShoppingListsRouteImport.update({
+  id: '/api/shopping-lists',
+  path: '/api/shopping-lists',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IngredientsIndexRoute = IngredientsIndexRouteImport.update({
+  id: '/ingredients/',
+  path: '/ingredients/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RecipesIndexRoute = RecipesIndexRouteImport.update({
   id: '/recipes/',
   path: '/recipes/',
@@ -84,6 +105,16 @@ const SettingsIndexRoute = SettingsIndexRouteImport.update({
   path: '/settings/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ShoppingListsIndexRoute = ShoppingListsIndexRouteImport.update({
+  id: '/shopping-lists/',
+  path: '/shopping-lists/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShoppingListsListIdRoute = ShoppingListsListIdRouteImport.update({
+  id: '/shopping-lists/$listId',
+  path: '/shopping-lists/$listId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -94,38 +125,55 @@ const ApiRecipeRecipeIdRoute = ApiRecipeRecipeIdRouteImport.update({
   path: '/api/recipe/$recipeId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiShoppingListsListIdRoute = ApiShoppingListsListIdRouteImport.update({
+  id: '/$listId',
+  path: '/$listId',
+  getParentRoute: () => ApiShoppingListsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/api/algorithm': typeof ApiAlgorithmRoute
   '/api/family': typeof ApiFamilyRoute
+  '/api/ingredient-aisles': typeof ApiIngredientAislesRoute
   '/api/ingredients': typeof ApiIngredientsRoute
   '/api/join-family': typeof ApiJoinFamilyRoute
   '/api/meal-plans': typeof ApiMealPlansRoute
   '/api/recipes': typeof ApiRecipesRoute
+  '/api/shopping-lists': typeof ApiShoppingListsRouteWithChildren
   '/recipes/$recipeId': typeof RecipesRecipeIdRoute
   '/recipes/new': typeof RecipesNewRoute
+  '/shopping-lists/$listId': typeof ShoppingListsListIdRoute
+  '/ingredients/': typeof IngredientsIndexRoute
   '/recipes/': typeof RecipesIndexRoute
   '/settings/': typeof SettingsIndexRoute
+  '/shopping-lists/': typeof ShoppingListsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/recipe/$recipeId': typeof ApiRecipeRecipeIdRoute
+  '/api/shopping-lists/$listId': typeof ApiShoppingListsListIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/api/algorithm': typeof ApiAlgorithmRoute
   '/api/family': typeof ApiFamilyRoute
+  '/api/ingredient-aisles': typeof ApiIngredientAislesRoute
   '/api/ingredients': typeof ApiIngredientsRoute
   '/api/join-family': typeof ApiJoinFamilyRoute
   '/api/meal-plans': typeof ApiMealPlansRoute
   '/api/recipes': typeof ApiRecipesRoute
+  '/api/shopping-lists': typeof ApiShoppingListsRouteWithChildren
   '/recipes/$recipeId': typeof RecipesRecipeIdRoute
   '/recipes/new': typeof RecipesNewRoute
+  '/shopping-lists/$listId': typeof ShoppingListsListIdRoute
+  '/ingredients': typeof IngredientsIndexRoute
   '/recipes': typeof RecipesIndexRoute
   '/settings': typeof SettingsIndexRoute
+  '/shopping-lists': typeof ShoppingListsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/recipe/$recipeId': typeof ApiRecipeRecipeIdRoute
+  '/api/shopping-lists/$listId': typeof ApiShoppingListsListIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -133,16 +181,22 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/api/algorithm': typeof ApiAlgorithmRoute
   '/api/family': typeof ApiFamilyRoute
+  '/api/ingredient-aisles': typeof ApiIngredientAislesRoute
   '/api/ingredients': typeof ApiIngredientsRoute
   '/api/join-family': typeof ApiJoinFamilyRoute
   '/api/meal-plans': typeof ApiMealPlansRoute
   '/api/recipes': typeof ApiRecipesRoute
+  '/api/shopping-lists': typeof ApiShoppingListsRouteWithChildren
   '/recipes/$recipeId': typeof RecipesRecipeIdRoute
   '/recipes/new': typeof RecipesNewRoute
+  '/shopping-lists/$listId': typeof ShoppingListsListIdRoute
+  '/ingredients/': typeof IngredientsIndexRoute
   '/recipes/': typeof RecipesIndexRoute
   '/settings/': typeof SettingsIndexRoute
+  '/shopping-lists/': typeof ShoppingListsIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/recipe/$recipeId': typeof ApiRecipeRecipeIdRoute
+  '/api/shopping-lists/$listId': typeof ApiShoppingListsListIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -151,48 +205,66 @@ export interface FileRouteTypes {
     | '/login'
     | '/api/algorithm'
     | '/api/family'
+    | '/api/ingredient-aisles'
     | '/api/ingredients'
     | '/api/join-family'
     | '/api/meal-plans'
     | '/api/recipes'
+    | '/api/shopping-lists'
     | '/recipes/$recipeId'
     | '/recipes/new'
+    | '/shopping-lists/$listId'
+    | '/ingredients/'
     | '/recipes/'
     | '/settings/'
+    | '/shopping-lists/'
     | '/api/auth/$'
     | '/api/recipe/$recipeId'
+    | '/api/shopping-lists/$listId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login'
     | '/api/algorithm'
     | '/api/family'
+    | '/api/ingredient-aisles'
     | '/api/ingredients'
     | '/api/join-family'
     | '/api/meal-plans'
     | '/api/recipes'
+    | '/api/shopping-lists'
     | '/recipes/$recipeId'
     | '/recipes/new'
+    | '/shopping-lists/$listId'
+    | '/ingredients'
     | '/recipes'
     | '/settings'
+    | '/shopping-lists'
     | '/api/auth/$'
     | '/api/recipe/$recipeId'
+    | '/api/shopping-lists/$listId'
   id:
     | '__root__'
     | '/'
     | '/login'
     | '/api/algorithm'
     | '/api/family'
+    | '/api/ingredient-aisles'
     | '/api/ingredients'
     | '/api/join-family'
     | '/api/meal-plans'
     | '/api/recipes'
+    | '/api/shopping-lists'
     | '/recipes/$recipeId'
     | '/recipes/new'
+    | '/shopping-lists/$listId'
+    | '/ingredients/'
     | '/recipes/'
     | '/settings/'
+    | '/shopping-lists/'
     | '/api/auth/$'
     | '/api/recipe/$recipeId'
+    | '/api/shopping-lists/$listId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -200,14 +272,19 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ApiAlgorithmRoute: typeof ApiAlgorithmRoute
   ApiFamilyRoute: typeof ApiFamilyRoute
+  ApiIngredientAislesRoute: typeof ApiIngredientAislesRoute
   ApiIngredientsRoute: typeof ApiIngredientsRoute
   ApiJoinFamilyRoute: typeof ApiJoinFamilyRoute
   ApiMealPlansRoute: typeof ApiMealPlansRoute
   ApiRecipesRoute: typeof ApiRecipesRoute
+  ApiShoppingListsRoute: typeof ApiShoppingListsRouteWithChildren
   RecipesRecipeIdRoute: typeof RecipesRecipeIdRoute
   RecipesNewRoute: typeof RecipesNewRoute
+  ShoppingListsListIdRoute: typeof ShoppingListsListIdRoute
+  IngredientsIndexRoute: typeof IngredientsIndexRoute
   RecipesIndexRoute: typeof RecipesIndexRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
+  ShoppingListsIndexRoute: typeof ShoppingListsIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiRecipeRecipeIdRoute: typeof ApiRecipeRecipeIdRoute
 }
@@ -242,6 +319,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiFamilyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/ingredient-aisles': {
+      id: '/api/ingredient-aisles'
+      path: '/api/ingredient-aisles'
+      fullPath: '/api/ingredient-aisles'
+      preLoaderRoute: typeof ApiIngredientAislesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/ingredients': {
       id: '/api/ingredients'
       path: '/api/ingredients'
@@ -268,6 +352,20 @@ declare module '@tanstack/react-router' {
       path: '/api/recipes'
       fullPath: '/api/recipes'
       preLoaderRoute: typeof ApiRecipesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/shopping-lists': {
+      id: '/api/shopping-lists'
+      path: '/api/shopping-lists'
+      fullPath: '/api/shopping-lists'
+      preLoaderRoute: typeof ApiShoppingListsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ingredients/': {
+      id: '/ingredients/'
+      path: '/ingredients'
+      fullPath: '/ingredients/'
+      preLoaderRoute: typeof IngredientsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/recipes/': {
@@ -298,6 +396,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/shopping-lists/': {
+      id: '/shopping-lists/'
+      path: '/shopping-lists'
+      fullPath: '/shopping-lists/'
+      preLoaderRoute: typeof ShoppingListsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/shopping-lists/$listId': {
+      id: '/shopping-lists/$listId'
+      path: '/shopping-lists/$listId'
+      fullPath: '/shopping-lists/$listId'
+      preLoaderRoute: typeof ShoppingListsListIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -312,22 +424,45 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiRecipeRecipeIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/shopping-lists/$listId': {
+      id: '/api/shopping-lists/$listId'
+      path: '/$listId'
+      fullPath: '/api/shopping-lists/$listId'
+      preLoaderRoute: typeof ApiShoppingListsListIdRouteImport
+      parentRoute: typeof ApiShoppingListsRoute
+    }
   }
 }
+
+interface ApiShoppingListsRouteChildren {
+  ApiShoppingListsListIdRoute: typeof ApiShoppingListsListIdRoute
+}
+
+const ApiShoppingListsRouteChildren: ApiShoppingListsRouteChildren = {
+  ApiShoppingListsListIdRoute: ApiShoppingListsListIdRoute,
+}
+
+const ApiShoppingListsRouteWithChildren =
+  ApiShoppingListsRoute._addFileChildren(ApiShoppingListsRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
   ApiAlgorithmRoute: ApiAlgorithmRoute,
   ApiFamilyRoute: ApiFamilyRoute,
+  ApiIngredientAislesRoute: ApiIngredientAislesRoute,
   ApiIngredientsRoute: ApiIngredientsRoute,
   ApiJoinFamilyRoute: ApiJoinFamilyRoute,
   ApiMealPlansRoute: ApiMealPlansRoute,
   ApiRecipesRoute: ApiRecipesRoute,
+  ApiShoppingListsRoute: ApiShoppingListsRouteWithChildren,
   RecipesRecipeIdRoute: RecipesRecipeIdRoute,
   RecipesNewRoute: RecipesNewRoute,
+  ShoppingListsListIdRoute: ShoppingListsListIdRoute,
+  IngredientsIndexRoute: IngredientsIndexRoute,
   RecipesIndexRoute: RecipesIndexRoute,
   SettingsIndexRoute: SettingsIndexRoute,
+  ShoppingListsIndexRoute: ShoppingListsIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiRecipeRecipeIdRoute: ApiRecipeRecipeIdRoute,
 }
