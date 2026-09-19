@@ -10,7 +10,7 @@ import { Checkbox } from '../components/ui/checkbox'
 import { Skeleton } from '../components/ui/skeleton'
 import { IngredientMultiSelect } from '../components/ingredient-multi-select'
 import { formatDate, createImageUrl, dateKey, utcMidnight, cn } from '../lib/utils'
-import { Plus, Sparkles, Utensils, Filter, Trash2, ChevronLeft, ChevronRight, ShoppingCart, Pencil } from 'lucide-react'
+import { Plus, Sparkles, Utensils, Filter, Trash2, ChevronLeft, ChevronRight, ShoppingCart, Pencil, CookingPot } from 'lucide-react'
 import type { MealPlan, Recipe, PlanOption, DishType } from '../types'
 import { buildShoppingItems } from '../lib/shopping-list'
 import { AISLE_ORDER, AISLE_LABELS, guessAisle, type Aisle } from '../lib/aisle'
@@ -633,6 +633,12 @@ function HomePage() {
                               .filter(Boolean)
                               .join(', ')}
                           </p>
+                          <Button asChild variant="secondary" size="sm" className="w-full">
+                            <Link to="/recipes/$recipeId/cook" params={{ recipeId: plan.recipe.id }}>
+                              <CookingPot className="h-4 w-4 mr-1" />
+                              Lag maten
+                            </Link>
+                          </Button>
                         </div>
                       ) : null}
 

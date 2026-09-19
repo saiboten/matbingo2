@@ -31,6 +31,7 @@ import { Route as ShoppingListsListIdRouteImport } from './routes/shopping-lists
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiRecipeRecipeIdRouteImport } from './routes/api/recipe/$recipeId'
 import { Route as ApiShoppingListsListIdRouteImport } from './routes/api/shopping-lists/$listId'
+import { Route as RecipesRecipeIdCookRouteImport } from './routes/recipes/$recipeId_.cook'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -142,6 +143,11 @@ const ApiShoppingListsListIdRoute = ApiShoppingListsListIdRouteImport.update({
   path: '/$listId',
   getParentRoute: () => ApiShoppingListsRoute,
 } as any)
+const RecipesRecipeIdCookRoute = RecipesRecipeIdCookRouteImport.update({
+  id: '/recipes/$recipeId_/cook',
+  path: '/recipes/$recipeId/cook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -166,6 +172,7 @@ export interface FileRoutesByFullPath {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/recipe/$recipeId': typeof ApiRecipeRecipeIdRoute
   '/api/shopping-lists/$listId': typeof ApiShoppingListsListIdRoute
+  '/recipes/$recipeId/cook': typeof RecipesRecipeIdCookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -190,6 +197,7 @@ export interface FileRoutesByTo {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/recipe/$recipeId': typeof ApiRecipeRecipeIdRoute
   '/api/shopping-lists/$listId': typeof ApiShoppingListsListIdRoute
+  '/recipes/$recipeId/cook': typeof RecipesRecipeIdCookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -215,6 +223,7 @@ export interface FileRoutesById {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/recipe/$recipeId': typeof ApiRecipeRecipeIdRoute
   '/api/shopping-lists/$listId': typeof ApiShoppingListsListIdRoute
+  '/recipes/$recipeId_/cook': typeof RecipesRecipeIdCookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -241,6 +250,7 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/recipe/$recipeId'
     | '/api/shopping-lists/$listId'
+    | '/recipes/$recipeId/cook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -265,6 +275,7 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/recipe/$recipeId'
     | '/api/shopping-lists/$listId'
+    | '/recipes/$recipeId/cook'
   id:
     | '__root__'
     | '/'
@@ -289,6 +300,7 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/recipe/$recipeId'
     | '/api/shopping-lists/$listId'
+    | '/recipes/$recipeId_/cook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -313,6 +325,7 @@ export interface RootRouteChildren {
   ShoppingListsIndexRoute: typeof ShoppingListsIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiRecipeRecipeIdRoute: typeof ApiRecipeRecipeIdRoute
+  RecipesRecipeIdCookRoute: typeof RecipesRecipeIdCookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -471,6 +484,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiShoppingListsListIdRouteImport
       parentRoute: typeof ApiShoppingListsRoute
     }
+    '/recipes/$recipeId_/cook': {
+      id: '/recipes/$recipeId_/cook'
+      path: '/recipes/$recipeId/cook'
+      fullPath: '/recipes/$recipeId/cook'
+      preLoaderRoute: typeof RecipesRecipeIdCookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -507,6 +527,7 @@ const rootRouteChildren: RootRouteChildren = {
   ShoppingListsIndexRoute: ShoppingListsIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiRecipeRecipeIdRoute: ApiRecipeRecipeIdRoute,
+  RecipesRecipeIdCookRoute: RecipesRecipeIdCookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

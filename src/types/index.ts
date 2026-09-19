@@ -21,7 +21,16 @@ export interface Recipe {
   createdAt: Date
   updatedAt: Date
   image?: RecipeImage
+  steps?: RecipeStep[]
   eatenLogs?: EatenLog[]
+}
+
+export interface RecipeStep {
+  id: string
+  recipeId: string
+  position: number
+  title?: string | null
+  text: string
 }
 
 export interface RecipeImage {

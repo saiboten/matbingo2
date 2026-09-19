@@ -12,6 +12,7 @@ export const Route = createFileRoute('/api/recipe/$recipeId')({
             where: { id: params.recipeId },
             include: {
               image: true,
+              steps: { orderBy: { position: 'asc' } },
               eatenLogs: {
                 orderBy: { date: 'desc' },
                 take: 5

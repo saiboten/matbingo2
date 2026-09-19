@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, useParams } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate, useParams } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
@@ -14,7 +14,7 @@ import { Badge } from '../../components/ui/badge'
 import { fileToBase64, validateImage, createImageUrl, formatDate } from '../../lib/utils'
 import { DISH_TYPE_OPTIONS, DAYS, DISH_TYPE_COLORS, DISH_TYPE_LABELS, DAY_LABELS } from '../../types'
 import type { Recipe, Day, DishType } from '../../types'
-import { ArrowLeft, Upload, ChefHat, ExternalLink, Trash2, Save } from 'lucide-react'
+import { ArrowLeft, Upload, ChefHat, ExternalLink, Trash2, Save, CookingPot } from 'lucide-react'
 
 export const Route = createFileRoute('/recipes/$recipeId')({
   component: RecipeDetailPage,
@@ -329,6 +329,13 @@ function RecipeDetailPage() {
         </Badge>
         <Badge variant="secondary">Poeng: {recipe.score}</Badge>
       </div>
+
+      <Button asChild size="lg" className="mb-6 w-full">
+        <Link to="/recipes/$recipeId/cook" params={{ recipeId }}>
+          <CookingPot className="h-5 w-5 mr-2" />
+          Lag maten
+        </Link>
+      </Button>
 
       <Card className="mb-6">
         <CardHeader>
