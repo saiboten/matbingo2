@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Checkbox } from '../components/ui/checkbox'
 import { Skeleton } from '../components/ui/skeleton'
 import { IngredientMultiSelect } from '../components/ingredient-multi-select'
-import { formatDate, createImageUrl, dateKey, utcMidnight } from '../lib/utils'
+import { formatDate, createImageUrl, dateKey, utcMidnight, cn } from '../lib/utils'
 import { Plus, Sparkles, Utensils, Filter, Trash2, ChevronLeft, ChevronRight, ShoppingCart, Pencil } from 'lucide-react'
 import type { MealPlan, Recipe, PlanOption, DishType } from '../types'
 import { DISH_TYPE_OPTIONS, DISH_TYPE_LABELS } from '../types'
@@ -59,6 +59,62 @@ function WeekSkeleton() {
           </Card>
         ))}
       </div>
+    </div>
+  )
+}
+
+// One line per day of the week, used while picking days for a shopping list
+function WeekSelectList({
+  weekDays,
+  getPlan,
+  todayKey,
+  selectedDates,
+  onToggle,
+}: {
+  weekDays: Date[]
+  getPlan: (date: Date) => MealPlan | undefined
+  todayKey: string
+  selectedDates: Set<string>
+  onToggle: (key: string) => void
+}) {
+  return (
+    <div className="divide-y rounded-lg border">
+      {weekDays.map((date, index) => {
+        const plan = getPlan(date)
+        const key = dateKey(date)
+        const selectable = !!plan?.recipe
+        const selected = selectedDates.has(key)
+        const label = `${DAY_NAMES[index]} ${date.getUTCDate()}. ${date.toLocaleDateString('nb-NO', { month: 'short', timeZone: 'UTC' })}`
+
+        return (
+          <label
+            key={key}
+            className={cn(
+              'flex min-h-12 items-center gap-3 px-3 py-2',
+              selectable ? 'cursor-pointer active:bg-muted/60' : 'opacity-50',
+              selected && 'bg-muted'
+            )}
+          >
+            <Checkbox
+              checked={selected}
+              disabled={!selectable}
+              onCheckedChange={() => onToggle(key)}
+              className="h-6 w-6 shrink-0 [&_svg]:h-5 [&_svg]:w-5"
+            />
+            <span
+              className={cn(
+                'w-20 shrink-0 text-sm',
+                key === todayKey ? 'font-semibold text-primary' : 'text-muted-foreground'
+              )}
+            >
+              {label}
+            </span>
+            <span className={cn('min-w-0 flex-1 line-clamp-2', selectable ? 'font-medium' : 'text-sm text-muted-foreground')}>
+              {plan?.recipe?.name ?? (plan?.otherText || 'Ingen oppskrift')}
+            </span>
+          </label>
+        )
+      })}
     </div>
   )
 }
@@ -417,119 +473,103 @@ function HomePage() {
         </div>
       )}
 
-      <div className="flex flex-wrap items-center gap-2 p-3 bg-muted/50 rounded-lg">
-        <div className="flex items-center gap-1 text-sm text-muted-foreground mr-1">
-          <Filter className="h-4 w-4" />
-          Filtre for forslag
+      {!selectMode && (
+        <div className="flex flex-wrap items-center gap-2 p-3 bg-muted/50 rounded-lg">
+          <div className="flex items-center gap-1 text-sm text-muted-foreground mr-1">
+            <Filter className="h-4 w-4" />
+            Filtre for forslag
+          </div>
+          <Select value={suggestionType} onValueChange={(value) => setSuggestionType(value as DishType | 'ALL')}>
+            <SelectTrigger className="w-36">
+              <SelectValue placeholder="Alle typer" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Alle typer</SelectItem>
+              {DISH_TYPE_OPTIONS.map((type) => (
+                <SelectItem key={type.value} value={type.value}>
+                  {type.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <IngredientMultiSelect
+            options={availableIngredients}
+            selected={suggestionIngredients}
+            onChange={setSuggestionIngredients}
+            placeholder="Ingredienser ..."
+            className="w-72"
+          />
         </div>
-        <Select value={suggestionType} onValueChange={(value) => setSuggestionType(value as DishType | 'ALL')}>
-          <SelectTrigger className="w-36">
-            <SelectValue placeholder="Alle typer" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ALL">Alle typer</SelectItem>
-            {DISH_TYPE_OPTIONS.map((type) => (
-              <SelectItem key={type.value} value={type.value}>
-                {type.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <IngredientMultiSelect
-          options={availableIngredients}
-          selected={suggestionIngredients}
-          onChange={setSuggestionIngredients}
-          placeholder="Ingredienser ..."
-          className="w-72"
-        />
-      </div>
+      )}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
-        {weekDays.map((date, index) => {
-          const plan = getPlanForDate(date)
-          const key = dateKey(date)
-          const isToday = key === todayKey
-          const dayName = DAY_NAMES[index]
-          const selectable = !!plan?.recipe
-          const selected = selectedDates.has(key)
+      {!selectMode && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+          {weekDays.map((date, index) => {
+            const plan = getPlanForDate(date)
+            const key = dateKey(date)
+            const isToday = key === todayKey
+            const dayName = DAY_NAMES[index]
 
-          return (
-            <Card
-              key={key}
-              className={`${isToday ? 'border-primary' : ''} ${selected ? 'ring-2 ring-primary' : ''} ${
-                selectMode && selectable ? 'cursor-pointer' : ''
-              }`}
-              onClick={selectMode && selectable ? () => toggleSelectedDate(key) : undefined}
-            >
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  {selectMode && (
-                    <Checkbox
-                      checked={selected}
-                      disabled={!selectable}
-                      onCheckedChange={() => toggleSelectedDate(key)}
-                      onClick={(e) => e.stopPropagation()}
-                      aria-label={`Velg ${dayName}`}
-                      className="mr-3"
-                    />
-                  )}
-                  <div className="flex-1">
-                    <CardTitle className="text-lg">
-                      {isToday ? 'I dag' : dayName}
-                    </CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      {date.getUTCDate()} {date.toLocaleDateString('nb-NO', { month: 'short', timeZone: 'UTC' })}
-                    </p>
+            return (
+              <Card key={key} className={isToday ? 'border-primary' : ''}>
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-lg">
+                        {isToday ? 'I dag' : dayName}
+                      </CardTitle>
+                      <p className="text-sm text-muted-foreground">
+                        {date.getUTCDate()} {date.toLocaleDateString('nb-NO', { month: 'short', timeZone: 'UTC' })}
+                      </p>
+                    </div>
+                    {isToday && <Badge variant="default">I dag</Badge>}
                   </div>
-                  {isToday && <Badge variant="default">I dag</Badge>}
-                </div>
-              </CardHeader>
-              <CardContent>
-                {plan ? (
-                  <div className="space-y-3">
-                    {plan.option === 'OTHER' ? (
-                      <div className="p-3 bg-muted rounded-lg">
-                        <p className="text-sm font-medium">{plan.otherText}</p>
-                        <Badge variant="outline" className="mt-2">Egendefinert</Badge>
-                      </div>
-                    ) : plan.recipe ? (
-                      <div className="space-y-2">
-                        {plan.recipe.image && (
-                          <img
-                            src={createImageUrl(plan.recipe.image)}
-                            alt={plan.recipe.name}
-                            className="w-full h-32 object-cover rounded-lg"
-                          />
-                        )}
-                        <h3 className="font-medium">{plan.recipe.name}</h3>
-                        <Badge
-                          variant="secondary"
-                          className={
-                            plan.recipe.type === 'MEAT' ? 'bg-red-100 text-red-800' :
-                            plan.recipe.type === 'FISH' ? 'bg-blue-100 text-blue-800' :
-                            plan.recipe.type === 'VEGAN' ? 'bg-green-100 text-green-800' :
-                            'bg-gray-100 text-gray-800'
-                          }
-                        >
-                          {DISH_TYPE_LABELS[plan.recipe.type]}
-                        </Badge>
-                        {plan.option === 'ALGORITHM' && (
-                          <Badge variant="outline" className="ml-2">
-                            <Sparkles className="h-3 w-3 mr-1" />
-                            Forslag
+                </CardHeader>
+                <CardContent>
+                  {plan ? (
+                    <div className="space-y-3">
+                      {plan.option === 'OTHER' ? (
+                        <div className="p-3 bg-muted rounded-lg">
+                          <p className="text-sm font-medium">{plan.otherText}</p>
+                          <Badge variant="outline" className="mt-2">Egendefinert</Badge>
+                        </div>
+                      ) : plan.recipe ? (
+                        <div className="space-y-2">
+                          {plan.recipe.image && (
+                            <img
+                              src={createImageUrl(plan.recipe.image)}
+                              alt={plan.recipe.name}
+                              className="w-full h-32 object-cover rounded-lg"
+                            />
+                          )}
+                          <h3 className="font-medium">{plan.recipe.name}</h3>
+                          <Badge
+                            variant="secondary"
+                            className={
+                              plan.recipe.type === 'MEAT' ? 'bg-red-100 text-red-800' :
+                              plan.recipe.type === 'FISH' ? 'bg-blue-100 text-blue-800' :
+                              plan.recipe.type === 'VEGAN' ? 'bg-green-100 text-green-800' :
+                              'bg-gray-100 text-gray-800'
+                            }
+                          >
+                            {DISH_TYPE_LABELS[plan.recipe.type]}
                           </Badge>
-                        )}
-                        <p className="text-xs text-muted-foreground">
-                          {plan.recipe.ingredients
-                            .split(',')
-                            .map(ingredient => ingredient.trim())
-                            .filter(Boolean)
-                            .join(', ')}
-                        </p>
-                      </div>
-                    ) : null}
+                          {plan.option === 'ALGORITHM' && (
+                            <Badge variant="outline" className="ml-2">
+                              <Sparkles className="h-3 w-3 mr-1" />
+                              Forslag
+                            </Badge>
+                          )}
+                          <p className="text-xs text-muted-foreground">
+                            {plan.recipe.ingredients
+                              .split(',')
+                              .map(ingredient => ingredient.trim())
+                              .filter(Boolean)
+                              .join(', ')}
+                          </p>
+                        </div>
+                      ) : null}
 
-                    {!selectMode && (
                       <div className="flex gap-2">
                         <Button
                           variant="outline"
@@ -564,100 +604,108 @@ function HomePage() {
                           <span className="sr-only">Fjern</span>
                         </Button>
                       </div>
-                    )}
-                  </div>
-                ) : selectMode ? (
-                  <p className="text-sm text-muted-foreground">Ingen oppskrift å handle til</p>
-                ) : suggestions[key] ? (
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">Forslag</p>
-                    <div className="p-3 bg-muted rounded-lg space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Sparkles className="h-4 w-4 text-muted-foreground" />
-                        <h3 className="font-medium">{suggestions[key].name}</h3>
+                    </div>
+                  ) : suggestions[key] ? (
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">Forslag</p>
+                      <div className="p-3 bg-muted rounded-lg space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="h-4 w-4 text-muted-foreground" />
+                          <h3 className="font-medium">{suggestions[key].name}</h3>
+                        </div>
+                        <Badge
+                          variant="secondary"
+                          className={
+                            suggestions[key].type === 'MEAT' ? 'bg-red-100 text-red-800' :
+                            suggestions[key].type === 'FISH' ? 'bg-blue-100 text-blue-800' :
+                            suggestions[key].type === 'VEGAN' ? 'bg-green-100 text-green-800' :
+                            'bg-gray-100 text-gray-800'
+                          }
+                        >
+                          {DISH_TYPE_LABELS[suggestions[key].type]}
+                        </Badge>
                       </div>
-                      <Badge
-                        variant="secondary"
-                        className={
-                          suggestions[key].type === 'MEAT' ? 'bg-red-100 text-red-800' :
-                          suggestions[key].type === 'FISH' ? 'bg-blue-100 text-blue-800' :
-                          suggestions[key].type === 'VEGAN' ? 'bg-green-100 text-green-800' :
-                          'bg-gray-100 text-gray-800'
-                        }
+                      <Button
+                        size="sm"
+                        className="w-full"
+                        onClick={() => handleAcceptSuggestion(date)}
                       >
-                        {DISH_TYPE_LABELS[suggestions[key].type]}
-                      </Badge>
+                        Godta
+                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
+                          disabled={suggestionLoading[key]}
+                          onClick={() => handleDeclineSuggestion(date)}
+                        >
+                          {suggestionLoading[key] ? 'Finner ...' : 'Prøv et annet'}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => handleCancelSuggestion(date)}
+                        >
+                          Avbryt
+                        </Button>
+                      </div>
                     </div>
-                    <Button
-                      size="sm"
-                      className="w-full"
-                      onClick={() => handleAcceptSuggestion(date)}
-                    >
-                      Godta
-                    </Button>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1"
-                        disabled={suggestionLoading[key]}
-                        onClick={() => handleDeclineSuggestion(date)}
-                      >
-                        {suggestionLoading[key] ? 'Finner ...' : 'Prøv et annet'}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="flex-1"
-                        onClick={() => handleCancelSuggestion(date)}
-                      >
-                        Avbryt
-                      </Button>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">Ingen middag planlagt</p>
+                      <div className="flex flex-col gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedDate(date)
+                            setDialogOpen(true)
+                          }}
+                        >
+                          <Plus className="h-4 w-4 mr-1" />
+                          Legg til oppskrift
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          disabled={suggestionLoading[key]}
+                          onClick={() => handleAutoPick(date)}
+                        >
+                          <Sparkles className="h-4 w-4 mr-1" />
+                          {suggestionLoading[key] ? 'Finner ...' : 'Foreslå middag'}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedDate(date)
+                            // Open dialog with "Other" option pre-selected
+                          }}
+                        >
+                          <Utensils className="h-4 w-4 mr-1" />
+                          Annet
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">Ingen middag planlagt</p>
-                    <div className="flex flex-col gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedDate(date)
-                          setDialogOpen(true)
-                        }}
-                      >
-                        <Plus className="h-4 w-4 mr-1" />
-                        Legg til oppskrift
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        disabled={suggestionLoading[key]}
-                        onClick={() => handleAutoPick(date)}
-                      >
-                        <Sparkles className="h-4 w-4 mr-1" />
-                        {suggestionLoading[key] ? 'Finner ...' : 'Foreslå middag'}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedDate(date)
-                          // Open dialog with "Other" option pre-selected
-                        }}
-                      >
-                        <Utensils className="h-4 w-4 mr-1" />
-                        Annet
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )
-        })}
-      </div>
+                  )}
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
+      )}
+
+      {selectMode && (
+        <WeekSelectList
+          weekDays={weekDays}
+          getPlan={getPlanForDate}
+          todayKey={todayKey}
+          selectedDates={selectedDates}
+          onToggle={toggleSelectedDate}
+        />
+      )}
 
       {/* Meal Selection Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
