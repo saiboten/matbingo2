@@ -12,6 +12,8 @@ import { IngredientMultiSelect } from '../components/ingredient-multi-select'
 import { formatDate, createImageUrl, dateKey, utcMidnight, cn } from '../lib/utils'
 import { Plus, Sparkles, Utensils, Filter, Trash2, ChevronLeft, ChevronRight, ShoppingCart, Pencil } from 'lucide-react'
 import type { MealPlan, Recipe, PlanOption, DishType } from '../types'
+import { buildShoppingItems } from '../lib/shopping-list'
+import { AISLE_ORDER, AISLE_LABELS, guessAisle, type Aisle } from '../lib/aisle'
 import { DISH_TYPE_OPTIONS, DISH_TYPE_LABELS } from '../types'
 
 export const Route = createFileRoute('/')({
@@ -63,6 +65,56 @@ function WeekSkeleton() {
   )
 }
 
+// What the shopping list summary needs to remember about each selected day (kept across weeks)
+interface SelectedRecipe {
+  name: string
+  ingredients: string
+}
+
+// Ingredients of the selected recipes, grouped by aisle like the finished shopping list
+function SelectionSummary({
+  selectedDates,
+  aisles,
+}: {
+  selectedDates: ReadonlyMap<string, SelectedRecipe>
+  aisles: ReadonlyMap<string, Aisle>
+}) {
+  const recipes = Array.from(selectedDates.values())
+  const items = buildShoppingItems(recipes)
+
+  if (items.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Velg dager for å se hvilke ingredienser som kommer med på handlelisten.
+      </p>
+    )
+  }
+
+  const byAisle = new Map<Aisle, string[]>()
+  for (const item of items) {
+    const aisle = aisles.get(item.name.toLowerCase()) ?? guessAisle(item.name)
+    byAisle.set(aisle, [...(byAisle.get(aisle) ?? []), item.name])
+  }
+
+  return (
+    <section className="space-y-3">
+      <h2 className="font-semibold">
+        Ingredienser ({items.length}) fra {recipes.length} {recipes.length === 1 ? 'oppskrift' : 'oppskrifter'}
+      </h2>
+      <div className="divide-y rounded-lg border">
+        {AISLE_ORDER.filter(aisle => byAisle.has(aisle)).map(aisle => (
+          <div key={aisle} className="px-3 py-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              {AISLE_LABELS[aisle]}
+            </p>
+            <p className="text-sm">{byAisle.get(aisle)!.join(', ')}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
 // One line per day of the week, used while picking days for a shopping list
 function WeekSelectList({
   weekDays,
@@ -74,8 +126,8 @@ function WeekSelectList({
   weekDays: Date[]
   getPlan: (date: Date) => MealPlan | undefined
   todayKey: string
-  selectedDates: Set<string>
-  onToggle: (key: string) => void
+  selectedDates: ReadonlyMap<string, SelectedRecipe>
+  onToggle: (key: string, recipe: SelectedRecipe) => void
 }) {
   return (
     <div className="divide-y rounded-lg border">
@@ -98,7 +150,7 @@ function WeekSelectList({
             <Checkbox
               checked={selected}
               disabled={!selectable}
-              onCheckedChange={() => onToggle(key)}
+              onCheckedChange={() => plan?.recipe && onToggle(key, plan.recipe)}
               className="h-6 w-6 shrink-0 [&_svg]:h-5 [&_svg]:w-5"
             />
             <span
@@ -155,7 +207,8 @@ function HomePage() {
   const [suggestionIngredients, setSuggestionIngredients] = useState<string[]>([])
   const [availableIngredients, setAvailableIngredients] = useState<string[]>([])
   const [selectMode, setSelectMode] = useState(false)
-  const [selectedDates, setSelectedDates] = useState<Set<string>>(new Set())
+  const [selectedDates, setSelectedDates] = useState<Map<string, SelectedRecipe>>(new Map())
+  const [aisles, setAisles] = useState<Map<string, Aisle>>(new Map())
   const [creatingList, setCreatingList] = useState(false)
   const navigate = useNavigate()
 
@@ -359,16 +412,30 @@ function HomePage() {
     })
   }
 
-  const exitSelectMode = () => {
-    setSelectMode(false)
-    setSelectedDates(new Set())
+  const startSelectMode = async () => {
+    setSelectMode(true)
+    if (!session?.user.familyId || aisles.size > 0) return
+
+    // The family's aisle choices, so the summary is grouped the same way as the finished list
+    try {
+      const response = await fetch(`/api/ingredient-aisles?familyId=${session.user.familyId}`)
+      const data = await response.json()
+      setAisles(new Map((data.ingredients || []).map((i: { nameKey: string; aisle: Aisle }) => [i.nameKey, i.aisle])))
+    } catch (error) {
+      console.error('Error fetching aisles:', error)
+    }
   }
 
-  const toggleSelectedDate = (key: string) => {
+  const exitSelectMode = () => {
+    setSelectMode(false)
+    setSelectedDates(new Map())
+  }
+
+  const toggleSelectedDate = (key: string, recipe: SelectedRecipe) => {
     setSelectedDates(prev => {
-      const next = new Set(prev)
+      const next = new Map(prev)
       if (next.has(key)) next.delete(key)
-      else next.add(key)
+      else next.set(key, { name: recipe.name, ingredients: recipe.ingredients })
       return next
     })
   }
@@ -377,7 +444,7 @@ function HomePage() {
     if (!session?.user.familyId || selectedDates.size === 0) return
 
     // dateKeys are UTC calendar days (YYYY-MM-DD), same convention as the meal plan dates
-    const dates = Array.from(selectedDates).map(key => {
+    const dates = Array.from(selectedDates.keys()).map(key => {
       const [y, m, d] = key.split('-').map(Number)
       return utcMidnight(y, m - 1, d).toISOString()
     })
@@ -444,7 +511,7 @@ function HomePage() {
             </Button>
           )}
           {!selectMode && (
-            <Button variant="secondary" size="sm" onClick={() => setSelectMode(true)}>
+            <Button variant="secondary" size="sm" onClick={startSelectMode}>
               <ShoppingCart className="h-4 w-4 mr-1" />
               Lag handleliste
             </Button>
@@ -706,6 +773,8 @@ function HomePage() {
           onToggle={toggleSelectedDate}
         />
       )}
+
+      {selectMode && <SelectionSummary selectedDates={selectedDates} aisles={aisles} />}
 
       {/* Meal Selection Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
