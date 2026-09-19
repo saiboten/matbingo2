@@ -7,6 +7,7 @@ import { Badge } from '../components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import { Checkbox } from '../components/ui/checkbox'
+import { Skeleton } from '../components/ui/skeleton'
 import { IngredientMultiSelect } from '../components/ingredient-multi-select'
 import { formatDate, createImageUrl, dateKey, utcMidnight } from '../lib/utils'
 import { Plus, Sparkles, Utensils, Filter, Trash2, ChevronLeft, ChevronRight, ShoppingCart, Pencil } from 'lucide-react'
@@ -19,6 +20,48 @@ export const Route = createFileRoute('/')({
     // Check session on client side in component
   },
 })
+
+// Placeholder shown while the session and first week load; mirrors the real layout so nothing jumps.
+function WeekSkeleton() {
+  return (
+    <div className="space-y-6" aria-busy="true" aria-label="Laster ukesmeny">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl sm:text-3xl font-bold">Ukesmeny</h1>
+        <div className="flex flex-wrap items-center gap-2">
+          <Skeleton className="h-10 w-10" />
+          <Skeleton className="h-5 w-40" />
+          <Skeleton className="h-10 w-10" />
+          <Skeleton className="h-9 w-36" />
+        </div>
+      </div>
+
+      <Skeleton className="h-[52px] w-full" />
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+        {Array.from({ length: 7 }, (_, i) => (
+          <Card key={i}>
+            <CardHeader className="pb-3">
+              <Skeleton className="h-6 w-16" />
+              <Skeleton className="mt-1 h-4 w-12" />
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-5 w-3/4" />
+              <Skeleton className="h-5 w-14 rounded-full" />
+              <Skeleton className="h-3 w-full" />
+              <Skeleton className="h-3 w-2/3" />
+              <div className="flex gap-2">
+                <Skeleton className="h-9 flex-1" />
+                <Skeleton className="h-10 w-10" />
+                <Skeleton className="h-10 w-10" />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 const DAY_NAMES = ['Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør', 'Søn']
 
@@ -315,7 +358,7 @@ function HomePage() {
   }
 
   if (isPending || loading) {
-    return <div className="flex justify-center p-8">Laster ...</div>
+    return <WeekSkeleton />
   }
 
   // Prevent rendering if redirecting
