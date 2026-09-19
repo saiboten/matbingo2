@@ -17,6 +17,19 @@ To build this application for production:
 npm run build
 ```
 
+## Deploying to Vercel
+
+The build uses the `nitro` Vite plugin, which produces Vercel's output format automatically.
+Set these environment variables in the Vercel project (see `.env.example`):
+
+- `DATABASE_URL`
+- `BETTER_AUTH_SECRET`
+- `BETTER_AUTH_URL` (the deployed URL, not localhost)
+- `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`
+
+Also add `https://<your-domain>/api/auth/callback/google` as an authorized redirect URI for
+the Google OAuth client. `prisma generate` runs automatically on install.
+
 ## Testing
 
 This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
