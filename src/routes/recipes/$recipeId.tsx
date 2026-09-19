@@ -4,6 +4,8 @@ import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
 import { Textarea } from '../../components/ui/textarea'
+import { IngredientListInput } from '../../components/ingredient-list-input'
+import { parseIngredients, formatIngredients } from '../../lib/ingredient-text'
 import { Slider } from '../../components/ui/slider'
 import { Checkbox } from '../../components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
@@ -16,21 +18,34 @@ import { ArrowLeft, Upload, ChefHat, ExternalLink, Trash2, Save } from 'lucide-r
 
 export const Route = createFileRoute('/recipes/$recipeId')({
   component: RecipeDetailPage,
+  // /recipes/<id>?edit=true opens the page straight in edit mode
+  validateSearch: (search: Record<string, unknown>): { edit?: true } =>
+    search.edit === true || search.edit === 'true' ? { edit: true } : {},
 })
 
 function RecipeDetailPage() {
   const { recipeId } = useParams({ from: '/recipes/$recipeId' })
   const navigate = useNavigate()
+  const { edit } = Route.useSearch()
+  const isEditing = edit === true
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [recipe, setRecipe] = useState<Recipe | null>(null)
-  const [isEditing, setIsEditing] = useState(false)
+  // Edit mode lives in the URL so it can be linked to; leaving it replaces the history entry
+  const setIsEditing = (value: boolean) =>
+    navigate({
+      to: '/recipes/$recipeId',
+      params: { recipeId },
+      search: value ? { edit: true } : {},
+      replace: !value
+    })
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [imageData, setImageData] = useState<{ base64: string; mimeType: string } | null>(null)
   
   // Edit form state
   const [name, setName] = useState('')
-  const [ingredients, setIngredients] = useState('')
+  const [ingredients, setIngredients] = useState<string[]>([])
+  const [ingredientOptions, setIngredientOptions] = useState<string[]>([])
   const [description, setDescription] = useState('')
   const [externalUrl, setExternalUrl] = useState('')
   const [score, setScore] = useState(5)
@@ -51,7 +66,11 @@ function RecipeDetailPage() {
         setRecipe(data.recipe)
         // Initialize edit form
         setName(data.recipe.name)
-        setIngredients(data.recipe.ingredients)
+        setIngredients(parseIngredients(data.recipe.ingredients))
+        fetch(`/api/ingredients?familyId=${data.recipe.familyId}`)
+          .then(response => response.json())
+          .then(options => setIngredientOptions(options.ingredients || []))
+          .catch(error => console.error('Error fetching ingredients:', error))
         setDescription(data.recipe.description || '')
         setExternalUrl(data.recipe.externalUrl || '')
         setScore(data.recipe.score)
@@ -102,7 +121,7 @@ function RecipeDetailPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name,
-          ingredients,
+          ingredients: formatIngredients(ingredients),
           description: description || undefined,
           externalUrl: externalUrl || undefined,
           score,
@@ -252,7 +271,7 @@ function RecipeDetailPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>Ingredienser</Label>
-                <Textarea value={ingredients} onChange={(e) => setIngredients(e.target.value)} rows={4} required />
+                <IngredientListInput value={ingredients} onChange={setIngredients} options={ingredientOptions} />
               </div>
               <div className="space-y-2">
                 <Label>Beskrivelse</Label>
@@ -266,7 +285,7 @@ function RecipeDetailPage() {
           </Card>
 
           <div className="flex gap-4">
-            <Button type="submit" disabled={saving} className="flex-1">
+            <Button type="submit" disabled={saving || ingredients.length === 0} className="flex-1">
               <Save className="h-4 w-4 mr-2" />
               {saving ? 'Lagrer ...' : 'Lagre endringer'}
             </Button>
@@ -329,7 +348,11 @@ function RecipeDetailPage() {
           <CardTitle>Ingredienser</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="whitespace-pre-wrap">{recipe.ingredients}</p>
+          <ul className="divide-y">
+            {parseIngredients(recipe.ingredients).map(item => (
+              <li key={item} className="py-2">{item}</li>
+            ))}
+          </ul>
         </CardContent>
       </Card>
 

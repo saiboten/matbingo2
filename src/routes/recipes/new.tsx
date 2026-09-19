@@ -1,10 +1,12 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSession } from '../../lib/auth-client'
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
 import { Textarea } from '../../components/ui/textarea'
+import { IngredientListInput } from '../../components/ingredient-list-input'
+import { formatIngredients } from '../../lib/ingredient-text'
 import { Slider } from '../../components/ui/slider'
 import { Checkbox } from '../../components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
@@ -27,12 +29,21 @@ function NewRecipePage() {
   
   // Form state
   const [name, setName] = useState('')
-  const [ingredients, setIngredients] = useState('')
+  const [ingredients, setIngredients] = useState<string[]>([])
+  const [ingredientOptions, setIngredientOptions] = useState<string[]>([])
   const [description, setDescription] = useState('')
   const [externalUrl, setExternalUrl] = useState('')
   const [score, setScore] = useState(5)
   const [type, setType] = useState<DishType>('OTHER')
   const [suitableDays, setSuitableDays] = useState<Day[]>(['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'])
+
+  useEffect(() => {
+    if (!session?.user.familyId) return
+    fetch(`/api/ingredients?familyId=${session.user.familyId}`)
+      .then(response => response.json())
+      .then(data => setIngredientOptions(data.ingredients || []))
+      .catch(error => console.error('Error fetching ingredients:', error))
+  }, [session])
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -72,7 +83,7 @@ function NewRecipePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name,
-          ingredients,
+          ingredients: formatIngredients(ingredients),
           description: description || undefined,
           externalUrl: externalUrl || undefined,
           score,
@@ -249,13 +260,11 @@ function NewRecipePage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="ingredients">Ingredienser *</Label>
-              <Textarea
+              <IngredientListInput
                 id="ingredients"
                 value={ingredients}
-                onChange={(e) => setIngredients(e.target.value)}
-                placeholder="List opp ingrediensene, adskilt med komma ..."
-                rows={4}
-                required
+                onChange={setIngredients}
+                options={ingredientOptions}
               />
             </div>
 
@@ -287,7 +296,7 @@ function NewRecipePage() {
         <div className="flex gap-4">
           <Button 
             type="submit" 
-            disabled={loading || !name || !ingredients || suitableDays.length === 0}
+            disabled={loading || !name || ingredients.length === 0 || suitableDays.length === 0}
             className="flex-1"
           >
             {loading ? 'Oppretter ...' : 'Opprett oppskrift'}

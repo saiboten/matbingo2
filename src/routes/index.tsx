@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { useSession } from '../lib/auth-client'
 import { Button } from '../components/ui/button'
@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Checkbox } from '../components/ui/checkbox'
 import { IngredientMultiSelect } from '../components/ingredient-multi-select'
 import { formatDate, createImageUrl, dateKey, utcMidnight } from '../lib/utils'
-import { Plus, Sparkles, Utensils, Filter, Trash2, ChevronLeft, ChevronRight, ShoppingCart } from 'lucide-react'
+import { Plus, Sparkles, Utensils, Filter, Trash2, ChevronLeft, ChevronRight, ShoppingCart, Pencil } from 'lucide-react'
 import type { MealPlan, Recipe, PlanOption, DishType } from '../types'
 import { DISH_TYPE_OPTIONS, DISH_TYPE_LABELS } from '../types'
 
@@ -476,6 +476,13 @@ function HomePage() {
                             Forslag
                           </Badge>
                         )}
+                        <p className="text-xs text-muted-foreground">
+                          {plan.recipe.ingredients
+                            .split(',')
+                            .map(ingredient => ingredient.trim())
+                            .filter(Boolean)
+                            .join(', ')}
+                        </p>
                       </div>
                     ) : null}
 
@@ -492,6 +499,18 @@ function HomePage() {
                         >
                           Endre
                         </Button>
+                        {plan.recipe && (
+                          <Button asChild variant="outline" size="icon">
+                            <Link
+                              to="/recipes/$recipeId"
+                              params={{ recipeId: plan.recipe.id }}
+                              search={{ edit: true }}
+                            >
+                              <Pencil className="h-4 w-4" />
+                              <span className="sr-only">Rediger oppskrift</span>
+                            </Link>
+                          </Button>
+                        )}
                         <Button
                           variant="outline"
                           size="icon"
