@@ -29,6 +29,7 @@ Set these environment variables in the Vercel project (see `.env.example`):
 
 Also add `https://<your-domain>/api/auth/callback/google` as an authorized redirect URI for
 the Google OAuth client. `prisma generate` runs automatically on install.
+Keep the `http://localhost:3000/api/auth/callback/google` URI too so local development keeps working.
 
 ## Testing
 
