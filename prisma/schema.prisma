@@ -116,6 +116,42 @@ model RecipeStep {
   @@unique([recipeId, position])
 }
 
+// Ready-made recipes every family can copy into its own collection (managed by the super admin).
+// A family's copy is an ordinary Recipe, so editing it never changes the blueprint.
+model Blueprint {
+  id           String          @id
+  name         String
+  description  String?
+  ingredients  String
+  type         DishType
+  score        Int             @default(5)
+  suitableDays Day[]
+  position     Int             @default(0)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  steps        BlueprintStep[]
+  image        BlueprintImage?
+}
+
+model BlueprintStep {
+  id          String    @id @default(uuid())
+  blueprintId String
+  position    Int
+  title       String?
+  text        String
+  blueprint   Blueprint @relation(fields: [blueprintId], references: [id], onDelete: Cascade)
+
+  @@unique([blueprintId, position])
+}
+
+model BlueprintImage {
+  id          String    @id @default(uuid())
+  blueprintId String    @unique
+  base64      String
+  mimeType    String
+  blueprint   Blueprint @relation(fields: [blueprintId], references: [id], onDelete: Cascade)
+}
+
 model RecipeImage {
   id        String   @id @default(uuid())
   base64    String

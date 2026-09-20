@@ -1,92 +1,165 @@
 import { describe, expect, it, vi } from 'vitest'
-import { BLUEPRINTS, blueprintRecipeData, findBlueprint, matchAddedBlueprints } from './blueprints'
+import { BLUEPRINT_SEEDS } from '../data/blueprint-recipes'
+import { blueprintImageUrl, blueprintRecipeData, matchAddedBlueprints, toBlueprint } from './blueprints'
 import { normalizeSteps } from './recipe-steps'
 import { parseIngredients } from './ingredient-text'
 
 vi.mock('./prisma', () => ({ prisma: {} }))
 const { BlueprintError, addBlueprintToFamily } = await import('./add-blueprint')
+const { ensureBlueprintsSeeded, listBlueprints } = await import('./blueprint-store')
 
-describe('the blueprint library', () => {
-  it('has ten recipes with unique ids and names', () => {
-    expect(BLUEPRINTS).toHaveLength(10)
-    expect(new Set(BLUEPRINTS.map(b => b.id)).size).toBe(10)
-    expect(new Set(BLUEPRINTS.map(b => b.name.toLowerCase())).size).toBe(10)
+describe('the built-in blueprints (the library\'s starting content)', () => {
+  it('are ten recipes with unique ids and names', () => {
+    expect(BLUEPRINT_SEEDS).toHaveLength(10)
+    expect(new Set(BLUEPRINT_SEEDS.map(b => b.id)).size).toBe(10)
+    expect(new Set(BLUEPRINT_SEEDS.map(b => b.name.toLowerCase())).size).toBe(10)
   })
 
-  it.each(BLUEPRINTS.map(b => [b.name, b] as const))('%s is complete and fits the recipe limits', (_name, blueprint) => {
-    expect(['MEAT', 'FISH', 'VEGAN', 'OTHER']).toContain(blueprint.type)
-    expect(blueprint.score).toBeGreaterThanOrEqual(0)
-    expect(blueprint.score).toBeLessThanOrEqual(10)
-    expect(blueprint.description.trim()).not.toBe('')
-    expect(parseIngredients(blueprint.ingredients).length).toBeGreaterThanOrEqual(2)
-    expect(blueprint.steps.length).toBeGreaterThanOrEqual(3)
+  it.each(BLUEPRINT_SEEDS.map(b => [b.name, b] as const))('%s is complete and fits the recipe limits', (_name, seed) => {
+    expect(['MEAT', 'FISH', 'VEGAN', 'OTHER']).toContain(seed.type)
+    expect(seed.score).toBeGreaterThanOrEqual(0)
+    expect(seed.score).toBeLessThanOrEqual(10)
+    expect(seed.description.trim()).not.toBe('')
+    expect(parseIngredients(seed.ingredients).length).toBeGreaterThanOrEqual(2)
+    expect(seed.steps.length).toBeGreaterThanOrEqual(3)
     // nothing would be trimmed or dropped when the steps are saved
-    expect(normalizeSteps(blueprint.steps.map(([title, text]) => ({ title, text })))).toHaveLength(blueprint.steps.length)
+    expect(normalizeSteps(seed.steps.map(([title, text]) => ({ title, text })))).toHaveLength(seed.steps.length)
   })
 })
 
-describe('findBlueprint', () => {
-  it('finds a blueprint by id', () => {
-    expect(findBlueprint('pannekaker')?.name).toBe('Pannekaker')
-    expect(findBlueprint('nope')).toBeUndefined()
+const row = {
+  id: 'pannekaker',
+  name: 'Pannekaker',
+  description: 'Tynne pannekaker',
+  ingredients: 'Mel, Egg, Melk',
+  type: 'OTHER' as const,
+  score: 4,
+  suitableDays: ['SATURDAY', 'SUNDAY'] as ('SATURDAY' | 'SUNDAY')[],
+  position: 3,
+  updatedAt: new Date('2026-09-20T10:00:00.000Z'),
+  steps: [
+    { position: 1, title: 'Lag røren', text: 'Visp mel og egg.' },
+    { position: 2, title: null, text: 'Stek pannekakene.' },
+  ],
+}
+
+describe('toBlueprint', () => {
+  it('turns a database row into the shape the app uses', () => {
+    const blueprint = toBlueprint({ ...row, image: { id: 'i1' } })
+    expect(blueprint).toMatchObject({ id: 'pannekaker', hasImage: true, updatedAt: '2026-09-20T10:00:00.000Z' })
+    expect(toBlueprint({ ...row, image: null }).hasImage).toBe(false)
+  })
+})
+
+describe('blueprintImageUrl', () => {
+  it('is null without a photo, and versioned with one', () => {
+    const blueprint = toBlueprint({ ...row, image: { id: 'i1' } })
+    expect(blueprintImageUrl({ ...blueprint, hasImage: false })).toBeNull()
+    expect(blueprintImageUrl(blueprint)).toBe(`/api/blueprint-image/pannekaker?v=${new Date(row.updatedAt).getTime()}`)
   })
 })
 
 describe('matchAddedBlueprints', () => {
   it('matches by recipe name, ignoring case and spacing', () => {
-    const added = matchAddedBlueprints(BLUEPRINTS, [
-      { id: 'r1', name: ' pannekaker ' },
-      { id: 'r2', name: 'Noe helt annet' },
-    ])
+    const added = matchAddedBlueprints(
+      [{ id: 'pannekaker', name: 'Pannekaker' }, { id: 'lasagne', name: 'Lasagne' }],
+      [{ id: 'r1', name: ' pannekaker ' }, { id: 'r2', name: 'Noe helt annet' }]
+    )
     expect(added).toEqual({ pannekaker: 'r1' })
   })
 })
 
 describe('blueprintRecipeData', () => {
-  it('numbers the steps and defaults to every day', () => {
-    const data = blueprintRecipeData(findBlueprint('spagetti-bolognese')!)
-    expect(data.suitableDays).toHaveLength(7)
-    expect(data.steps.map(step => step.position)).toEqual(data.steps.map((_, i) => i + 1))
+  it('numbers the steps and keeps the days', () => {
+    const data = blueprintRecipeData(toBlueprint({ ...row, image: null }))
+    expect(data.suitableDays).toEqual(['SATURDAY', 'SUNDAY'])
+    expect(data.steps.map(step => step.position)).toEqual([1, 2])
   })
 
-  it("keeps a blueprint's own days", () => {
-    expect(blueprintRecipeData(findBlueprint('pannekaker')!).suitableDays).toEqual(['SATURDAY', 'SUNDAY'])
+  it('falls back to every day when a blueprint has none', () => {
+    expect(blueprintRecipeData(toBlueprint({ ...row, suitableDays: [], image: null })).suitableDays).toHaveLength(7)
+  })
+})
+
+describe('ensureBlueprintsSeeded', () => {
+  const makeDb = (existing: number) => {
+    const count = vi.fn().mockResolvedValue(existing)
+    const createBlueprints = vi.fn().mockResolvedValue({ count: 10 })
+    const createSteps = vi.fn().mockResolvedValue({ count: 0 })
+    return {
+      db: { blueprint: { count, createMany: createBlueprints }, blueprintStep: { createMany: createSteps } } as never,
+      createBlueprints,
+      createSteps,
+    }
+  }
+
+  it('fills an empty library with the built-in blueprints and their steps', async () => {
+    const { db, createBlueprints, createSteps } = makeDb(0)
+    await ensureBlueprintsSeeded(db)
+
+    expect(createBlueprints.mock.calls[0][0].data).toHaveLength(10)
+    expect(createBlueprints.mock.calls[0][0].skipDuplicates).toBe(true)
+    expect(createSteps.mock.calls[0][0].data.length).toBe(BLUEPRINT_SEEDS.reduce((sum, seed) => sum + seed.steps.length, 0))
+  })
+
+  it('leaves an existing library alone', async () => {
+    const { db, createBlueprints, createSteps } = makeDb(3)
+    await ensureBlueprintsSeeded(db)
+    expect(createBlueprints).not.toHaveBeenCalled()
+    expect(createSteps).not.toHaveBeenCalled()
+  })
+})
+
+describe('listBlueprints', () => {
+  it('returns the blueprints in order, as app objects', async () => {
+    const findMany = vi.fn().mockResolvedValue([{ ...row, image: null }])
+    const db = { blueprint: { count: vi.fn().mockResolvedValue(1), findMany }, blueprintStep: {} } as never
+
+    const list = await listBlueprints(db)
+    expect(list).toHaveLength(1)
+    expect(list[0]).toMatchObject({ id: 'pannekaker', hasImage: false })
+    expect(findMany.mock.calls[0][0].orderBy).toEqual([{ position: 'asc' }, { name: 'asc' }])
   })
 })
 
 describe('addBlueprintToFamily', () => {
-  const makeDb = (existing: { id: string; name: string }[] = []) => {
+  const makeDb = (existing: { id: string; name: string }[] = [], withImage = false) => {
     const create = vi.fn().mockResolvedValue({ id: 'new-recipe' })
     const findMany = vi.fn().mockResolvedValue(existing)
-    return { db: { recipe: { findMany, create } } as never, create, findMany }
+    const findUnique = vi
+      .fn()
+      .mockResolvedValue({ ...row, image: withImage ? { id: 'i1', base64: 'AAAA', mimeType: 'image/png' } : null })
+    return { db: { recipe: { findMany, create }, blueprint: { findUnique } } as never, create }
   }
+  const input = { blueprintId: 'pannekaker', familyId: 'fam', userId: 'usr' }
 
   it('copies the recipe with its steps into the family', async () => {
     const { db, create } = makeDb()
-
-    await expect(
-      addBlueprintToFamily({ blueprintId: 'fiskegrateng', familyId: 'fam', userId: 'usr' }, db)
-    ).resolves.toEqual({ id: 'new-recipe' })
+    await expect(addBlueprintToFamily(input, db)).resolves.toEqual({ id: 'new-recipe' })
 
     const data = create.mock.calls[0][0].data
-    expect(data).toMatchObject({ name: 'Fiskegrateng', familyId: 'fam', createdById: 'usr' })
-    expect(data.steps.create).toHaveLength(findBlueprint('fiskegrateng')!.steps.length)
-    expect(data.steps.create[0]).toMatchObject({ position: 1 })
+    expect(data).toMatchObject({ name: 'Pannekaker', familyId: 'fam', createdById: 'usr', score: 4 })
+    expect(data.steps.create).toEqual([
+      { position: 1, title: 'Lag røren', text: 'Visp mel og egg.' },
+      { position: 2, title: null, text: 'Stek pannekakene.' },
+    ])
+    expect(data.image).toBeUndefined()
+  })
+
+  it("copies the blueprint's photo too", async () => {
+    const { db, create } = makeDb([], true)
+    await addBlueprintToFamily(input, db)
+    expect(create.mock.calls[0][0].data.image).toEqual({ create: { base64: 'AAAA', mimeType: 'image/png' } })
   })
 
   it('does not add the same recipe twice', async () => {
-    const { db, create } = makeDb([{ id: 'mine', name: 'Fiskegrateng' }])
-
-    await expect(
-      addBlueprintToFamily({ blueprintId: 'fiskegrateng', familyId: 'fam', userId: 'usr' }, db)
-    ).rejects.toMatchObject({ status: 409, recipeId: 'mine' })
+    const { db, create } = makeDb([{ id: 'mine', name: 'Pannekaker' }])
+    await expect(addBlueprintToFamily(input, db)).rejects.toMatchObject({ status: 409, recipeId: 'mine' })
     expect(create).not.toHaveBeenCalled()
   })
 
   it('rejects an unknown blueprint', async () => {
-    const { db } = makeDb()
-    await expect(
-      addBlueprintToFamily({ blueprintId: 'nope', familyId: 'fam', userId: 'usr' }, db)
-    ).rejects.toBeInstanceOf(BlueprintError)
+    const db = { recipe: {}, blueprint: { findUnique: vi.fn().mockResolvedValue(null) } } as never
+    await expect(addBlueprintToFamily({ ...input, blueprintId: 'nope' }, db)).rejects.toBeInstanceOf(BlueprintError)
   })
 })

@@ -1,8 +1,9 @@
 import type { Day, DishType } from '../types'
 
-// A ready-made recipe families can copy into their own collection. Adding one creates an ordinary
-// recipe (with all its steps) that the family is free to change; the blueprint itself never changes.
-export interface Blueprint {
+// The blueprint library lives in the database and is edited by the super admin. These are its
+// starting content: they are inserted the first time the library is read while it is empty.
+// Changing this file does NOT change blueprints that already exist in the database.
+export interface BlueprintSeed {
   id: string
   name: string
   type: DishType
@@ -16,7 +17,7 @@ export interface Blueprint {
   steps: [string, string][]
 }
 
-export const BLUEPRINTS: Blueprint[] = [
+export const BLUEPRINT_SEEDS: BlueprintSeed[] = [
   {
     id: 'spagetti-bolognese',
     name: 'Spagetti bolognese',

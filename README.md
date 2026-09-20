@@ -54,6 +54,20 @@ npm run db:seed     # test family, 16 recipes (photos, steps, hibernation), a pl
   Settings with the code `TESTFAM1`, or run `npm run db:seed -- --attach you@gmail.com` to become its admin.
 - Restart `npm run dev` after changing `.env`.
 
+## Blueprint library and the super admin
+
+The shared recipe library (`/recipes/library`) is stored in the database (`Blueprint`, `BlueprintStep`,
+`BlueprintImage`). The first time it is read while empty, it is filled from `src/data/blueprint-recipes.ts`;
+after that the database is the source of truth and that file is not used.
+
+Only the super admin, `saiboten@gmail.com` (verified Google email), can edit it, at `/admin/blueprints`. The
+link only appears for that user, and every admin API call is checked again on the server. To use other
+addresses, set `SUPER_ADMIN_EMAILS` (comma separated) on the server. The link in the interface always follows
+the built-in default in `src/lib/super-admin.ts`.
+
+New tables must exist in a database before code that uses them is deployed: run `npm run db:push` for the
+local database, and `DOTENV_CONFIG_PATH=.env.prod npx prisma db push` for production (deliberately).
+
 ## Testing
 
 This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:

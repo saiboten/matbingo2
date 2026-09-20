@@ -1,13 +1,54 @@
-import { BLUEPRINTS, type Blueprint } from '../data/blueprint-recipes'
-import type { Day } from '../types'
+import type { Day, DishType } from '../types'
 
-export { BLUEPRINTS }
-export type { Blueprint }
+// A ready-made recipe in the shared library. Families copy one into their own recipes; the copy is an
+// ordinary recipe, so editing it never changes the blueprint.
+export interface Blueprint {
+  id: string
+  name: string
+  description: string | null
+  // Comma-separated, like a recipe's own ingredients
+  ingredients: string
+  type: DishType
+  // How often the recipe is suggested by default (0-10)
+  score: number
+  suitableDays: Day[]
+  position: number
+  updatedAt: string
+  hasImage: boolean
+  steps: { position: number; title: string | null; text: string }[]
+}
 
 const ALL_DAYS: Day[] = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']
 
-export function findBlueprint(id: string): Blueprint | undefined {
-  return BLUEPRINTS.find(blueprint => blueprint.id === id)
+// What a blueprint row from the database looks like (with its steps and a marker for a photo)
+interface BlueprintRow {
+  id: string
+  name: string
+  description: string | null
+  ingredients: string
+  type: DishType
+  score: number
+  suitableDays: Day[]
+  position: number
+  updatedAt: Date
+  steps: { position: number; title: string | null; text: string }[]
+  image?: { id: string } | null
+}
+
+export function toBlueprint(row: BlueprintRow): Blueprint {
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    ingredients: row.ingredients,
+    type: row.type,
+    score: row.score,
+    suitableDays: row.suitableDays,
+    position: row.position,
+    updatedAt: row.updatedAt.toISOString(),
+    hasImage: Boolean(row.image),
+    steps: row.steps.map(({ position, title, text }) => ({ position, title, text })),
+  }
 }
 
 function nameKey(name: string): string {
@@ -17,7 +58,7 @@ function nameKey(name: string): string {
 // A copy is an ordinary recipe, so a blueprint counts as added when the family has a recipe with the
 // same name. Returns blueprint id -> id of that recipe.
 export function matchAddedBlueprints(
-  blueprints: Blueprint[],
+  blueprints: { id: string; name: string }[],
   recipes: { id: string; name: string }[]
 ): Record<string, string> {
   const byName = new Map(recipes.map(recipe => [nameKey(recipe.name), recipe.id]))
@@ -37,7 +78,14 @@ export function blueprintRecipeData(blueprint: Blueprint) {
     score: blueprint.score,
     ingredients: blueprint.ingredients,
     description: blueprint.description,
-    suitableDays: blueprint.suitableDays ?? ALL_DAYS,
-    steps: blueprint.steps.map(([title, text], index) => ({ position: index + 1, title, text })),
+    suitableDays: blueprint.suitableDays.length ? blueprint.suitableDays : ALL_DAYS,
+    steps: blueprint.steps.map(({ title, text }, index) => ({ position: index + 1, title, text })),
   }
+}
+
+// URL of a blueprint's photo, or null. `updatedAt` is in the URL so a changed photo gets a new
+// address and old ones can be cached for good.
+export function blueprintImageUrl(blueprint: { id: string; updatedAt: string; hasImage: boolean }): string | null {
+  if (!blueprint.hasImage) return null
+  return `/api/blueprint-image/${blueprint.id}?v=${new Date(blueprint.updatedAt).getTime()}`
 }

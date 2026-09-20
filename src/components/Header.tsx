@@ -3,6 +3,7 @@ import { Link, useRouterState } from '@tanstack/react-router'
 import { useSession, signOut } from '../lib/auth-client'
 import { Button } from './ui/button'
 import { cn } from '../lib/utils'
+import { isSuperAdmin } from '../lib/super-admin'
 import {
   ChefHat,
   Settings,
@@ -15,6 +16,7 @@ import {
   ListChecks,
   ShoppingCart,
   Carrot,
+  ShieldCheck,
 } from 'lucide-react'
 
 const NAV_ITEMS = [
@@ -24,6 +26,9 @@ const NAV_ITEMS = [
   { to: '/shopping-lists', label: 'Handleliste', icon: ShoppingCart },
   { to: '/ingredients', label: 'Ingredienser', icon: Carrot },
 ] as const
+
+// Only shown to the super admin
+const ADMIN_ITEM = { to: '/admin/blueprints', label: 'Admin', icon: ShieldCheck } as const
 
 const SETTINGS_ITEM = { to: '/settings', label: 'Innstillinger', icon: Settings } as const
 
@@ -80,6 +85,8 @@ export default function Header() {
     )
   }
 
+  const navItems = isSuperAdmin(session.user.email) ? [...NAV_ITEMS, ADMIN_ITEM] : NAV_ITEMS
+
   return (
     <header className="border-b bg-background">
       <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
@@ -90,7 +97,7 @@ export default function Header() {
 
         {/* Wide screens: links in the bar */}
         <nav className="hidden lg:flex items-center gap-6">
-          {NAV_ITEMS.map(item => (
+          {navItems.map(item => (
             <Link
               key={item.to}
               to={item.to}
@@ -144,7 +151,7 @@ export default function Header() {
               role="menu"
               className="absolute right-0 top-full z-50 mt-2 w-64 rounded-md border bg-popover p-1 text-popover-foreground shadow-lg"
             >
-              {[...NAV_ITEMS, SETTINGS_ITEM].map(item => {
+              {[...navItems, SETTINGS_ITEM].map(item => {
                 const Icon = item.icon
                 return (
                   <Link

@@ -7,8 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/ca
 import { Skeleton } from '../../components/ui/skeleton'
 import { useToast } from '../../components/ui/toast'
 import { parseIngredients } from '../../lib/ingredient-text'
+import { blueprintImageUrl, type Blueprint } from '../../lib/blueprints'
 import { DISH_TYPE_COLORS, DISH_TYPE_LABELS } from '../../types'
-import { BLUEPRINTS, type Blueprint } from '../../data/blueprint-recipes'
 import { ArrowLeft, Check, Plus } from 'lucide-react'
 
 export const Route = createFileRoute('/recipes/library')({
@@ -19,9 +19,13 @@ export function RecipeLibraryPage() {
   const { data: session, isPending } = useSession()
   const navigate = useNavigate()
   const toast = useToast()
+  // The shared library, the same for every family
+  const [blueprints, setBlueprints] = useState<Blueprint[]>([])
+  const [libraryLoading, setLibraryLoading] = useState(true)
+  const [libraryError, setLibraryError] = useState<string | null>(null)
   // blueprint id -> id of the family's copy of it
   const [added, setAdded] = useState<Record<string, string>>({})
-  // The library itself is the same for everyone and always shown; only this check needs the account
+  // Which ones the family already has needs the account; the library itself doesn't
   const [checkError, setCheckError] = useState<string | null>(null)
   const [addingId, setAddingId] = useState<string | null>(null)
 
@@ -32,6 +36,24 @@ export function RecipeLibraryPage() {
       navigate({ to: '/settings', replace: true })
     }
   }, [isPending, session, navigate])
+
+  const fetchLibrary = async () => {
+    setLibraryError(null)
+    try {
+      const response = await fetch('/api/blueprint-library')
+      if (response.ok) {
+        const data = await response.json()
+        setBlueprints(data.blueprints || [])
+      } else {
+        setLibraryError(`feil ${response.status}`)
+      }
+    } catch (error) {
+      console.error('Error fetching the library:', error)
+      setLibraryError('ingen kontakt med serveren')
+    } finally {
+      setLibraryLoading(false)
+    }
+  }
 
   const fetchAdded = async () => {
     setCheckError(null)
@@ -49,6 +71,10 @@ export function RecipeLibraryPage() {
       setCheckError('ingen kontakt med serveren')
     }
   }
+
+  useEffect(() => {
+    fetchLibrary()
+  }, [])
 
   useEffect(() => {
     if (session?.user.familyId) fetchAdded()
@@ -80,7 +106,7 @@ export function RecipeLibraryPage() {
     }
   }
 
-  if (isPending) {
+  if (isPending || libraryLoading) {
     return (
       <div className="max-w-3xl space-y-4" aria-busy="true" aria-label="Laster biblioteket">
         <Skeleton className="h-9 w-72" />
@@ -110,7 +136,19 @@ export function RecipeLibraryPage() {
         </div>
       </div>
 
-      {checkError && (
+      {libraryError && (
+        <div
+          role="alert"
+          className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-destructive/40 p-3 text-sm"
+        >
+          <span>Kunne ikke hente biblioteket ({libraryError}).</span>
+          <Button variant="outline" size="sm" onClick={() => { setLibraryLoading(true); fetchLibrary() }}>
+            Prøv igjen
+          </Button>
+        </div>
+      )}
+
+      {checkError && !libraryError && (
         <div
           role="alert"
           className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-destructive/40 p-3 text-sm"
@@ -124,17 +162,31 @@ export function RecipeLibraryPage() {
         </div>
       )}
 
+      {!libraryError && blueprints.length === 0 && (
+        <p className="text-muted-foreground">Biblioteket er tomt akkurat nå.</p>
+      )}
+
       <div className="space-y-4">
-        {BLUEPRINTS.map(blueprint => {
+        {blueprints.map(blueprint => {
           const recipeId = added[blueprint.id]
+          const imageUrl = blueprintImageUrl(blueprint)
           return (
-            <Card key={blueprint.id}>
+            <Card key={blueprint.id} className="overflow-hidden">
+              {imageUrl && (
+                <img
+                  src={imageUrl}
+                  alt={blueprint.name}
+                  loading="lazy"
+                  decoding="async"
+                  className="h-40 w-full object-cover sm:h-52"
+                />
+              )}
               <CardHeader className="pb-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <CardTitle className="text-lg sm:text-xl">{blueprint.name}</CardTitle>
                   <Badge className={DISH_TYPE_COLORS[blueprint.type]}>{DISH_TYPE_LABELS[blueprint.type]}</Badge>
                 </div>
-                <p className="text-sm text-muted-foreground">{blueprint.description}</p>
+                {blueprint.description && <p className="text-sm text-muted-foreground">{blueprint.description}</p>}
               </CardHeader>
               <CardContent className="space-y-3">
                 <p className="text-sm">
@@ -142,21 +194,23 @@ export function RecipeLibraryPage() {
                   {parseIngredients(blueprint.ingredients).join(', ')}
                 </p>
 
-                <details className="group text-sm">
-                  <summary className="cursor-pointer select-none font-medium text-primary hover:underline">
-                    Se fremgangsmåten ({blueprint.steps.length} steg)
-                  </summary>
-                  <ol className="mt-3 space-y-2 border-l-2 pl-4">
-                    {blueprint.steps.map(([title, text], index) => (
-                      <li key={title + index}>
-                        <p className="font-medium">
-                          {index + 1}. {title}
-                        </p>
-                        <p className="text-muted-foreground">{text}</p>
-                      </li>
-                    ))}
-                  </ol>
-                </details>
+                {blueprint.steps.length > 0 && (
+                  <details className="group text-sm">
+                    <summary className="cursor-pointer select-none font-medium text-primary hover:underline">
+                      Se fremgangsmåten ({blueprint.steps.length} steg)
+                    </summary>
+                    <ol className="mt-3 space-y-2 border-l-2 pl-4">
+                      {blueprint.steps.map((step, index) => (
+                        <li key={step.position}>
+                          <p className="font-medium">
+                            {index + 1}. {step.title}
+                          </p>
+                          <p className="text-muted-foreground">{step.text}</p>
+                        </li>
+                      ))}
+                    </ol>
+                  </details>
+                )}
 
                 {recipeId ? (
                   <div className="flex flex-wrap items-center gap-2">
