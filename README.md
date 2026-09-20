@@ -36,6 +36,8 @@ Keep the `http://localhost:3000/api/auth/callback/google` URI too so local devel
 Day-to-day development and testing uses a PostgreSQL database on this machine, not production.
 
 - `.env` points at it: `postgresql://matbingo:matbingo@localhost:5432/matbingo_dev`
+- To work against production (or make schema changes there), swap which `DATABASE_URL` line is commented out in
+  `.env`, and restart `npm run dev`. A copy of the production URL is also kept in `.env.prod` (both git-ignored).
 - The production connection string is kept in `.env.prod` (git-ignored). Scripts only touch production if you
   say so: `DOTENV_CONFIG_PATH=.env.prod npx vite-node scripts/<script>.ts`. Vercel has its own settings.
 
