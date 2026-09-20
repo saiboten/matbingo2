@@ -13,7 +13,8 @@ import { Checkbox } from '../../components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card'
 import { Badge } from '../../components/ui/badge'
-import { fileToBase64, validateImage, createImageUrl, formatDate } from '../../lib/utils'
+import { fileToBase64, validateImage, formatDate } from '../../lib/utils'
+import { recipeImageUrl } from '../../lib/recipe-image'
 import { DISH_TYPE_OPTIONS, DAYS, DISH_TYPE_COLORS, DISH_TYPE_LABELS, DAY_LABELS } from '../../types'
 import type { Recipe, Day, DishType } from '../../types'
 import { ArrowLeft, Upload, ChefHat, ExternalLink, Trash2, Save, CookingPot } from 'lucide-react'
@@ -80,8 +81,9 @@ function RecipeDetailPage() {
         setType(data.recipe.type)
         setSuitableDays(data.recipe.suitableDays)
         setSteps((data.recipe.steps ?? []).map((step: { title?: string | null; text: string }) => ({ title: step.title ?? '', text: step.text })))
-        if (data.recipe.image) {
-          setImagePreview(createImageUrl(data.recipe.image))
+        const imageUrl = recipeImageUrl(data.recipe)
+        if (imageUrl) {
+          setImagePreview(imageUrl)
         }
       }
     } catch (error) {
@@ -329,7 +331,7 @@ function RecipeDetailPage() {
 
       {recipe.image && (
         <img 
-          src={createImageUrl(recipe.image)} 
+          src={recipeImageUrl(recipe)!} 
           alt={recipe.name}
           className="w-full h-64 object-cover rounded-lg mb-6"
         />

@@ -44,7 +44,7 @@ export async function selectOptimalRecipe(
       })
     },
     include: {
-      image: true,
+      image: { select: { id: true } },
       eatenLogs: {
         where: {
           familyId

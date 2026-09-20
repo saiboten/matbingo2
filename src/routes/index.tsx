@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Checkbox } from '../components/ui/checkbox'
 import { Skeleton } from '../components/ui/skeleton'
 import { IngredientMultiSelect } from '../components/ingredient-multi-select'
-import { formatDate, createImageUrl, dateKey, utcMidnight, cn } from '../lib/utils'
+import { formatDate, dateKey, utcMidnight, cn } from '../lib/utils'
+import { recipeImageUrl } from '../lib/recipe-image'
 import { Plus, Sparkles, Utensils, Filter, Trash2, ChevronLeft, ChevronRight, ShoppingCart, Pencil, CookingPot } from 'lucide-react'
 import type { MealPlan, Recipe, PlanOption, DishType } from '../types'
 import { buildShoppingItems } from '../lib/shopping-list'
@@ -233,7 +234,6 @@ function HomePage() {
 
   useEffect(() => {
     if (session?.user.familyId) {
-      fetchRecipes()
       fetchIngredients()
     }
   }, [session])
@@ -255,6 +255,13 @@ function HomePage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // The recipes are only needed for the "add recipe" dialog, so they are fetched when it is first opened
+  const openPlanDialog = (date: Date) => {
+    setSelectedDate(date)
+    setDialogOpen(true)
+    if (recipes.length === 0) fetchRecipes()
   }
 
   const fetchRecipes = async () => {
@@ -603,7 +610,7 @@ function HomePage() {
                         <div className="space-y-2">
                           {plan.recipe.image && (
                             <img
-                              src={createImageUrl(plan.recipe.image)}
+                              src={recipeImageUrl(plan.recipe)!}
                               alt={plan.recipe.name}
                               className="w-full h-32 object-cover rounded-lg"
                             />
@@ -647,10 +654,7 @@ function HomePage() {
                           variant="outline"
                           size="sm"
                           className="flex-1"
-                          onClick={() => {
-                            setSelectedDate(date)
-                            setDialogOpen(true)
-                          }}
+                          onClick={() => openPlanDialog(date)}
                         >
                           Endre
                         </Button>
@@ -740,10 +744,7 @@ function HomePage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => {
-                            setSelectedDate(date)
-                            setDialogOpen(true)
-                          }}
+                          onClick={() => openPlanDialog(date)}
                         >
                           <Plus className="h-4 w-4 mr-1" />
                           Legg til oppskrift
@@ -791,7 +792,9 @@ function HomePage() {
                   >
                     {recipe.image ? (
                       <img
-                        src={createImageUrl(recipe.image)}
+                        src={recipeImageUrl(recipe)!}
+                        loading="lazy"
+                        decoding="async"
                         alt={recipe.name}
                         className="h-12 w-12 object-cover rounded"
                       />

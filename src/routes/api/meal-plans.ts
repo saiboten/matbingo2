@@ -29,7 +29,7 @@ export const Route = createFileRoute('/api/meal-plans')({
             include: {
               recipe: {
                 include: {
-                  image: true
+                  image: { select: { id: true } }
                 }
               }
             },
@@ -74,7 +74,7 @@ export const Route = createFileRoute('/api/meal-plans')({
             include: {
               recipe: {
                 include: {
-                  image: true
+                  image: { select: { id: true } }
                 }
               }
             }

@@ -12,7 +12,7 @@ export const Route = createFileRoute('/api/recipe/$recipeId')({
           const recipe = await prisma.recipe.findUnique({
             where: { id: params.recipeId },
             include: {
-              image: true,
+              image: { select: { id: true } },
               steps: { orderBy: { position: 'asc' } },
               eatenLogs: {
                 orderBy: { date: 'desc' },
@@ -92,7 +92,7 @@ export const Route = createFileRoute('/api/recipe/$recipeId')({
             where: { id: params.recipeId },
             data: updateData,
             include: {
-              image: true,
+              image: { select: { id: true } },
               steps: { orderBy: { position: 'asc' } }
             }
           })

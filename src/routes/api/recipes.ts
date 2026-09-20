@@ -34,7 +34,7 @@ export const Route = createFileRoute('/api/recipes')({
         const recipes = await prisma.recipe.findMany({
           where,
           include: {
-            image: true,
+            image: { select: { id: true } },
             _count: {
               select: {
                 eatenLogs: true
@@ -86,7 +86,7 @@ export const Route = createFileRoute('/api/recipes')({
               })
             },
             include: {
-              image: true
+              image: { select: { id: true } }
             }
           })
 

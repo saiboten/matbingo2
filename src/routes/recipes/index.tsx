@@ -6,7 +6,7 @@ import { Input } from '../../components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card'
 import { Badge } from '../../components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
-import { createImageUrl } from '../../lib/utils'
+import { recipeImageUrl } from '../../lib/recipe-image'
 import { Plus, Search, ChefHat, ListChecks, Moon } from 'lucide-react'
 import type { Recipe, DishType } from '../../types'
 import { DISH_TYPE_OPTIONS, DISH_TYPE_COLORS, DISH_TYPE_LABELS } from '../../types'
@@ -131,7 +131,9 @@ function RecipesPage() {
                 <div className="aspect-video w-full overflow-hidden rounded-t-lg">
                   {recipe.image ? (
                     <img
-                      src={createImageUrl(recipe.image)}
+                      src={recipeImageUrl(recipe)!}
+                      loading="lazy"
+                      decoding="async"
                       alt={recipe.name}
                       className="h-full w-full object-cover"
                     />

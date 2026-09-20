@@ -33,11 +33,10 @@ export interface RecipeStep {
   text: string
 }
 
+// Recipe responses only say that a photo exists; the photo itself is fetched from
+// /api/recipe-image/<id> (see recipeImageUrl in lib/recipe-image.ts)
 export interface RecipeImage {
   id: string
-  base64: string
-  mimeType: string
-  recipeId: string
 }
 
 export interface MealPlan {
