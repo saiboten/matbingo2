@@ -23,3 +23,45 @@ export function buildInviteMessage(details: { familyName: string; inviteCode: st
     `3. Skriv inn invitasjonskoden: ${details.inviteCode}`,
   ].join('\n')
 }
+
+export type LeaveDecision =
+  | { ok: true; handOverTo: string | null }
+  | { ok: false; status: number; code: 'NOT_A_MEMBER' | 'ONLY_MEMBER' | 'HAND_OVER_REQUIRED'; error: string }
+
+// Whether a member may leave their family. The admin can't just leave: they must hand the admin role
+// to another member first, and the last member can't leave (the family would be left without anyone).
+export function resolveLeave(input: {
+  userId: string
+  adminId: string | null
+  memberIds: string[]
+  newAdminId?: string | null
+}): LeaveDecision {
+  const { userId, adminId, memberIds, newAdminId } = input
+
+  if (!memberIds.includes(userId)) {
+    return { ok: false, status: 404, code: 'NOT_A_MEMBER', error: 'Du er ikke medlem av denne familien' }
+  }
+
+  if (userId !== adminId) return { ok: true, handOverTo: null }
+
+  const others = memberIds.filter(id => id !== userId)
+  if (others.length === 0) {
+    return {
+      ok: false,
+      status: 400,
+      code: 'ONLY_MEMBER',
+      error: 'Du er den eneste i familien. Inviter noen først, så kan du overføre administrasjonen og forlate familien.',
+    }
+  }
+
+  if (!newAdminId || !others.includes(newAdminId)) {
+    return {
+      ok: false,
+      status: 400,
+      code: 'HAND_OVER_REQUIRED',
+      error: 'Du er administrator. Velg hvem som skal overta før du forlater familien.',
+    }
+  }
+
+  return { ok: true, handOverTo: newAdminId }
+}

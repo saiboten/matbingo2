@@ -6,10 +6,14 @@ import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card'
 import { Badge } from '../../components/ui/badge'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog'
 import { useToast } from '../../components/ui/toast'
 import { buildInviteMessage } from '../../lib/family'
 import type { Family } from '../../types'
 import { Users, Copy, Check, LogOut, UserPlus, ChefHat, Share2, UserMinus } from 'lucide-react'
+
+// A message to show after the page reloads (leaving the family reloads it to refresh the session)
+const FLASH_KEY = 'matbingo:flash'
 
 export const Route = createFileRoute('/settings/')({
   component: SettingsPage,
@@ -27,6 +31,21 @@ function SettingsPage() {
   const [creatingFamily, setCreatingFamily] = useState(false)
   const [newFamilyName, setNewFamilyName] = useState('')
   const [removingId, setRemovingId] = useState<string | null>(null)
+  const [leaveDialogOpen, setLeaveDialogOpen] = useState(false)
+  const [newAdminId, setNewAdminId] = useState<string | null>(null)
+  const [leaving, setLeaving] = useState(false)
+
+  useEffect(() => {
+    try {
+      const flash = sessionStorage.getItem(FLASH_KEY)
+      if (flash) {
+        sessionStorage.removeItem(FLASH_KEY)
+        toast(flash)
+      }
+    } catch {
+      // Storage can be unavailable; the message is just skipped
+    }
+  }, [])
 
   useEffect(() => {
     if (session?.user.familyId) {
@@ -158,15 +177,53 @@ function SettingsPage() {
     }
   }
 
-  const handleLeaveFamily = async () => {
-    if (!confirm('Er du sikker på at du vil forlate denne familien?')) return
+  const leaveFamily = async (handOverTo?: string) => {
+    if (!family) return
 
+    setLeaving(true)
     try {
-      // In a real app, you'd have an API endpoint for this
-      alert('Kommer snart')
+      const response = await fetch('/api/family-leave', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ familyId: family.id, newAdminId: handOverTo })
+      })
+
+      if (response.ok) {
+        try {
+          sessionStorage.setItem(FLASH_KEY, `Du har forlatt familien «${family.name}»`)
+        } catch {
+          // Without storage the page just reloads without the message
+        }
+        // Reload so the session picks up that the user no longer has a family
+        window.location.reload()
+        return
+      }
+
+      const data = await response.json().catch(() => ({}))
+      toast(data.error || 'Kunne ikke forlate familien', 'error')
     } catch (error) {
       console.error('Error leaving family:', error)
+      toast('Kunne ikke forlate familien', 'error')
     }
+    setLeaving(false)
+  }
+
+  const handleLeaveFamily = () => {
+    if (!family) return
+
+    // The admin has to hand the role to someone else first
+    if (family.adminId === session?.user.id) {
+      if ((family.members?.length ?? 0) <= 1) {
+        toast('Du er den eneste i familien. Inviter noen først, så kan du overføre administrasjonen og forlate familien.', 'error')
+        return
+      }
+      setNewAdminId(null)
+      setLeaveDialogOpen(true)
+      return
+    }
+
+    if (!confirm(`Forlate familien «${family.name}»? Du kan bli med igjen senere med invitasjonskoden.`)) return
+    leaveFamily()
   }
 
   if (isPending || loading) {
@@ -356,6 +413,57 @@ function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* The admin picks who takes over before leaving */}
+      <Dialog open={leaveDialogOpen} onOpenChange={(open) => !leaving && setLeaveDialogOpen(open)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Velg ny administrator</DialogTitle>
+          </DialogHeader>
+
+          <p className="text-sm text-muted-foreground">
+            Du er administrator for «{family.name}». Før du forlater familien må noen andre overta.
+          </p>
+
+          <fieldset className="space-y-2">
+            <legend className="sr-only">Ny administrator</legend>
+            {family.members
+              ?.filter((member) => member.id !== session?.user.id)
+              .map((member) => (
+                <label
+                  key={member.id}
+                  className="flex cursor-pointer items-center gap-3 rounded-lg border p-3 has-[:checked]:border-primary has-[:checked]:bg-muted"
+                >
+                  <input
+                    type="radio"
+                    name="new-admin"
+                    value={member.id}
+                    checked={newAdminId === member.id}
+                    onChange={() => setNewAdminId(member.id)}
+                    className="h-4 w-4 shrink-0 accent-primary"
+                  />
+                  <div className="min-w-0">
+                    <p className="font-medium">{member.name}</p>
+                    <p className="truncate text-sm text-muted-foreground">{member.email}</p>
+                  </div>
+                </label>
+              ))}
+          </fieldset>
+
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" disabled={leaving} onClick={() => setLeaveDialogOpen(false)}>
+              Avbryt
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={!newAdminId || leaving}
+              onClick={() => newAdminId && leaveFamily(newAdminId)}
+            >
+              {leaving ? 'Forlater ...' : 'Overfør og forlat familien'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

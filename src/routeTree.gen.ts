@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ApiAlgorithmRouteImport } from './routes/api/algorithm'
 import { Route as ApiFamilyRouteImport } from './routes/api/family'
+import { Route as ApiFamilyLeaveRouteImport } from './routes/api/family-leave'
 import { Route as ApiFamilyMembersRouteImport } from './routes/api/family-members'
 import { Route as ApiIngredientAislesRouteImport } from './routes/api/ingredient-aisles'
 import { Route as ApiIngredientsRouteImport } from './routes/api/ingredients'
@@ -53,6 +54,11 @@ const ApiAlgorithmRoute = ApiAlgorithmRouteImport.update({
 const ApiFamilyRoute = ApiFamilyRouteImport.update({
   id: '/api/family',
   path: '/api/family',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiFamilyLeaveRoute = ApiFamilyLeaveRouteImport.update({
+  id: '/api/family-leave',
+  path: '/api/family-leave',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiFamilyMembersRoute = ApiFamilyMembersRouteImport.update({
@@ -166,6 +172,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/api/algorithm': typeof ApiAlgorithmRoute
   '/api/family': typeof ApiFamilyRoute
+  '/api/family-leave': typeof ApiFamilyLeaveRoute
   '/api/family-members': typeof ApiFamilyMembersRoute
   '/api/ingredient-aisles': typeof ApiIngredientAislesRoute
   '/api/ingredients': typeof ApiIngredientsRoute
@@ -193,6 +200,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/api/algorithm': typeof ApiAlgorithmRoute
   '/api/family': typeof ApiFamilyRoute
+  '/api/family-leave': typeof ApiFamilyLeaveRoute
   '/api/family-members': typeof ApiFamilyMembersRoute
   '/api/ingredient-aisles': typeof ApiIngredientAislesRoute
   '/api/ingredients': typeof ApiIngredientsRoute
@@ -221,6 +229,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/api/algorithm': typeof ApiAlgorithmRoute
   '/api/family': typeof ApiFamilyRoute
+  '/api/family-leave': typeof ApiFamilyLeaveRoute
   '/api/family-members': typeof ApiFamilyMembersRoute
   '/api/ingredient-aisles': typeof ApiIngredientAislesRoute
   '/api/ingredients': typeof ApiIngredientsRoute
@@ -250,6 +259,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/api/algorithm'
     | '/api/family'
+    | '/api/family-leave'
     | '/api/family-members'
     | '/api/ingredient-aisles'
     | '/api/ingredients'
@@ -277,6 +287,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/api/algorithm'
     | '/api/family'
+    | '/api/family-leave'
     | '/api/family-members'
     | '/api/ingredient-aisles'
     | '/api/ingredients'
@@ -304,6 +315,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/api/algorithm'
     | '/api/family'
+    | '/api/family-leave'
     | '/api/family-members'
     | '/api/ingredient-aisles'
     | '/api/ingredients'
@@ -332,6 +344,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ApiAlgorithmRoute: typeof ApiAlgorithmRoute
   ApiFamilyRoute: typeof ApiFamilyRoute
+  ApiFamilyLeaveRoute: typeof ApiFamilyLeaveRoute
   ApiFamilyMembersRoute: typeof ApiFamilyMembersRoute
   ApiIngredientAislesRoute: typeof ApiIngredientAislesRoute
   ApiIngredientsRoute: typeof ApiIngredientsRoute
@@ -382,6 +395,13 @@ declare module '@tanstack/react-router' {
       path: '/api/family'
       fullPath: '/api/family'
       preLoaderRoute: typeof ApiFamilyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/family-leave': {
+      id: '/api/family-leave'
+      path: '/api/family-leave'
+      fullPath: '/api/family-leave'
+      preLoaderRoute: typeof ApiFamilyLeaveRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/family-members': {
@@ -550,6 +570,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ApiAlgorithmRoute: ApiAlgorithmRoute,
   ApiFamilyRoute: ApiFamilyRoute,
+  ApiFamilyLeaveRoute: ApiFamilyLeaveRoute,
   ApiFamilyMembersRoute: ApiFamilyMembersRoute,
   ApiIngredientAislesRoute: ApiIngredientAislesRoute,
   ApiIngredientsRoute: ApiIngredientsRoute,

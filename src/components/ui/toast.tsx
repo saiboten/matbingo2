@@ -11,6 +11,7 @@ interface ToastItem {
 }
 
 const TOAST_DURATION_MS = 3500
+const ERROR_TOAST_DURATION_MS = 6000 // errors are often longer and worth reading twice
 
 const ToastContext = React.createContext<((message: string, variant?: ToastVariant) => void) | null>(null)
 
@@ -22,7 +23,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const toast = React.useCallback((message: string, variant: ToastVariant = 'success') => {
     const id = nextId.current++
     setToasts(prev => [...prev, { id, message, variant }])
-    window.setTimeout(() => setToasts(prev => prev.filter(item => item.id !== id)), TOAST_DURATION_MS)
+    window.setTimeout(
+      () => setToasts(prev => prev.filter(item => item.id !== id)),
+      variant === 'error' ? ERROR_TOAST_DURATION_MS : TOAST_DURATION_MS
+    )
   }, [])
 
   return (
