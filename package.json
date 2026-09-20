@@ -7,7 +7,10 @@
     "postinstall": "prisma generate",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "db:push": "prisma db push",
+    "db:seed": "vite-node scripts/seed-dev.ts",
+    "db:reset": "vite-node scripts/seed-dev.ts --reset"
   },
   "dependencies": {
     "@nanostores/react": "^1.0.0",

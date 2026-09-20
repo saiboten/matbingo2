@@ -31,6 +31,29 @@ Also add `https://<your-domain>/api/auth/callback/google` as an authorized redir
 the Google OAuth client. `prisma generate` runs automatically on install.
 Keep the `http://localhost:3000/api/auth/callback/google` URI too so local development keeps working.
 
+## Local database
+
+Day-to-day development and testing uses a PostgreSQL database on this machine, not production.
+
+- `.env` points at it: `postgresql://matbingo:matbingo@localhost:5432/matbingo_dev`
+- The production connection string is kept in `.env.prod` (git-ignored). Scripts only touch production if you
+  say so: `DOTENV_CONFIG_PATH=.env.prod npx vite-node scripts/<script>.ts`. Vercel has its own settings.
+
+One-time setup (PostgreSQL installed and running):
+
+```bash
+psql -U postgres -c "CREATE ROLE matbingo WITH LOGIN PASSWORD 'matbingo';"
+psql -U postgres -c "CREATE DATABASE matbingo_dev OWNER matbingo;"
+npm run db:push     # create the tables
+npm run db:seed     # test family, 16 recipes (photos, steps, hibernation), a planned week
+```
+
+- `npm run db:reset` deletes the test family and creates it again. `db:seed` is safe to re-run.
+- The seed script refuses to run against a database that isn't on localhost.
+- Log in locally with Google (the local database starts without users), then either join the test family in
+  Settings with the code `TESTFAM1`, or run `npm run db:seed -- --attach you@gmail.com` to become its admin.
+- Restart `npm run dev` after changing `.env`.
+
 ## Testing
 
 This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
