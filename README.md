@@ -38,8 +38,11 @@ Day-to-day development and testing uses a PostgreSQL database on this machine, n
 - `.env` points at it: `postgresql://matbingo:matbingo@localhost:5432/matbingo_dev`
 - To work against production (or make schema changes there), swap which `DATABASE_URL` line is commented out in
   `.env`, and restart `npm run dev`. A copy of the production URL is also kept in `.env.prod` (both git-ignored).
-- The production connection string is kept in `.env.prod` (git-ignored). Scripts only touch production if you
-  say so: `DOTENV_CONFIG_PATH=.env.prod npx vite-node scripts/<script>.ts`. Vercel has its own settings.
+- The production connection string is kept in `.env.prod` (git-ignored). Vercel has its own settings.
+- Pointing ONE command at production: for the Prisma CLI use `DOTENV_CONFIG_PATH=.env.prod npx prisma db push`.
+  That trick does NOT work for `vite-node` scripts (they read `.env` first); for those, set the variable for
+  the command instead: `DATABASE_URL="<production url>" npx vite-node scripts/<script>.ts`, or swap the line
+  in `.env`. Check the "target" line the scripts print before writing anything.
 
 One-time setup (PostgreSQL installed and running):
 
