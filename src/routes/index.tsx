@@ -211,7 +211,6 @@ function HomePage() {
   const [selectMode, setSelectMode] = useState(false)
   const [selectedDates, setSelectedDates] = useState<Map<string, SelectedRecipe>>(new Map())
   const [aisles, setAisles] = useState<Map<string, Aisle>>(new Map())
-  const [creatingList, setCreatingList] = useState(false)
   const navigate = useNavigate()
 
   const weekDays = getWeekDays(weekOffset)
@@ -448,39 +447,14 @@ function HomePage() {
     })
   }
 
-  const handleCreateShoppingList = async () => {
-    if (!session?.user.familyId || selectedDates.size === 0) return
+  // Continue to the step where extra items can be added; the list is made there
+  const handleContinueToExtras = () => {
+    if (selectedDates.size === 0) return
 
     // dateKeys are UTC calendar days (YYYY-MM-DD), same convention as the meal plan dates
-    const dates = Array.from(selectedDates.keys()).map(key => {
-      const [y, m, d] = key.split('-').map(Number)
-      return utcMidnight(y, m - 1, d).toISOString()
-    })
-
-    setCreatingList(true)
-    try {
-      const response = await fetch('/api/shopping-lists', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          familyId: session.user.familyId,
-          createdById: session.user.id,
-          dates
-        })
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        exitSelectMode()
-        navigate({ to: '/shopping-lists/$listId', params: { listId: data.shoppingList.id } })
-      } else {
-        alert('Kunne ikke lage handlelisten')
-      }
-    } catch (error) {
-      console.error('Error creating shopping list:', error)
-    } finally {
-      setCreatingList(false)
-    }
+    const dates = Array.from(selectedDates.keys()).sort().join(',')
+    exitSelectMode()
+    navigate({ to: '/shopping-lists/new', search: { dates } })
   }
 
   const getPlanForDate = (date: Date) => {
@@ -534,15 +508,15 @@ function HomePage() {
             <span className="text-muted-foreground"> ({selectedDates.size} valgt)</span>
           </p>
           <div className="flex gap-2">
-            <Button variant="ghost" size="sm" onClick={exitSelectMode} disabled={creatingList}>
+            <Button variant="ghost" size="sm" onClick={exitSelectMode}>
               Avbryt
             </Button>
             <Button
               size="sm"
-              onClick={handleCreateShoppingList}
-              disabled={selectedDates.size === 0 || creatingList}
+              onClick={handleContinueToExtras}
+              disabled={selectedDates.size === 0}
             >
-              {creatingList ? 'Lager ...' : 'Ferdig'}
+              Neste
             </Button>
           </div>
         </div>

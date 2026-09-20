@@ -5,6 +5,7 @@ import { Button } from '../../components/ui/button'
 import { Checkbox } from '../../components/ui/checkbox'
 import { formatDate } from '../../lib/utils'
 import { AISLE_ORDER, AISLE_LABELS } from '../../lib/aisle'
+import { describeSources } from '../../lib/shopping-extras'
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react'
 import type { ShoppingList } from '../../types'
 
@@ -149,7 +150,9 @@ function ShoppingListPage() {
                         />
                         <div className={`min-w-0 ${item.checked ? 'line-through text-muted-foreground' : ''}`}>
                           <p className="break-words text-base font-medium">{item.name}</p>
-                          <p className="text-xs text-muted-foreground">fra: {item.sources.join(', ')}</p>
+                          {item.sources.length > 0 && (
+                            <p className="text-xs text-muted-foreground">{describeSources(item.sources)}</p>
+                          )}
                         </div>
                       </label>
                     </li>

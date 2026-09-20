@@ -1,9 +1,8 @@
 import { json } from '@tanstack/react-start'
 import { createFileRoute } from '@tanstack/react-router'
 import { prisma } from '../../lib/prisma'
-import { buildShoppingItems } from '../../lib/shopping-list'
-import { resolveAisles, ingredientKey } from '../../lib/ingredients'
-import { aisleRank } from '../../lib/aisle'
+import { ShoppingListError, createShoppingList } from '../../lib/create-shopping-list'
+import { getFamilyUser } from '../../lib/session'
 
 export const Route = createFileRoute('/api/shopping-lists')({
   server: {
@@ -30,44 +29,26 @@ export const Route = createFileRoute('/api/shopping-lists')({
         }
       },
 
+      // Makes a list from the recipes on the chosen days plus any extra items. The family and the
+      // user come from the signed-in session, never from the request.
       POST: async ({ request }) => {
+        const who = await getFamilyUser(request)
+        if (who.error) return who.error
+
         try {
-          const { familyId, createdById, dates } = await request.json()
-
-          if (!familyId || !createdById || !Array.isArray(dates) || dates.length === 0) {
-            return json({ error: 'Mangler påkrevde parametere' }, { status: 400 })
-          }
-
-          const parsedDates = dates.map((d: string) => new Date(d))
-          const mealPlans = await prisma.mealPlan.findMany({
-            where: { familyId, date: { in: parsedDates }, recipeId: { not: null } },
-            include: { recipe: true },
-            orderBy: { date: 'asc' }
-          })
-
-          if (mealPlans.length === 0) {
-            return json({ error: 'Ingen oppskrifter på de valgte dagene' }, { status: 400 })
-          }
-
-          const recipes = mealPlans.flatMap(plan => (plan.recipe ? [plan.recipe] : []))
-          const drafts = buildShoppingItems(recipes)
-          const aisles = await resolveAisles(familyId, drafts.map(item => item.name))
-          const items = drafts
-            .map(item => ({ ...item, aisle: aisles.get(ingredientKey(item.name)) ?? 'OTHER' }))
-            .sort((a, b) => aisleRank(a.aisle) - aisleRank(b.aisle) || a.name.localeCompare(b.name))
-
-          const shoppingList = await prisma.shoppingList.create({
-            data: {
-              familyId,
-              createdById,
-              dates: mealPlans.map(plan => plan.date),
-              items: { create: items }
-            },
-            include: { items: true }
+          const { dates, extras } = await request.json()
+          const shoppingList = await createShoppingList({
+            familyId: who.familyId,
+            userId: who.userId,
+            days: dates,
+            extras
           })
 
           return json({ shoppingList })
         } catch (error) {
+          if (error instanceof ShoppingListError) {
+            return json({ error: error.message }, { status: error.status })
+          }
           console.error('Error creating shopping list:', error)
           return json({ error: 'Kunne ikke opprette handlelisten' }, { status: 500 })
         }
