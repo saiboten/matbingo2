@@ -7,7 +7,8 @@ import { getFamilyUser } from '../../lib/session'
 export const Route = createFileRoute('/api/blueprints')({
   server: {
     handlers: {
-      // The library, plus which blueprints the signed-in user's family already has (id -> recipe id)
+      // Which blueprints the signed-in user's family already has (blueprint id -> recipe id). The
+      // library itself is the same for everyone and isn't fetched from here.
       GET: async ({ request }) => {
         const who = await getFamilyUser(request)
         if (who.error) return who.error
@@ -18,7 +19,7 @@ export const Route = createFileRoute('/api/blueprints')({
             select: { id: true, name: true }
           })
 
-          return json({ blueprints: BLUEPRINTS, added: matchAddedBlueprints(BLUEPRINTS, recipes) })
+          return json({ added: matchAddedBlueprints(BLUEPRINTS, recipes) })
         } catch (error) {
           console.error('Error fetching blueprints:', error)
           return json({ error: 'Kunne ikke hente biblioteket' }, { status: 500 })
