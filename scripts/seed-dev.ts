@@ -11,7 +11,8 @@ import type { Day, DishType } from '../src/types'
 //   npx vite-node scripts/seed-dev.ts --attach you@gmail.com   also put an existing local user in the family
 //                                                           as its admin (log in once locally first)
 //
-// It refuses to run against any database that isn't on this machine.
+// Run it with npm run db:seed / db:reset (uses .env.dev). It refuses to run against any database that isn't
+// on this machine.
 
 const host = (() => {
   try {
@@ -24,7 +25,7 @@ const host = (() => {
 if (!['localhost', '127.0.0.1', '::1', '[::1]'].includes(host)) {
   console.error(
     `Avbrutt: DATABASE_URL peker på «${host || 'ukjent'}», ikke en lokal database.\n` +
-      'Testdata skal aldri inn i produksjon. Sjekk .env (den skal peke på localhost).'
+      'Testdata skal aldri inn i produksjon. Bruk npm run db:seed (som bruker .env.dev, som skal peke på localhost).'
   )
   process.exit(1)
 }

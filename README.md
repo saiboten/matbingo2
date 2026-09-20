@@ -31,20 +31,35 @@ Also add `https://<your-domain>/api/auth/callback/google` as an authorized redir
 the Google OAuth client. `prisma generate` runs automatically on install.
 Keep the `http://localhost:3000/api/auth/callback/google` URI too so local development keeps working.
 
-## Local database
+## Local database and environments
 
-Day-to-day development and testing uses a PostgreSQL database on this machine, not production.
+There are two complete environment files, both git-ignored, and every command picks one **explicitly**:
 
-- `.env` points at it: `postgresql://matbingo:matbingo@localhost:5432/matbingo_dev`
-- To work against production (or make schema changes there), swap which `DATABASE_URL` line is commented out in
-  `.env`, and restart `npm run dev`. A copy of the production URL is also kept in `.env.prod` (both git-ignored).
-- The production connection string is kept in `.env.prod` (git-ignored). Vercel has its own settings.
-- Pointing ONE command at production: for the Prisma CLI use `DOTENV_CONFIG_PATH=.env.prod npx prisma db push`.
-  That trick does NOT work for `vite-node` scripts (they read `.env` first); for those, set the variable for
-  the command instead: `DATABASE_URL="<production url>" npx vite-node scripts/<script>.ts`, or swap the line
-  in `.env`. Check the "target" line the scripts print before writing anything.
+| File | Database | Used by |
+|---|---|---|
+| `.env.dev` | PostgreSQL on this machine (`matbingo_dev`) | `npm run dev`, `db:push`, `db:studio`, `db:seed`, `db:reset`, `prisma`, `script` |
+| `.env.prod` | the real production database (real data!) | `npm run dev:prod`, `db:push:prod`, `db:studio:prod`, `prisma:prod`, `script:prod` |
 
-One-time setup (PostgreSQL installed and running):
+Each file holds all settings (`DATABASE_URL`, `BETTER_AUTH_*`, `GOOGLE_*`). `scripts/with-env.mjs` loads exactly one of
+them for the command it runs and prints which database is in play first. The safety rules:
+
+- `.env.dev` must point at a database on localhost, and `.env.prod` must not; otherwise the launcher refuses to run.
+- Everything that can change production (`db:push:prod`, `db:studio:prod`, `prisma:prod`, `script:prod`) asks for
+  confirmation: type `prod` when asked, or set `CONFIRM_PRODUCTION=1` in non-interactive use. `dev:prod` only prints a warning.
+- There is no plain `.env` on purpose. A command started without the launcher (e.g. `npx prisma db push`) finds no
+  database and fails, instead of silently using the wrong one.
+
+```bash
+npm run dev                  # dev server against the local database
+npm run dev:prod             # dev server against PRODUCTION (be careful)
+
+npm run db:push              # create/update the tables in the local database
+npm run db:push:prod         # the same in production (asks first). New tables must exist before code that uses them is deployed
+npm run prisma -- migrate diff ...      # any Prisma command; add :prod for production
+npm run script -- scripts/x.ts --flag   # run a script in scripts/; script:prod for production
+```
+
+One-time setup of the local database (PostgreSQL installed and running):
 
 ```bash
 psql -U postgres -c "CREATE ROLE matbingo WITH LOGIN PASSWORD 'matbingo';"
@@ -53,11 +68,13 @@ npm run db:push     # create the tables
 npm run db:seed     # test family, 16 recipes (photos, steps, hibernation), a planned week
 ```
 
-- `npm run db:reset` deletes the test family and creates it again. `db:seed` is safe to re-run.
-- The seed script refuses to run against a database that isn't on localhost.
+Create `.env.dev` and `.env.prod` from `.env.example` (the same settings in both, with the matching `DATABASE_URL`).
+
+- `npm run db:reset` deletes the test family and creates it again. `db:seed` is safe to re-run and refuses to run
+  against a database that isn't on localhost.
 - Log in locally with Google (the local database starts without users), then either join the test family in
   Settings with the code `TESTFAM1`, or run `npm run db:seed -- --attach you@gmail.com` to become its admin.
-- Restart `npm run dev` after changing `.env`.
+- Restart the dev server after changing an env file. Vercel has its own settings.
 
 ## Blueprint library and the super admin
 
@@ -71,7 +88,7 @@ addresses, set `SUPER_ADMIN_EMAILS` (comma separated) on the server. The link in
 the built-in default in `src/lib/super-admin.ts`.
 
 New tables must exist in a database before code that uses them is deployed: run `npm run db:push` for the
-local database, and `DOTENV_CONFIG_PATH=.env.prod npx prisma db push` for production (deliberately).
+local database, and `npm run db:push:prod` for production (deliberately, before the deploy).
 
 ## Testing
 

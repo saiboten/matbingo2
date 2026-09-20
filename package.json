@@ -3,14 +3,22 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite dev --port 3000",
-    "postinstall": "prisma generate",
+    "dev": "node scripts/with-env.mjs dev -- vite dev --port 3000",
+    "dev:prod": "node scripts/with-env.mjs prod -- vite dev --port 3000",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "db:push": "prisma db push",
-    "db:seed": "vite-node scripts/seed-dev.ts",
-    "db:reset": "vite-node scripts/seed-dev.ts --reset"
+    "postinstall": "prisma generate",
+    "db:push": "node scripts/with-env.mjs dev -- prisma db push",
+    "db:push:prod": "node scripts/with-env.mjs prod --guard -- prisma db push",
+    "db:studio": "node scripts/with-env.mjs dev -- prisma studio",
+    "db:studio:prod": "node scripts/with-env.mjs prod --guard -- prisma studio",
+    "prisma": "node scripts/with-env.mjs dev -- prisma",
+    "prisma:prod": "node scripts/with-env.mjs prod --guard -- prisma",
+    "script": "node scripts/with-env.mjs dev -- vite-node",
+    "script:prod": "node scripts/with-env.mjs prod --guard -- vite-node",
+    "db:seed": "node scripts/with-env.mjs dev -- vite-node scripts/seed-dev.ts",
+    "db:reset": "node scripts/with-env.mjs dev -- vite-node scripts/seed-dev.ts --reset"
   },
   "dependencies": {
     "@nanostores/react": "^1.0.0",

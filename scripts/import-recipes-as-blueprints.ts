@@ -11,12 +11,13 @@ import type { Day, DishType } from '../src/types'
 // Copies one family's recipes (with steps and photos) into the shared blueprint library, to give new
 // families a rich starting point.
 //
-//   npx vite-node scripts/import-recipes-as-blueprints.ts [--email you@example.com] [--dry-run]
+//   npm run script -- scripts/import-recipes-as-blueprints.ts [--email you@example.com] [--dry-run]      (local database)
+//   npm run script:prod -- scripts/import-recipes-as-blueprints.ts --confirm-production ...          (production)
 //
 // - SOURCE: the recipes are READ from the production database (SOURCE_DATABASE_URL, or .env.prod).
-// - TARGET: the blueprints are WRITTEN to the database DATABASE_URL points at (.env, or a DATABASE_URL set for
-//   the command; DOTENV_CONFIG_PATH does not work for vite-node). A target that isn't on this machine needs
-//   --confirm-production, and the script prints its target first.
+// - TARGET: the blueprints are WRITTEN to the database the chosen environment file points at (.env.dev for
+//   `script`, .env.prod for `script:prod`). A target that isn't on this machine needs --confirm-production, and
+//   the script prints its source and target first.
 // - Recipes without ingredients are left out, and a recipe whose name is already a blueprint is skipped,
 //   so existing blueprints are never overwritten and the script is safe to run again.
 
