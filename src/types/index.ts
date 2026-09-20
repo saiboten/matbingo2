@@ -62,6 +62,8 @@ export interface Family {
   id: string
   name: string
   inviteCode: string
+  // The family's admin (its creator, or the oldest member for older families)
+  adminId?: string | null
   members?: User[]
 }
 

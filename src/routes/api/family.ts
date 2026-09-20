@@ -1,6 +1,7 @@
 import { json } from '@tanstack/react-start'
 import { createFileRoute } from '@tanstack/react-router'
 import { prisma } from '../../lib/prisma'
+import { effectiveAdminId } from '../../lib/family'
 import { generateInviteCode } from '../../lib/utils'
 
 export const Route = createFileRoute('/api/family')({
@@ -23,7 +24,8 @@ export const Route = createFileRoute('/api/family')({
                   id: true,
                   name: true,
                   email: true,
-                  image: true
+                  image: true,
+                  createdAt: true
                 }
               },
               _count: {
@@ -38,7 +40,9 @@ export const Route = createFileRoute('/api/family')({
             return json({ error: 'Fant ikke familien' }, { status: 404 })
           }
 
-          return json({ family })
+          return json({
+            family: { ...family, adminId: effectiveAdminId(family.adminId, family.members) }
+          })
         } catch (error) {
           console.error('Error fetching family:', error)
           return json({ error: 'Kunne ikke hente familien' }, { status: 500 })
@@ -53,7 +57,8 @@ export const Route = createFileRoute('/api/family')({
           const family = await prisma.family.create({
             data: {
               name,
-              inviteCode: generateInviteCode()
+              inviteCode: generateInviteCode(),
+              adminId: userId
             }
           })
 

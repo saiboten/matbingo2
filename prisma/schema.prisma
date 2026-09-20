@@ -67,6 +67,8 @@ model Family {
   id            String         @id @default(uuid())
   name          String
   inviteCode    String         @unique
+  // The user who created the family. Older families have none; see effectiveAdminId in lib/family.ts
+  adminId       String?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   eatenLogs     EatenLog[]

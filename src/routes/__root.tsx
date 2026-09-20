@@ -1,6 +1,7 @@
 import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
 import React from 'react'
 import Header from '../components/Header'
+import { ToastProvider } from '../components/ui/toast'
 import { isChunkLoadError, reloadOnceForNewVersion } from '../lib/chunk-reload'
 import appCss from '../styles.css?url'
 
@@ -114,12 +115,14 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <div className="min-h-screen bg-background">
-          <Header />
-          <main className="container mx-auto px-4 py-4 sm:py-8">
-            {children}
-          </main>
-        </div>
+        <ToastProvider>
+          <div className="min-h-screen bg-background">
+            <Header />
+            <main className="container mx-auto px-4 py-4 sm:py-8">
+              {children}
+            </main>
+          </div>
+        </ToastProvider>
         <Scripts />
       </body>
     </html>

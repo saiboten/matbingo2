@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ApiAlgorithmRouteImport } from './routes/api/algorithm'
 import { Route as ApiFamilyRouteImport } from './routes/api/family'
+import { Route as ApiFamilyMembersRouteImport } from './routes/api/family-members'
 import { Route as ApiIngredientAislesRouteImport } from './routes/api/ingredient-aisles'
 import { Route as ApiIngredientsRouteImport } from './routes/api/ingredients'
 import { Route as ApiJoinFamilyRouteImport } from './routes/api/join-family'
@@ -52,6 +53,11 @@ const ApiAlgorithmRoute = ApiAlgorithmRouteImport.update({
 const ApiFamilyRoute = ApiFamilyRouteImport.update({
   id: '/api/family',
   path: '/api/family',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiFamilyMembersRoute = ApiFamilyMembersRouteImport.update({
+  id: '/api/family-members',
+  path: '/api/family-members',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiIngredientAislesRoute = ApiIngredientAislesRouteImport.update({
@@ -160,6 +166,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/api/algorithm': typeof ApiAlgorithmRoute
   '/api/family': typeof ApiFamilyRoute
+  '/api/family-members': typeof ApiFamilyMembersRoute
   '/api/ingredient-aisles': typeof ApiIngredientAislesRoute
   '/api/ingredients': typeof ApiIngredientsRoute
   '/api/join-family': typeof ApiJoinFamilyRoute
@@ -186,6 +193,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/api/algorithm': typeof ApiAlgorithmRoute
   '/api/family': typeof ApiFamilyRoute
+  '/api/family-members': typeof ApiFamilyMembersRoute
   '/api/ingredient-aisles': typeof ApiIngredientAislesRoute
   '/api/ingredients': typeof ApiIngredientsRoute
   '/api/join-family': typeof ApiJoinFamilyRoute
@@ -213,6 +221,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/api/algorithm': typeof ApiAlgorithmRoute
   '/api/family': typeof ApiFamilyRoute
+  '/api/family-members': typeof ApiFamilyMembersRoute
   '/api/ingredient-aisles': typeof ApiIngredientAislesRoute
   '/api/ingredients': typeof ApiIngredientsRoute
   '/api/join-family': typeof ApiJoinFamilyRoute
@@ -241,6 +250,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/api/algorithm'
     | '/api/family'
+    | '/api/family-members'
     | '/api/ingredient-aisles'
     | '/api/ingredients'
     | '/api/join-family'
@@ -267,6 +277,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/api/algorithm'
     | '/api/family'
+    | '/api/family-members'
     | '/api/ingredient-aisles'
     | '/api/ingredients'
     | '/api/join-family'
@@ -293,6 +304,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/api/algorithm'
     | '/api/family'
+    | '/api/family-members'
     | '/api/ingredient-aisles'
     | '/api/ingredients'
     | '/api/join-family'
@@ -320,6 +332,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ApiAlgorithmRoute: typeof ApiAlgorithmRoute
   ApiFamilyRoute: typeof ApiFamilyRoute
+  ApiFamilyMembersRoute: typeof ApiFamilyMembersRoute
   ApiIngredientAislesRoute: typeof ApiIngredientAislesRoute
   ApiIngredientsRoute: typeof ApiIngredientsRoute
   ApiJoinFamilyRoute: typeof ApiJoinFamilyRoute
@@ -369,6 +382,13 @@ declare module '@tanstack/react-router' {
       path: '/api/family'
       fullPath: '/api/family'
       preLoaderRoute: typeof ApiFamilyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/family-members': {
+      id: '/api/family-members'
+      path: '/api/family-members'
+      fullPath: '/api/family-members'
+      preLoaderRoute: typeof ApiFamilyMembersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/ingredient-aisles': {
@@ -530,6 +550,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ApiAlgorithmRoute: ApiAlgorithmRoute,
   ApiFamilyRoute: ApiFamilyRoute,
+  ApiFamilyMembersRoute: ApiFamilyMembersRoute,
   ApiIngredientAislesRoute: ApiIngredientAislesRoute,
   ApiIngredientsRoute: ApiIngredientsRoute,
   ApiJoinFamilyRoute: ApiJoinFamilyRoute,

@@ -6,8 +6,10 @@ import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card'
 import { Badge } from '../../components/ui/badge'
+import { useToast } from '../../components/ui/toast'
+import { buildInviteMessage } from '../../lib/family'
 import type { Family } from '../../types'
-import { Users, Copy, Check, LogOut, UserPlus, ChefHat } from 'lucide-react'
+import { Users, Copy, Check, LogOut, UserPlus, ChefHat, Share2, UserMinus } from 'lucide-react'
 
 export const Route = createFileRoute('/settings/')({
   component: SettingsPage,
@@ -15,6 +17,7 @@ export const Route = createFileRoute('/settings/')({
 
 function SettingsPage() {
   const { data: session, isPending } = useSession()
+  const toast = useToast()
   const [family, setFamily] = useState<Family | null>(null)
   const [loading, setLoading] = useState(true)
   const [inviteCode, setInviteCode] = useState('')
@@ -23,6 +26,7 @@ function SettingsPage() {
   const [joining, setJoining] = useState(false)
   const [creatingFamily, setCreatingFamily] = useState(false)
   const [newFamilyName, setNewFamilyName] = useState('')
+  const [removingId, setRemovingId] = useState<string | null>(null)
 
   useEffect(() => {
     if (session?.user.familyId) {
@@ -53,6 +57,50 @@ function SettingsPage() {
     navigator.clipboard.writeText(inviteCode)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleShare = async () => {
+    if (!family) return
+
+    const message = buildInviteMessage({
+      familyName: family.name,
+      inviteCode,
+      siteUrl: window.location.origin
+    })
+
+    try {
+      await navigator.clipboard.writeText(message)
+      toast('Invitasjonen er kopiert. Lim den inn i en melding.')
+    } catch (error) {
+      console.error('Error copying invitation:', error)
+      toast('Kunne ikke kopiere invitasjonen. Prøv igjen.', 'error')
+    }
+  }
+
+  const handleRemoveMember = async (member: { id: string; name: string }) => {
+    if (!family) return
+    if (!confirm(`Fjerne ${member.name} fra familien? Personen beholder kontoen sin og kan bli med igjen med invitasjonskoden.`)) return
+
+    setRemovingId(member.id)
+    try {
+      const response = await fetch(
+        `/api/family-members?familyId=${family.id}&userId=${member.id}`,
+        { method: 'DELETE' }
+      )
+
+      if (response.ok) {
+        toast(`${member.name} er fjernet fra familien`)
+        await fetchFamily()
+      } else {
+        const data = await response.json().catch(() => ({}))
+        toast(data.error || 'Kunne ikke fjerne medlemmet', 'error')
+      }
+    } catch (error) {
+      console.error('Error removing member:', error)
+      toast('Kunne ikke fjerne medlemmet', 'error')
+    } finally {
+      setRemovingId(null)
+    }
   }
 
   const handleJoinFamily = async () => {
@@ -202,6 +250,8 @@ function SettingsPage() {
   }
 
   // In a family - show family details
+  const isAdmin = family.adminId === session?.user.id
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <h1 className="text-3xl font-bold">Familieinnstillinger</h1>
@@ -227,13 +277,19 @@ function SettingsPage() {
               <Button 
                 variant="outline" 
                 size="icon"
+                className="h-auto w-10"
                 onClick={handleCopyCode}
               >
                 {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                <span className="sr-only">Kopier koden</span>
+              </Button>
+              <Button variant="outline" className="h-auto" onClick={handleShare}>
+                <Share2 className="h-4 w-4 mr-2" />
+                Del
               </Button>
             </div>
             <p className="text-sm text-muted-foreground">
-              Del denne koden med familiemedlemmer for å invitere dem
+              «Del» kopierer en invitasjon med forklaring og kode, som du kan lime inn i en melding
             </p>
           </div>
 
@@ -260,12 +316,27 @@ function SettingsPage() {
                       <Users className="h-5 w-5 text-primary" />
                     </div>
                   )}
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <p className="font-medium">{member.name}</p>
-                    <p className="text-sm text-muted-foreground">{member.email}</p>
+                    <p className="text-sm text-muted-foreground truncate">{member.email}</p>
                   </div>
+                  {member.id === family.adminId && (
+                    <Badge variant="outline">Administrator</Badge>
+                  )}
                   {member.id === session?.user.id && (
                     <Badge variant="secondary">Deg</Badge>
+                  )}
+                  {isAdmin && member.id !== session?.user.id && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="shrink-0 text-destructive hover:text-destructive"
+                      disabled={removingId === member.id}
+                      onClick={() => handleRemoveMember(member)}
+                    >
+                      <UserMinus className="h-4 w-4" />
+                      <span className="sr-only">Fjern {member.name} fra familien</span>
+                    </Button>
                   )}
                 </div>
               ))}
