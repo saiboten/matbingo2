@@ -165,7 +165,7 @@ function ShoppingListPage() {
       )}
 
       <p className="text-sm text-muted-foreground">
-        Havner en vare i feil gang?{' '}
+        Havner en vare på feil hylle?{' '}
         <Link to="/ingredients" className="text-primary hover:underline">
           Rediger ingrediensene
         </Link>

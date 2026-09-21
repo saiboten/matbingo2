@@ -86,7 +86,7 @@ export function CommonItemsPage() {
     set(next)
     const rollback = () => {
       if (previous) set(previous)
-      toast('Kunne ikke endre avdelingen', 'error')
+      toast('Kunne ikke endre hyllen', 'error')
     }
     try {
       const response = await fetch('/api/common-items', { method: 'PATCH', headers: JSON_HEADERS, body: JSON.stringify({ id, aisle: next }) })
@@ -144,11 +144,11 @@ export function CommonItemsPage() {
       >
         <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ny vare ..." aria-label="Ny vare" maxLength={100} />
         <Select value={aisle} onValueChange={(value) => setAisle(value as Aisle | 'AUTO')}>
-          <SelectTrigger className="sm:w-56" aria-label="Gang for ny vare">
+          <SelectTrigger className="sm:w-56" aria-label="Hylle for ny vare">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="AUTO">Velg gang automatisk</SelectItem>
+            <SelectItem value="AUTO">Velg hylle automatisk</SelectItem>
             {AISLE_ORDER.map(option => (
               <SelectItem key={option} value={option}>
                 {AISLE_LABELS[option]}
@@ -181,7 +181,7 @@ export function CommonItemsPage() {
                       <span className="min-w-0 break-words font-medium">{item.name}</span>
                       <div className="flex shrink-0 items-center gap-1">
                         <Select value={item.aisle} onValueChange={(value) => handleChangeAisle(item.id, value as Aisle)}>
-                          <SelectTrigger className="w-40 sm:w-52" aria-label={`Gang for ${item.name}`}>
+                          <SelectTrigger className="w-40 sm:w-52" aria-label={`Hylle for ${item.name}`}>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>

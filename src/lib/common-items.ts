@@ -65,7 +65,7 @@ export async function addCommonItem(
   const name = typeof input.name === 'string' ? input.name.replace(/\s+/g, ' ').trim() : ''
   if (!name) throw new CommonItemError('Skriv inn navnet på varen', 400)
   if (name.length > MAX_EXTRA_NAME_LENGTH) throw new CommonItemError('Navnet er for langt', 400)
-  if (input.aisle !== undefined && !isAisle(input.aisle)) throw new CommonItemError('Ugyldig avdeling', 400)
+  if (input.aisle !== undefined && !isAisle(input.aisle)) throw new CommonItemError('Ugyldig hylle', 400)
 
   await ensureCommonItems(familyId, db)
   const nameKey = ingredientKey(name)
@@ -85,7 +85,7 @@ export async function addCommonItem(
 
 // Changes the aisle of one of the family's items (which also changes it for the ingredient itself)
 export async function changeCommonItemAisle(familyId: string, id: string, aisle: unknown, db: Db = prisma): Promise<FamilyCommonItem> {
-  if (!isAisle(aisle)) throw new CommonItemError('Ugyldig avdeling', 400)
+  if (!isAisle(aisle)) throw new CommonItemError('Ugyldig hylle', 400)
   const result = await db.ingredient.updateMany({ where: { id, familyId, common: true }, data: { aisle } })
   if (result.count === 0) throw new CommonItemError('Fant ikke varen', 404)
   const row = await db.ingredient.findUniqueOrThrow({ where: { id } })

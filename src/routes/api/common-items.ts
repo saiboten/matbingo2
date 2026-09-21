@@ -41,7 +41,7 @@ export const Route = createFileRoute('/api/common-items')({
           const { id, aisle } = await request.json()
           return json({ item: await changeCommonItemAisle(who.familyId, String(id), aisle) })
         } catch (error) {
-          return fail(error, 'Kunne ikke endre avdelingen')
+          return fail(error, 'Kunne ikke endre hyllen')
         }
       },
 

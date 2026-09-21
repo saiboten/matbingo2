@@ -82,7 +82,7 @@ function IngredientsPage() {
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold">Ingredienser</h1>
         <p className="text-sm sm:text-base text-muted-foreground">
-          Velg hvilken gang hver ingrediens hører til. Nye handlelister sorteres etter dette.
+          Velg hvilken hylle hver ingrediens hører til. Nye handlelister sorteres etter dette.
         </p>
       </div>
 
@@ -119,7 +119,7 @@ function IngredientsPage() {
                         value={item.aisle}
                         onValueChange={(value) => handleChangeAisle(item.id, value as Aisle)}
                       >
-                        <SelectTrigger className="w-44 shrink-0 sm:w-56" aria-label={`Gang for ${item.name}`}>
+                        <SelectTrigger className="w-44 shrink-0 sm:w-56" aria-label={`Hylle for ${item.name}`}>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>

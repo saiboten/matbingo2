@@ -74,7 +74,7 @@ function ShoppingListsPage() {
 
       <p className="text-sm text-muted-foreground">
         <Link to="/ingredients" className="text-primary hover:underline">
-          Rediger hvilken gang ingrediensene hører til
+          Rediger hvilken hylle ingrediensene hører til
         </Link>
       </p>
     </div>
