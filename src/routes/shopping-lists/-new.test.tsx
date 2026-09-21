@@ -33,6 +33,17 @@ const PREVIEW: Reply = {
   },
 }
 
+const COMMON = {
+  items: [
+    { id: '1', name: 'Melk', aisle: 'CHILLED' },
+    { id: '2', name: 'Brød', aisle: 'BAKERY' },
+    { id: '3', name: 'Egg', aisle: 'CHILLED' },
+    { id: '4', name: 'Smør', aisle: 'CHILLED' },
+    { id: '5', name: 'Løk', aisle: 'PRODUCE' },
+    { id: '6', name: 'Kjøttdeig', aisle: 'MEAT' },
+  ],
+}
+
 // A fetch that answers the preview and the create call, and remembers what was asked
 function mockServer(replies: { preview?: Reply; create?: Reply } = {}) {
   const calls: { url: string; method: string; body?: string }[] = []
@@ -41,6 +52,7 @@ function mockServer(replies: { preview?: Reply; create?: Reply } = {}) {
     vi.fn(async (url: string, init?: RequestInit) => {
       const method = init?.method ?? 'GET'
       calls.push({ url, method, body: init?.body as string | undefined })
+      if (url === '/api/common-items') return { ok: true, status: 200, json: async () => COMMON }
       const reply = method === 'POST' ? replies.create : replies.preview ?? PREVIEW
       if (!reply || reply === 'network-error') throw new TypeError('Failed to fetch')
       return { ok: reply.ok, status: reply.status, json: async () => reply.body }
@@ -71,7 +83,7 @@ describe('the "add more" step of making a shopping list', () => {
     renderView()
 
     expect(await screen.findByText('2 varer fra 1 oppskrift')).toBeTruthy()
-    expect(calls[0].url).toBe('/api/shopping-lists/preview?dates=2026-09-14,2026-09-15')
+    expect(calls.map(call => call.url)).toContain('/api/shopping-lists/preview?dates=2026-09-14,2026-09-15')
     expect(createButton().textContent).toContain('(2 varer)')
     // once in the summary, and once as an "already included" chip among the everyday items
     expect(screen.getAllByText('Kjøttdeig')).toHaveLength(2)
@@ -171,13 +183,21 @@ describe('the "add more" step of making a shopping list', () => {
     const calls = mockServer()
     renderView('')
     expect(screen.getByText('Ingen dager valgt')).toBeTruthy()
-    expect(calls).toHaveLength(0)
+    expect(calls.filter(call => call.url.includes('preview'))).toHaveLength(0)
+  })
+
+  it("offers the family's own list, links to where it is edited, and says so when it is empty", async () => {
+    mockServer()
+    renderView()
+    await screen.findByText('2 varer fra 1 oppskrift')
+    expect(screen.getByRole('link', { name: /Rediger listen/ }).getAttribute('href')).toBe('/shopping-lists/common-items')
+    expect(screen.queryByRole('button', { name: 'Toalettpapir' })).toBeNull()
   })
 
   it('ignores anything in the address that is not a day', async () => {
     const calls = mockServer()
     renderView('2026-09-14,<script>,abc,')
     await screen.findByText('2 varer fra 1 oppskrift')
-    expect(calls[0].url).toBe('/api/shopping-lists/preview?dates=2026-09-14')
+    expect(calls.map(call => call.url)).toContain('/api/shopping-lists/preview?dates=2026-09-14')
   })
 })

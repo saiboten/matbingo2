@@ -69,6 +69,8 @@ model Family {
   inviteCode    String         @unique
   // The user who created the family. Older families have none; see effectiveAdminId in lib/family.ts
   adminId       String?
+  // Set once the family has been given the default everyday items (see lib/common-items.ts)
+  commonItemsSeeded Boolean    @default(false)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   eatenLogs     EatenLog[]
@@ -198,6 +200,8 @@ model Ingredient {
   name      String
   nameKey   String
   aisle     Aisle    @default(OTHER)
+  // Offered as a one-tap extra when making a shopping list
+  common    Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   family    Family   @relation(fields: [familyId], references: [id], onDelete: Cascade)

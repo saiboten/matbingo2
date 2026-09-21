@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { useSession } from '../../lib/auth-client'
+import { Button } from '../../components/ui/button'
 import { Card, CardContent } from '../../components/ui/card'
 import { formatDate } from '../../lib/utils'
 import type { ShoppingList } from '../../types'
@@ -44,7 +45,12 @@ function ShoppingListsPage() {
 
   return (
     <div className="space-y-6 max-w-2xl">
-      <h1 className="text-3xl font-bold">Handlelister</h1>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-3xl font-bold">Handlelister</h1>
+        <Button asChild variant="outline" size="sm">
+          <Link to="/shopping-lists/common-items">Vanlige varer</Link>
+        </Button>
+      </div>
       {lists.length === 0 ? (
         <p className="text-muted-foreground">
           Ingen handlelister ennå. Bruk «Lag handleliste» på ukesmenyen for å lage en.

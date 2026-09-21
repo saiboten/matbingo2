@@ -5,11 +5,10 @@ import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
 import { Skeleton } from '../../components/ui/skeleton'
 import { useToast } from '../../components/ui/toast'
-import { COMMON_ITEMS } from '../../data/common-items'
 import { AISLE_LABELS, AISLE_ORDER, type Aisle } from '../../lib/aisle'
 import { normalizeExtras } from '../../lib/shopping-extras'
 import { cn } from '../../lib/utils'
-import { ArrowLeft, Check, Plus, X } from 'lucide-react'
+import { ArrowLeft, Check, Pencil, Plus, X } from 'lucide-react'
 
 export const Route = createFileRoute('/shopping-lists/new')({
   // The chosen days travel in the address (?dates=2026-09-14,2026-09-15), so a reload keeps them
@@ -44,7 +43,9 @@ export function NewShoppingListView({ dates }: { dates: string }) {
   const [recipeCount, setRecipeCount] = useState(0)
   const [previewLoading, setPreviewLoading] = useState(true)
   const [previewError, setPreviewError] = useState<string | null>(null)
-  // Common items are picked from the catalogue; own items are free text
+  // Common items are picked from the family's own list; own items are free text
+  const [commonItems, setCommonItems] = useState<{ name: string; aisle: Aisle }[]>([])
+  const [commonLoading, setCommonLoading] = useState(true)
   const [picked, setPicked] = useState<Set<string>>(new Set())
   const [custom, setCustom] = useState<string[]>([])
   const [customInput, setCustomInput] = useState('')
@@ -87,6 +88,21 @@ export function NewShoppingListView({ dates }: { dates: string }) {
     if (session?.user.familyId) fetchPreview()
   }, [session, dates])
 
+  useEffect(() => {
+    if (!session?.user.familyId) return
+    const loadCommon = async () => {
+      try {
+        const response = await fetch('/api/common-items')
+        if (response.ok) setCommonItems((await response.json()).items || [])
+      } catch (error) {
+        console.error('Error fetching common items:', error)
+      } finally {
+        setCommonLoading(false)
+      }
+    }
+    loadCommon()
+  }, [session])
+
   const inRecipes = new Set(recipeItems.map(item => item.name.toLowerCase()))
   const onList = (name: string) =>
     inRecipes.has(name.toLowerCase()) ||
@@ -116,7 +132,7 @@ export function NewShoppingListView({ dates }: { dates: string }) {
 
   const handleCreate = async () => {
     const extras = normalizeExtras([
-      ...COMMON_ITEMS.filter(item => picked.has(item.name.toLowerCase())),
+      ...commonItems.filter(item => picked.has(item.name.toLowerCase())),
       ...custom.map(name => ({ name })),
     ])
 
@@ -221,9 +237,20 @@ export function NewShoppingListView({ dates }: { dates: string }) {
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold">Vanlige varer</h2>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-lg font-semibold">Vanlige varer</h2>
+          <Button asChild variant="ghost" size="sm">
+            <Link to="/shopping-lists/common-items">
+              <Pencil className="mr-1 h-4 w-4" />
+              Rediger listen
+            </Link>
+          </Button>
+        </div>
+        {!commonLoading && commonItems.length === 0 && (
+          <p className="text-sm text-muted-foreground">Ingen vanlige varer i listen din ennå. Legg til noen med «Rediger listen».</p>
+        )}
         {AISLE_ORDER.map(aisle => {
-          const group = COMMON_ITEMS.filter(item => item.aisle === aisle)
+          const group = commonItems.filter(item => item.aisle === aisle)
           if (group.length === 0) return null
           return (
             <div key={aisle} className="space-y-2">
