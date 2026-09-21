@@ -656,6 +656,13 @@ function HomePage() {
                     <div className="space-y-2">
                       <p className="text-sm text-muted-foreground">Forslag</p>
                       <div className="p-3 bg-muted rounded-lg space-y-2">
+                        {recipeImageUrl(suggestions[key]) && (
+                          <img
+                            src={recipeImageUrl(suggestions[key])!}
+                            alt={suggestions[key].name}
+                            className="w-full h-32 object-cover rounded-lg"
+                          />
+                        )}
                         <div className="flex items-center gap-2">
                           <Sparkles className="h-4 w-4 text-muted-foreground" />
                           <h3 className="font-medium">{suggestions[key].name}</h3>
