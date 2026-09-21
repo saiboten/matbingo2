@@ -19,7 +19,7 @@ export const Route = createFileRoute('/settings/')({
   component: SettingsPage,
 })
 
-function SettingsPage() {
+export function SettingsPage() {
   const { data: session, isPending } = useSession()
   const toast = useToast()
   const [family, setFamily] = useState<Family | null>(null)
@@ -48,12 +48,15 @@ function SettingsPage() {
   }, [])
 
   useEffect(() => {
+    // Wait until the session is known: without it there is no family yet, and the page would show
+    // "Bli med i en familie" for a moment before the family arrives
+    if (isPending) return
     if (session?.user.familyId) {
       fetchFamily()
     } else {
       setLoading(false)
     }
-  }, [session])
+  }, [session, isPending])
 
   const fetchFamily = async () => {
     if (!session?.user.familyId) return
@@ -228,6 +231,18 @@ function SettingsPage() {
 
   if (isPending || loading) {
     return <div className="flex justify-center p-8">Laster ...</div>
+  }
+
+  // In a family, but it could not be loaded: say so instead of offering to join one
+  if (!family && session?.user.familyId) {
+    return (
+      <div className="max-w-md mx-auto space-y-3">
+        <p>Kunne ikke hente familien.</p>
+        <Button variant="outline" onClick={() => { setLoading(true); fetchFamily() }}>
+          Prøv igjen
+        </Button>
+      </div>
+    )
   }
 
   // Not in a family - show join/create options
