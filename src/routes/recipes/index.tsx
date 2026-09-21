@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { useSession } from '../../lib/auth-client'
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/ca
 import { Badge } from '../../components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
 import { recipeImageUrl } from '../../lib/recipe-image'
+import { rememberScroll, rememberedScroll } from '../../lib/scroll-memory'
 import { Plus, Search, ChefHat, Moon, Library } from 'lucide-react'
 import type { Recipe, DishType } from '../../types'
 import { DISH_TYPE_OPTIONS, DISH_TYPE_COLORS, DISH_TYPE_LABELS } from '../../types'
@@ -15,12 +16,30 @@ export const Route = createFileRoute('/recipes/')({
   component: RecipesPage,
 })
 
+// The list and its filters are remembered while the app is open. Coming back from a recipe then shows the
+// list at once, at full height, so the router can put the page back where it was scrolled to (with an empty
+// "Laster ..." page there is nothing to scroll to). The list is refreshed in the background.
+let lastList: { recipes: Recipe[]; searchQuery: string; selectedType: DishType | 'ALL' } | null = null
+
 function RecipesPage() {
   const { data: session } = useSession()
-  const [recipes, setRecipes] = useState<Recipe[]>([])
-  const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedType, setSelectedType] = useState<DishType | 'ALL'>('ALL')
+  const [recipes, setRecipes] = useState<Recipe[]>(lastList?.recipes ?? [])
+  const [loading, setLoading] = useState(lastList === null)
+  const [searchQuery, setSearchQuery] = useState(lastList?.searchQuery ?? '')
+  const [selectedType, setSelectedType] = useState<DishType | 'ALL'>(lastList?.selectedType ?? 'ALL')
+
+  useEffect(() => {
+    if (!loading) lastList = { recipes, searchQuery, selectedType }
+  }, [loading, recipes, searchQuery, selectedType])
+
+  // Back from a recipe: scroll to where the list was left (else to the top) once the cards are on the page
+  const scrollTarget = useRef<number | null>(null)
+  if (scrollTarget.current === null) scrollTarget.current = rememberedScroll()
+  useLayoutEffect(() => {
+    if (loading || scrollTarget.current === null) return
+    window.scrollTo(0, scrollTarget.current)
+    scrollTarget.current = null
+  }, [loading])
 
   useEffect(() => {
     if (session?.user.familyId) {
@@ -137,7 +156,7 @@ function RecipesPage() {
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {recipes.map((recipe) => (
-            <Link key={recipe.id} to="/recipes/$recipeId" params={{ recipeId: recipe.id }} className="min-w-0">
+            <Link key={recipe.id} to="/recipes/$recipeId" params={{ recipeId: recipe.id }} className="min-w-0" onClick={rememberScroll}>
               <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
                 <div className="aspect-video w-full overflow-hidden rounded-t-lg">
                   {recipeImageUrl(recipe) ? (
