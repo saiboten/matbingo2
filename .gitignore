@@ -16,3 +16,6 @@ __unconfig*
 todos.json
 generated
 .vercel
+
+.vercel
+.env*.local
