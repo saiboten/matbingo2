@@ -40,6 +40,7 @@ function mockServer(latest: unknown = LIST) {
       const method = init?.method ?? 'GET'
       calls.push({ url, method, body: init?.body as string | undefined })
       if (url === '/api/shopping-lists/latest') return { ok: true, status: 200, json: async () => ({ shoppingList: latest }) }
+      if (url === '/api/known-ingredients') return { ok: true, status: 200, json: async () => ({ ingredients: [{ name: 'Egg', aisle: 'CHILLED' }, { name: 'Eggnog', aisle: 'CHILLED' }, { name: 'Melk', aisle: 'CHILLED' }] }) }
       if (url === '/api/simple-mode') return { ok: true, status: 200, json: async () => ({ simple: true }) }
       if (method === 'POST') return { ok: true, status: 200, json: async () => ({ item: { id: 'c', name: 'Egg', aisle: 'CHILLED', checked: false, sources: ['Ekstra'] } }) }
       return { ok: true, status: 200, json: async () => ({ success: true }) }
@@ -86,6 +87,7 @@ describe('simple mode list page', () => {
     fireEvent.change(screen.getByLabelText('Ny vare'), { target: { value: ' Egg ' } })
     fireEvent.click(screen.getAllByRole('button', { name: /Legg til/ })[0])
     expect(await screen.findByText('Egg')).toBeTruthy()
+    // a known ingredient is sent by name only, so the server uses the family's shelf
     expect(JSON.parse(calls.find(call => call.method === 'POST')!.body!)).toEqual({ name: 'Egg' })
     expect((screen.getByLabelText('Ny vare') as HTMLInputElement).value).toBe('')
   })
@@ -131,5 +133,35 @@ describe('adding from the bottom of the list', () => {
     expect(await screen.findByText('Egg')).toBeTruthy()
     expect(calls.find(call => call.method === 'POST')!.url).toBe('/api/shopping-lists/L1')
     expect((screen.getByLabelText('Ny vare') as HTMLInputElement).value).toBe('')
+  })
+})
+
+describe('choosing what to add from the known ingredients', () => {
+  it('offers matching known ingredients with their shelf, and adds the chosen one by name', async () => {
+    const calls = mockServer()
+    renderPage()
+    await screen.findByText('Melk')
+    fireEvent.change(screen.getByLabelText('Ny vare'), { target: { value: 'egg' } })
+    await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(2))
+    const options = screen.getAllByRole('option')
+    expect(options[0].textContent).toContain('Egg')
+    expect(options[0].textContent).toContain('Meieri')
+    expect(options[1].textContent).toContain('Eggnog')
+    // "egg" is exactly a known ingredient, so there is no separate add-as-typed row
+    fireEvent.click(options[1])
+    await waitFor(() => expect(calls.some(call => call.method === 'POST')).toBe(true))
+    expect(JSON.parse(calls.find(call => call.method === 'POST')!.body!)).toEqual({ name: 'Eggnog' })
+  })
+
+  it('has an add option that puts the text as typed on the Annet shelf', async () => {
+    const calls = mockServer()
+    renderPage()
+    await screen.findByText('Melk')
+    fireEvent.change(screen.getByLabelText('Ny vare'), { target: { value: 'Batterier' } })
+    const add = await screen.findByRole('option', { name: /Legg til «Batterier»/ })
+    expect(add.textContent).toContain('Annet')
+    fireEvent.click(add)
+    await waitFor(() => expect(calls.some(call => call.method === 'POST')).toBe(true))
+    expect(JSON.parse(calls.find(call => call.method === 'POST')!.body!)).toEqual({ name: 'Batterier', aisle: 'OTHER' })
   })
 })

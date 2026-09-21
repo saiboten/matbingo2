@@ -44,6 +44,15 @@ describe('addListItem', () => {
     expect(await addListItem('f', 'L', '  Melk ', db)).toMatchObject({ name: 'Melk', aisle: 'DRY', sources: ['Ekstra'], shoppingListId: 'L' })
   })
 
+  it('uses the given aisle for a new name, but the family shelf for a known one', async () => {
+    expect(await addListItem('f', 'L', 'Batterier', listDb([]), 'OTHER')).toMatchObject({ aisle: 'OTHER' })
+    // "Gulrøtter" would be guessed as produce; the hint wins for a name nobody has a shelf for
+    expect(await addListItem('f', 'L', 'Gulrøtter', listDb([]), 'OTHER')).toMatchObject({ aisle: 'OTHER' })
+    const known = listDb([], [{ nameKey: 'melk', aisle: 'CHILLED' }])
+    expect(await addListItem('f', 'L', 'Melk', known, 'OTHER')).toMatchObject({ aisle: 'CHILLED' })
+    await expect(addListItem('f', 'L', 'Melk', listDb([]), 'MOON')).rejects.toMatchObject({ status: 400 })
+  })
+
   it('guesses the aisle for an unknown item', async () => {
     expect(await addListItem('f', 'L', 'Gulrøtter', listDb([]))).toMatchObject({ aisle: 'PRODUCE' })
   })

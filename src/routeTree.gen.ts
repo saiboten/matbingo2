@@ -22,6 +22,7 @@ import { Route as ApiFamilyMembersRouteImport } from './routes/api/family-member
 import { Route as ApiIngredientAislesRouteImport } from './routes/api/ingredient-aisles'
 import { Route as ApiIngredientsRouteImport } from './routes/api/ingredients'
 import { Route as ApiJoinFamilyRouteImport } from './routes/api/join-family'
+import { Route as ApiKnownIngredientsRouteImport } from './routes/api/known-ingredients'
 import { Route as ApiMealPlansRouteImport } from './routes/api/meal-plans'
 import { Route as ApiRecipeOverviewRouteImport } from './routes/api/recipe-overview'
 import { Route as ApiRecipesRouteImport } from './routes/api/recipes'
@@ -116,6 +117,11 @@ const ApiIngredientsRoute = ApiIngredientsRouteImport.update({
 const ApiJoinFamilyRoute = ApiJoinFamilyRouteImport.update({
   id: '/api/join-family',
   path: '/api/join-family',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiKnownIngredientsRoute = ApiKnownIngredientsRouteImport.update({
+  id: '/api/known-ingredients',
+  path: '/api/known-ingredients',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiMealPlansRoute = ApiMealPlansRouteImport.update({
@@ -287,6 +293,7 @@ export interface FileRoutesByFullPath {
   '/api/ingredient-aisles': typeof ApiIngredientAislesRoute
   '/api/ingredients': typeof ApiIngredientsRoute
   '/api/join-family': typeof ApiJoinFamilyRoute
+  '/api/known-ingredients': typeof ApiKnownIngredientsRoute
   '/api/meal-plans': typeof ApiMealPlansRoute
   '/api/recipe-overview': typeof ApiRecipeOverviewRoute
   '/api/recipes': typeof ApiRecipesRoute
@@ -332,6 +339,7 @@ export interface FileRoutesByTo {
   '/api/ingredient-aisles': typeof ApiIngredientAislesRoute
   '/api/ingredients': typeof ApiIngredientsRoute
   '/api/join-family': typeof ApiJoinFamilyRoute
+  '/api/known-ingredients': typeof ApiKnownIngredientsRoute
   '/api/meal-plans': typeof ApiMealPlansRoute
   '/api/recipe-overview': typeof ApiRecipeOverviewRoute
   '/api/recipes': typeof ApiRecipesRoute
@@ -378,6 +386,7 @@ export interface FileRoutesById {
   '/api/ingredient-aisles': typeof ApiIngredientAislesRoute
   '/api/ingredients': typeof ApiIngredientsRoute
   '/api/join-family': typeof ApiJoinFamilyRoute
+  '/api/known-ingredients': typeof ApiKnownIngredientsRoute
   '/api/meal-plans': typeof ApiMealPlansRoute
   '/api/recipe-overview': typeof ApiRecipeOverviewRoute
   '/api/recipes': typeof ApiRecipesRoute
@@ -425,6 +434,7 @@ export interface FileRouteTypes {
     | '/api/ingredient-aisles'
     | '/api/ingredients'
     | '/api/join-family'
+    | '/api/known-ingredients'
     | '/api/meal-plans'
     | '/api/recipe-overview'
     | '/api/recipes'
@@ -470,6 +480,7 @@ export interface FileRouteTypes {
     | '/api/ingredient-aisles'
     | '/api/ingredients'
     | '/api/join-family'
+    | '/api/known-ingredients'
     | '/api/meal-plans'
     | '/api/recipe-overview'
     | '/api/recipes'
@@ -515,6 +526,7 @@ export interface FileRouteTypes {
     | '/api/ingredient-aisles'
     | '/api/ingredients'
     | '/api/join-family'
+    | '/api/known-ingredients'
     | '/api/meal-plans'
     | '/api/recipe-overview'
     | '/api/recipes'
@@ -561,6 +573,7 @@ export interface RootRouteChildren {
   ApiIngredientAislesRoute: typeof ApiIngredientAislesRoute
   ApiIngredientsRoute: typeof ApiIngredientsRoute
   ApiJoinFamilyRoute: typeof ApiJoinFamilyRoute
+  ApiKnownIngredientsRoute: typeof ApiKnownIngredientsRoute
   ApiMealPlansRoute: typeof ApiMealPlansRoute
   ApiRecipeOverviewRoute: typeof ApiRecipeOverviewRoute
   ApiRecipesRoute: typeof ApiRecipesRoute
@@ -679,6 +692,13 @@ declare module '@tanstack/react-router' {
       path: '/api/join-family'
       fullPath: '/api/join-family'
       preLoaderRoute: typeof ApiJoinFamilyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/known-ingredients': {
+      id: '/api/known-ingredients'
+      path: '/api/known-ingredients'
+      fullPath: '/api/known-ingredients'
+      preLoaderRoute: typeof ApiKnownIngredientsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/meal-plans': {
@@ -946,6 +966,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiIngredientAislesRoute: ApiIngredientAislesRoute,
   ApiIngredientsRoute: ApiIngredientsRoute,
   ApiJoinFamilyRoute: ApiJoinFamilyRoute,
+  ApiKnownIngredientsRoute: ApiKnownIngredientsRoute,
   ApiMealPlansRoute: ApiMealPlansRoute,
   ApiRecipeOverviewRoute: ApiRecipeOverviewRoute,
   ApiRecipesRoute: ApiRecipesRoute,

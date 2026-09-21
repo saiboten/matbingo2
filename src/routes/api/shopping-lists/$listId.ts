@@ -42,8 +42,8 @@ export const Route = createFileRoute('/api/shopping-lists/$listId')({
         if (who.error) return who.error
 
         try {
-          const { name } = await request.json()
-          return json({ item: await addListItem(who.familyId, params.listId, name) })
+          const { name, aisle } = await request.json()
+          return json({ item: await addListItem(who.familyId, params.listId, name, undefined, aisle ?? undefined) })
         } catch (error) {
           if (error instanceof SimpleModeError) return json({ error: error.message }, { status: error.status })
           console.error('Error adding shopping list item:', error)

@@ -1,6 +1,6 @@
 import { prisma } from './prisma'
 import { effectiveAdminId } from './family'
-import { guessAisle, type Aisle } from './aisle'
+import { AISLE_ORDER, guessAisle, type Aisle } from './aisle'
 import { ingredientKey, resolveAisles } from './ingredients'
 import { EXTRA_SOURCE, MAX_EXTRA_NAME_LENGTH } from './shopping-extras'
 
@@ -31,13 +31,15 @@ export async function latestShoppingList(familyId: string, db: Pick<Db, 'shoppin
 }
 
 // Adds an item to a list of the family. An item that is already there is put back on the list
-// (unchecked) instead of being added twice.
-export async function addListItem(familyId: string, listId: string, rawName: unknown, db: Db = prisma) {
+// (unchecked) instead of being added twice. A name the family has a shelf for uses that shelf; for a
+// new name the `aisle` given is used (else a guess), and the name is remembered with it.
+export async function addListItem(familyId: string, listId: string, rawName: unknown, db: Db = prisma, aisleHint?: unknown) {
   const name = typeof rawName === 'string' ? rawName.replace(/\s+/g, ' ').trim() : ''
   if (!name) throw new SimpleModeError('Skriv inn navnet på varen', 400)
   if (name.length > MAX_EXTRA_NAME_LENGTH) throw new SimpleModeError('Navnet er for langt', 400)
 
   const list = await db.shoppingList.findFirst({ where: { id: listId, familyId }, include: { items: true } })
+  if (aisleHint !== undefined && !AISLE_ORDER.includes(aisleHint as Aisle)) throw new SimpleModeError('Ugyldig hylle', 400)
   if (!list) throw new SimpleModeError('Fant ikke handlelisten', 404)
 
   const existing = list.items.find(item => ingredientKey(item.name) === ingredientKey(name))
@@ -45,7 +47,7 @@ export async function addListItem(familyId: string, listId: string, rawName: unk
     return db.shoppingListItem.update({ where: { id: existing.id }, data: { checked: false } })
   }
 
-  const aisles = await resolveAisles(familyId, [name], {}, db)
+  const aisles = await resolveAisles(familyId, [name], { hints: aisleHint ? { [ingredientKey(name)]: aisleHint as Aisle } : {} }, db)
   const aisle: Aisle = aisles.get(ingredientKey(name)) ?? guessAisle(name)
   return db.shoppingListItem.create({
     data: { shoppingListId: listId, name, aisle, sources: [EXTRA_SOURCE] }
