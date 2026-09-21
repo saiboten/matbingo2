@@ -530,7 +530,7 @@ function HomePage() {
             Filtre for forslag
           </div>
           <Select value={suggestionType} onValueChange={(value) => setSuggestionType(value as DishType | 'ALL')}>
-            <SelectTrigger className="w-36">
+            <SelectTrigger className="w-full sm:w-36">
               <SelectValue placeholder="Alle typer" />
             </SelectTrigger>
             <SelectContent>
@@ -547,7 +547,7 @@ function HomePage() {
             selected={suggestionIngredients}
             onChange={setSuggestionIngredients}
             placeholder="Ingredienser ..."
-            className="w-72"
+            className="w-full sm:w-72"
           />
         </div>
       )}
