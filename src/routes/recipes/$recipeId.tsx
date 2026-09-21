@@ -17,7 +17,7 @@ import { fileToBase64, validateImage, formatDate } from '../../lib/utils'
 import { recipeImageUrl } from '../../lib/recipe-image'
 import { DISH_TYPE_OPTIONS, DAYS, DISH_TYPE_COLORS, DISH_TYPE_LABELS, DAY_LABELS } from '../../types'
 import type { Recipe, Day, DishType } from '../../types'
-import { ArrowLeft, Upload, ChefHat, ExternalLink, Trash2, Save, CookingPot } from 'lucide-react'
+import { ArrowLeft, Upload, ChefHat, ExternalLink, Trash2, Save, CookingPot, Pencil } from 'lucide-react'
 
 export const Route = createFileRoute('/recipes/$recipeId')({
   component: RecipeDetailPage,
@@ -181,11 +181,12 @@ function RecipeDetailPage() {
     return (
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <Button variant="outline" size="icon" onClick={() => setIsEditing(false)}>
+          <div className="flex items-center gap-3">
+            <Button variant="outline" size="icon" className="shrink-0" onClick={() => setIsEditing(false)}>
               <ArrowLeft className="h-4 w-4" />
+              <span className="sr-only">Tilbake</span>
             </Button>
-            <h1 className="text-3xl font-bold">Rediger oppskrift</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold">Rediger oppskrift</h1>
           </div>
         </div>
 
@@ -312,19 +313,27 @@ function RecipeDetailPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={() => navigate({ to: '/recipes' })}>
+      <div className="mb-6 space-y-3">
+        <div className="flex items-start gap-3">
+          <Button variant="outline" size="icon" className="shrink-0" onClick={() => navigate({ to: '/recipes' })}>
             <ArrowLeft className="h-4 w-4" />
+            <span className="sr-only">Tilbake til oppskrifter</span>
           </Button>
-          <h1 className="text-3xl font-bold">{recipe.name}</h1>
+          <h1 className="min-w-0 break-words text-2xl sm:text-3xl font-bold">{recipe.name}</h1>
         </div>
+        {/* Under the title, so a long name never pushes them off the screen; side by side and equally wide on a phone */}
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setIsEditing(true)}>
+          <Button variant="outline" className="flex-1 sm:flex-none" onClick={() => setIsEditing(true)}>
+            <Pencil className="h-4 w-4 mr-2" />
             Rediger
           </Button>
-          <Button variant="destructive" onClick={handleDelete}>
-            <Trash2 className="h-4 w-4" />
+          <Button
+            variant="outline"
+            className="flex-1 sm:flex-none border-destructive/40 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+            onClick={handleDelete}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Slett
           </Button>
         </div>
       </div>
@@ -406,7 +415,7 @@ function RecipeDetailPage() {
             <CardTitle>Beskrivelse</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="whitespace-pre-wrap">{recipe.description}</p>
+            <p className="whitespace-pre-wrap break-words">{recipe.description}</p>
           </CardContent>
         </Card>
       )}
