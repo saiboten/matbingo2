@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { useSession } from '../lib/auth-client'
 import { Button } from '../components/ui/button'
+import { RecipeCombobox } from '../components/recipe-combobox'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog'
@@ -758,35 +759,7 @@ function HomePage() {
           <div className="space-y-4">
             <div className="grid gap-4">
               <h3 className="font-medium">Velg en oppskrift</h3>
-              <div className="grid gap-2 max-h-64 overflow-y-auto">
-                {recipes.map(recipe => (
-                  <div
-                    key={recipe.id}
-                    className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted cursor-pointer"
-                    onClick={() => handlePlanMeal(selectedDate!, 'MANUAL', recipe.id)}
-                  >
-                    {recipe.image ? (
-                      <img
-                        src={recipeImageUrl(recipe)!}
-                        loading="lazy"
-                        decoding="async"
-                        alt={recipe.name}
-                        className="h-12 w-12 object-cover rounded"
-                      />
-                    ) : (
-                      <div className="h-12 w-12 bg-muted rounded flex items-center justify-center">
-                        <Utensils className="h-6 w-6 text-muted-foreground" />
-                      </div>
-                    )}
-                    <div className="flex-1">
-                      <p className="font-medium">{recipe.name}</p>
-                      <Badge variant="secondary" className="text-xs">
-                        {DISH_TYPE_LABELS[recipe.type]} • Poeng: {recipe.score}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <RecipeCombobox recipes={recipes} onSelect={(recipe) => handlePlanMeal(selectedDate!, 'MANUAL', recipe.id)} />
             </div>
 
             <div className="border-t pt-4">
