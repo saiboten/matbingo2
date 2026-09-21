@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as SimpleRouteImport } from './routes/simple'
 import { Route as ApiAlgorithmRouteImport } from './routes/api/algorithm'
 import { Route as ApiBlueprintLibraryRouteImport } from './routes/api/blueprint-library'
 import { Route as ApiBlueprintsRouteImport } from './routes/api/blueprints'
@@ -25,6 +26,7 @@ import { Route as ApiMealPlansRouteImport } from './routes/api/meal-plans'
 import { Route as ApiRecipeOverviewRouteImport } from './routes/api/recipe-overview'
 import { Route as ApiRecipesRouteImport } from './routes/api/recipes'
 import { Route as ApiShoppingListsRouteImport } from './routes/api/shopping-lists'
+import { Route as ApiSimpleModeRouteImport } from './routes/api/simple-mode'
 import { Route as IngredientsIndexRouteImport } from './routes/ingredients/index'
 import { Route as RecipesIndexRouteImport } from './routes/recipes/index'
 import { Route as RecipesRecipeIdRouteImport } from './routes/recipes/$recipeId'
@@ -46,6 +48,7 @@ import { Route as ApiBlueprintsAddRouteImport } from './routes/api/blueprints/ad
 import { Route as ApiRecipeImageRecipeIdRouteImport } from './routes/api/recipe-image/$recipeId'
 import { Route as ApiRecipeRecipeIdRouteImport } from './routes/api/recipe/$recipeId'
 import { Route as ApiShoppingListsListIdRouteImport } from './routes/api/shopping-lists/$listId'
+import { Route as ApiShoppingListsLatestRouteImport } from './routes/api/shopping-lists/latest'
 import { Route as ApiShoppingListsPreviewRouteImport } from './routes/api/shopping-lists/preview'
 import { Route as RecipesRecipeIdCookRouteImport } from './routes/recipes/$recipeId_.cook'
 import { Route as ApiAdminBlueprintsBlueprintIdRouteImport } from './routes/api/admin/blueprints/$blueprintId'
@@ -58,6 +61,11 @@ const IndexRoute = IndexRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SimpleRoute = SimpleRouteImport.update({
+  id: '/simple',
+  path: '/simple',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAlgorithmRoute = ApiAlgorithmRouteImport.update({
@@ -128,6 +136,11 @@ const ApiRecipesRoute = ApiRecipesRouteImport.update({
 const ApiShoppingListsRoute = ApiShoppingListsRouteImport.update({
   id: '/api/shopping-lists',
   path: '/api/shopping-lists',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSimpleModeRoute = ApiSimpleModeRouteImport.update({
+  id: '/api/simple-mode',
+  path: '/api/simple-mode',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IngredientsIndexRoute = IngredientsIndexRouteImport.update({
@@ -238,6 +251,11 @@ const ApiShoppingListsListIdRoute = ApiShoppingListsListIdRouteImport.update({
   path: '/$listId',
   getParentRoute: () => ApiShoppingListsRoute,
 } as any)
+const ApiShoppingListsLatestRoute = ApiShoppingListsLatestRouteImport.update({
+  id: '/latest',
+  path: '/latest',
+  getParentRoute: () => ApiShoppingListsRoute,
+} as any)
 const ApiShoppingListsPreviewRoute = ApiShoppingListsPreviewRouteImport.update({
   id: '/preview',
   path: '/preview',
@@ -258,6 +276,7 @@ const ApiAdminBlueprintsBlueprintIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/simple': typeof SimpleRoute
   '/api/algorithm': typeof ApiAlgorithmRoute
   '/api/blueprint-library': typeof ApiBlueprintLibraryRoute
   '/api/blueprints': typeof ApiBlueprintsRouteWithChildren
@@ -272,6 +291,7 @@ export interface FileRoutesByFullPath {
   '/api/recipe-overview': typeof ApiRecipeOverviewRoute
   '/api/recipes': typeof ApiRecipesRoute
   '/api/shopping-lists': typeof ApiShoppingListsRouteWithChildren
+  '/api/simple-mode': typeof ApiSimpleModeRoute
   '/recipes/$recipeId': typeof RecipesRecipeIdRoute
   '/recipes/library': typeof RecipesLibraryRoute
   '/recipes/new': typeof RecipesNewRoute
@@ -292,6 +312,7 @@ export interface FileRoutesByFullPath {
   '/api/recipe-image/$recipeId': typeof ApiRecipeImageRecipeIdRoute
   '/api/recipe/$recipeId': typeof ApiRecipeRecipeIdRoute
   '/api/shopping-lists/$listId': typeof ApiShoppingListsListIdRoute
+  '/api/shopping-lists/latest': typeof ApiShoppingListsLatestRoute
   '/api/shopping-lists/preview': typeof ApiShoppingListsPreviewRoute
   '/recipes/$recipeId/cook': typeof RecipesRecipeIdCookRoute
   '/admin/blueprints/': typeof AdminBlueprintsIndexRoute
@@ -300,6 +321,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/simple': typeof SimpleRoute
   '/api/algorithm': typeof ApiAlgorithmRoute
   '/api/blueprint-library': typeof ApiBlueprintLibraryRoute
   '/api/blueprints': typeof ApiBlueprintsRouteWithChildren
@@ -314,6 +336,7 @@ export interface FileRoutesByTo {
   '/api/recipe-overview': typeof ApiRecipeOverviewRoute
   '/api/recipes': typeof ApiRecipesRoute
   '/api/shopping-lists': typeof ApiShoppingListsRouteWithChildren
+  '/api/simple-mode': typeof ApiSimpleModeRoute
   '/recipes/$recipeId': typeof RecipesRecipeIdRoute
   '/recipes/library': typeof RecipesLibraryRoute
   '/recipes/new': typeof RecipesNewRoute
@@ -334,6 +357,7 @@ export interface FileRoutesByTo {
   '/api/recipe-image/$recipeId': typeof ApiRecipeImageRecipeIdRoute
   '/api/recipe/$recipeId': typeof ApiRecipeRecipeIdRoute
   '/api/shopping-lists/$listId': typeof ApiShoppingListsListIdRoute
+  '/api/shopping-lists/latest': typeof ApiShoppingListsLatestRoute
   '/api/shopping-lists/preview': typeof ApiShoppingListsPreviewRoute
   '/recipes/$recipeId/cook': typeof RecipesRecipeIdCookRoute
   '/admin/blueprints': typeof AdminBlueprintsIndexRoute
@@ -343,6 +367,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/simple': typeof SimpleRoute
   '/api/algorithm': typeof ApiAlgorithmRoute
   '/api/blueprint-library': typeof ApiBlueprintLibraryRoute
   '/api/blueprints': typeof ApiBlueprintsRouteWithChildren
@@ -357,6 +382,7 @@ export interface FileRoutesById {
   '/api/recipe-overview': typeof ApiRecipeOverviewRoute
   '/api/recipes': typeof ApiRecipesRoute
   '/api/shopping-lists': typeof ApiShoppingListsRouteWithChildren
+  '/api/simple-mode': typeof ApiSimpleModeRoute
   '/recipes/$recipeId': typeof RecipesRecipeIdRoute
   '/recipes/library': typeof RecipesLibraryRoute
   '/recipes/new': typeof RecipesNewRoute
@@ -377,6 +403,7 @@ export interface FileRoutesById {
   '/api/recipe-image/$recipeId': typeof ApiRecipeImageRecipeIdRoute
   '/api/recipe/$recipeId': typeof ApiRecipeRecipeIdRoute
   '/api/shopping-lists/$listId': typeof ApiShoppingListsListIdRoute
+  '/api/shopping-lists/latest': typeof ApiShoppingListsLatestRoute
   '/api/shopping-lists/preview': typeof ApiShoppingListsPreviewRoute
   '/recipes/$recipeId_/cook': typeof RecipesRecipeIdCookRoute
   '/admin/blueprints/': typeof AdminBlueprintsIndexRoute
@@ -387,6 +414,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/simple'
     | '/api/algorithm'
     | '/api/blueprint-library'
     | '/api/blueprints'
@@ -401,6 +429,7 @@ export interface FileRouteTypes {
     | '/api/recipe-overview'
     | '/api/recipes'
     | '/api/shopping-lists'
+    | '/api/simple-mode'
     | '/recipes/$recipeId'
     | '/recipes/library'
     | '/recipes/new'
@@ -421,6 +450,7 @@ export interface FileRouteTypes {
     | '/api/recipe-image/$recipeId'
     | '/api/recipe/$recipeId'
     | '/api/shopping-lists/$listId'
+    | '/api/shopping-lists/latest'
     | '/api/shopping-lists/preview'
     | '/recipes/$recipeId/cook'
     | '/admin/blueprints/'
@@ -429,6 +459,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/simple'
     | '/api/algorithm'
     | '/api/blueprint-library'
     | '/api/blueprints'
@@ -443,6 +474,7 @@ export interface FileRouteTypes {
     | '/api/recipe-overview'
     | '/api/recipes'
     | '/api/shopping-lists'
+    | '/api/simple-mode'
     | '/recipes/$recipeId'
     | '/recipes/library'
     | '/recipes/new'
@@ -463,6 +495,7 @@ export interface FileRouteTypes {
     | '/api/recipe-image/$recipeId'
     | '/api/recipe/$recipeId'
     | '/api/shopping-lists/$listId'
+    | '/api/shopping-lists/latest'
     | '/api/shopping-lists/preview'
     | '/recipes/$recipeId/cook'
     | '/admin/blueprints'
@@ -471,6 +504,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/login'
+    | '/simple'
     | '/api/algorithm'
     | '/api/blueprint-library'
     | '/api/blueprints'
@@ -485,6 +519,7 @@ export interface FileRouteTypes {
     | '/api/recipe-overview'
     | '/api/recipes'
     | '/api/shopping-lists'
+    | '/api/simple-mode'
     | '/recipes/$recipeId'
     | '/recipes/library'
     | '/recipes/new'
@@ -505,6 +540,7 @@ export interface FileRouteTypes {
     | '/api/recipe-image/$recipeId'
     | '/api/recipe/$recipeId'
     | '/api/shopping-lists/$listId'
+    | '/api/shopping-lists/latest'
     | '/api/shopping-lists/preview'
     | '/recipes/$recipeId_/cook'
     | '/admin/blueprints/'
@@ -514,6 +550,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginRoute: typeof LoginRoute
+  SimpleRoute: typeof SimpleRoute
   ApiAlgorithmRoute: typeof ApiAlgorithmRoute
   ApiBlueprintLibraryRoute: typeof ApiBlueprintLibraryRoute
   ApiBlueprintsRoute: typeof ApiBlueprintsRouteWithChildren
@@ -528,6 +565,7 @@ export interface RootRouteChildren {
   ApiRecipeOverviewRoute: typeof ApiRecipeOverviewRoute
   ApiRecipesRoute: typeof ApiRecipesRoute
   ApiShoppingListsRoute: typeof ApiShoppingListsRouteWithChildren
+  ApiSimpleModeRoute: typeof ApiSimpleModeRoute
   RecipesRecipeIdRoute: typeof RecipesRecipeIdRoute
   RecipesLibraryRoute: typeof RecipesLibraryRoute
   RecipesNewRoute: typeof RecipesNewRoute
@@ -564,6 +602,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/simple': {
+      id: '/simple'
+      path: '/simple'
+      fullPath: '/simple'
+      preLoaderRoute: typeof SimpleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/algorithm': {
@@ -662,6 +707,13 @@ declare module '@tanstack/react-router' {
       path: '/api/shopping-lists'
       fullPath: '/api/shopping-lists'
       preLoaderRoute: typeof ApiShoppingListsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/simple-mode': {
+      id: '/api/simple-mode'
+      path: '/api/simple-mode'
+      fullPath: '/api/simple-mode'
+      preLoaderRoute: typeof ApiSimpleModeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ingredients/': {
@@ -811,6 +863,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiShoppingListsListIdRouteImport
       parentRoute: typeof ApiShoppingListsRoute
     }
+    '/api/shopping-lists/latest': {
+      id: '/api/shopping-lists/latest'
+      path: '/latest'
+      fullPath: '/api/shopping-lists/latest'
+      preLoaderRoute: typeof ApiShoppingListsLatestRouteImport
+      parentRoute: typeof ApiShoppingListsRoute
+    }
     '/api/shopping-lists/preview': {
       id: '/api/shopping-lists/preview'
       path: '/preview'
@@ -849,11 +908,13 @@ const ApiBlueprintsRouteWithChildren = ApiBlueprintsRoute._addFileChildren(
 
 interface ApiShoppingListsRouteChildren {
   ApiShoppingListsListIdRoute: typeof ApiShoppingListsListIdRoute
+  ApiShoppingListsLatestRoute: typeof ApiShoppingListsLatestRoute
   ApiShoppingListsPreviewRoute: typeof ApiShoppingListsPreviewRoute
 }
 
 const ApiShoppingListsRouteChildren: ApiShoppingListsRouteChildren = {
   ApiShoppingListsListIdRoute: ApiShoppingListsListIdRoute,
+  ApiShoppingListsLatestRoute: ApiShoppingListsLatestRoute,
   ApiShoppingListsPreviewRoute: ApiShoppingListsPreviewRoute,
 }
 
@@ -874,6 +935,7 @@ const ApiAdminBlueprintsRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
+  SimpleRoute: SimpleRoute,
   ApiAlgorithmRoute: ApiAlgorithmRoute,
   ApiBlueprintLibraryRoute: ApiBlueprintLibraryRoute,
   ApiBlueprintsRoute: ApiBlueprintsRouteWithChildren,
@@ -888,6 +950,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiRecipeOverviewRoute: ApiRecipeOverviewRoute,
   ApiRecipesRoute: ApiRecipesRoute,
   ApiShoppingListsRoute: ApiShoppingListsRouteWithChildren,
+  ApiSimpleModeRoute: ApiSimpleModeRoute,
   RecipesRecipeIdRoute: RecipesRecipeIdRoute,
   RecipesLibraryRoute: RecipesLibraryRoute,
   RecipesNewRoute: RecipesNewRoute,

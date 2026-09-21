@@ -2,6 +2,8 @@ import { json } from '@tanstack/react-start'
 import { createFileRoute } from '@tanstack/react-router'
 import { prisma } from '../../../lib/prisma'
 import { aisleRank } from '../../../lib/aisle'
+import { SimpleModeError, addListItem } from '../../../lib/simple-mode'
+import { getFamilyUser } from '../../../lib/session'
 
 export const Route = createFileRoute('/api/shopping-lists/$listId')({
   server: {
@@ -31,6 +33,21 @@ export const Route = createFileRoute('/api/shopping-lists/$listId')({
         } catch (error) {
           console.error('Error fetching shopping list:', error)
           return json({ error: 'Kunne ikke hente handlelisten' }, { status: 500 })
+        }
+      },
+
+      // Adds an item to the list. The family comes from the signed-in session.
+      POST: async ({ request, params }) => {
+        const who = await getFamilyUser(request)
+        if (who.error) return who.error
+
+        try {
+          const { name } = await request.json()
+          return json({ item: await addListItem(who.familyId, params.listId, name) })
+        } catch (error) {
+          if (error instanceof SimpleModeError) return json({ error: error.message }, { status: error.status })
+          console.error('Error adding shopping list item:', error)
+          return json({ error: 'Kunne ikke legge til varen' }, { status: 500 })
         }
       },
 

@@ -4,6 +4,7 @@ import { useSession, signOut } from '../lib/auth-client'
 import { Button } from './ui/button'
 import { cn } from '../lib/utils'
 import { isSuperAdmin } from '../lib/super-admin'
+import { useSimpleMode } from '../lib/use-simple-mode'
 import {
   ChefHat,
   Settings,
@@ -27,6 +28,9 @@ const NAV_ITEMS = [
   { to: '/ingredients', label: 'Ingredienser', icon: Carrot },
 ] as const
 
+// The only page in the simple mode (everyone but the family owner)
+const SIMPLE_NAV_ITEMS = [{ to: '/simple', label: 'Handleliste', icon: ShoppingCart }] as const
+
 // Only shown to the super admin
 const ADMIN_ITEM = { to: '/admin/blueprints', label: 'Admin', icon: ShieldCheck } as const
 
@@ -44,6 +48,7 @@ export default function Header() {
   const pathname = useRouterState({ select: state => state.location.pathname })
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const simple = useSimpleMode()
 
   // Close the menu after navigating
   useEffect(() => {
@@ -85,7 +90,11 @@ export default function Header() {
     )
   }
 
-  const navItems = isSuperAdmin(session.user.email) ? [...NAV_ITEMS, ADMIN_ITEM] : NAV_ITEMS
+  const navItems = simple
+    ? SIMPLE_NAV_ITEMS
+    : isSuperAdmin(session.user.email)
+      ? [...NAV_ITEMS, ADMIN_ITEM]
+      : NAV_ITEMS
 
   return (
     <header className="border-b bg-background">
