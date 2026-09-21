@@ -41,7 +41,7 @@ function WeekSkeleton() {
 
       <Skeleton className="h-[52px] w-full" />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
         {Array.from({ length: 7 }, (_, i) => (
           <Card key={i}>
             <CardHeader className="pb-3">
@@ -554,7 +554,7 @@ function HomePage() {
       )}
 
       {!selectMode && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
           {weekDays.map((date, index) => {
             const plan = getPlanForDate(date)
             const key = dateKey(date)
@@ -584,7 +584,7 @@ function HomePage() {
                         </div>
                       ) : plan.recipe ? (
                         <div className="space-y-2">
-                          {plan.recipe.image && (
+                          {recipeImageUrl(plan.recipe) && (
                             <img
                               src={recipeImageUrl(plan.recipe)!}
                               alt={plan.recipe.name}

@@ -135,12 +135,12 @@ function RecipesPage() {
           </Link>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {recipes.map((recipe) => (
-            <Link key={recipe.id} to="/recipes/$recipeId" params={{ recipeId: recipe.id }}>
+            <Link key={recipe.id} to="/recipes/$recipeId" params={{ recipeId: recipe.id }} className="min-w-0">
               <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
                 <div className="aspect-video w-full overflow-hidden rounded-t-lg">
-                  {recipe.image ? (
+                  {recipeImageUrl(recipe) ? (
                     <img
                       src={recipeImageUrl(recipe)!}
                       loading="lazy"
@@ -156,7 +156,7 @@ function RecipesPage() {
                 </div>
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
-                    <CardTitle className="text-lg">{recipe.name}</CardTitle>
+                    <CardTitle className="text-lg break-words">{recipe.name}</CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -175,7 +175,7 @@ function RecipesPage() {
                     )}
                   </div>
                   {recipe.description && (
-                    <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
+                    <p className="mt-2 text-sm text-muted-foreground line-clamp-2 break-words">
                       {recipe.description}
                     </p>
                   )}

@@ -105,7 +105,7 @@ export function RecipeCombobox({ recipes, onSelect, placeholder = 'Søk etter op
                 onClick={() => onSelect(recipe)}
                 className={cn('flex cursor-pointer items-center gap-3 px-3 py-2', index === active && 'bg-accent')}
               >
-                {recipe.image ? (
+                {recipeImageUrl(recipe) ? (
                   <img src={recipeImageUrl(recipe)!} loading="lazy" decoding="async" alt="" className="h-10 w-10 shrink-0 rounded object-cover" />
                 ) : (
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-muted">

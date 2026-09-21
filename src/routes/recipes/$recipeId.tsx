@@ -329,7 +329,7 @@ function RecipeDetailPage() {
         </div>
       </div>
 
-      {recipe.image && (
+      {recipeImageUrl(recipe) && (
         <img 
           src={recipeImageUrl(recipe)!} 
           alt={recipe.name}
