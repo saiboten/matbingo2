@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/ca
 import { Badge } from '../../components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
 import { recipeImageUrl } from '../../lib/recipe-image'
-import { Plus, Search, ChefHat, ListChecks, Moon, Library } from 'lucide-react'
+import { Plus, Search, ChefHat, Moon, Library } from 'lucide-react'
 import type { Recipe, DishType } from '../../types'
 import { DISH_TYPE_OPTIONS, DISH_TYPE_COLORS, DISH_TYPE_LABELS } from '../../types'
 
@@ -65,18 +65,23 @@ function RecipesPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl sm:text-3xl font-bold">Oppskrifter</h1>
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold">Oppskrifter</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
+            Familiens egne oppskrifter. Trenger du flere, finner du ferdige i biblioteket.
+          </p>
+        </div>
         <div className="flex flex-wrap gap-2">
           <Button asChild variant="outline">
             <Link to="/recipes/library">
               <Library className="h-4 w-4 mr-2" />
-              Bibliotek
+              Hent fra biblioteket
             </Link>
           </Button>
           <Button asChild variant="outline">
             <Link to="/recipes/overview">
-              <ListChecks className="h-4 w-4 mr-2" />
-              Oversikt og dvale
+              <Moon className="h-4 w-4 mr-2" />
+              Sett i dvale
             </Link>
           </Button>
           <Link to="/recipes/new">

@@ -14,7 +14,6 @@ import {
   X,
   CalendarDays,
   BookOpen,
-  ListChecks,
   ShoppingCart,
   Carrot,
   ShieldCheck,
@@ -23,7 +22,6 @@ import {
 const NAV_ITEMS = [
   { to: '/', label: 'Ukesmeny', icon: CalendarDays },
   { to: '/recipes', label: 'Oppskrifter', icon: BookOpen },
-  { to: '/recipes/overview', label: 'Oppskriftsoversikt', icon: ListChecks },
   { to: '/shopping-lists', label: 'Handleliste', icon: ShoppingCart },
   { to: '/ingredients', label: 'Ingredienser', icon: Carrot },
 ] as const
@@ -38,8 +36,6 @@ const SETTINGS_ITEM = { to: '/settings', label: 'Innstillinger', icon: Settings 
 
 function isActive(to: string, pathname: string): boolean {
   if (to === '/') return pathname === '/'
-  // The recipe list shouldn't light up on the overview page, which has its own entry
-  if (to === '/recipes') return pathname.startsWith('/recipes') && !pathname.startsWith('/recipes/overview')
   return pathname.startsWith(to)
 }
 

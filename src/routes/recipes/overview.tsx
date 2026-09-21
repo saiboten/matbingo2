@@ -127,9 +127,9 @@ function RecipeOverviewPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold">Oppskriftsoversikt</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Sett i dvale</h1>
           <p className="text-sm sm:text-base text-muted-foreground">
-            Oppskrifter i dvale foreslås ikke av «Foreslå middag». Du kan fortsatt legge dem inn selv.
+            Se hvor ofte hver oppskrift er spist. Oppskrifter i dvale foreslås ikke av «Foreslå middag». Du kan fortsatt legge dem inn selv.
           </p>
         </div>
       </div>
