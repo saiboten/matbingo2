@@ -32,19 +32,20 @@ afterEach(() => {
 })
 
 describe('the admin link in the header', () => {
-  it('is shown to the super admin, in the bar and in the phone menu', () => {
+  it('is shown to the super admin, in the bar and in the phone menu', async () => {
     sessionState = asUser('saiboten@gmail.com')
     render(<Header />)
     // once for the wide-screen bar (the phone menu is closed until opened)
-    expect(screen.getAllByText('Admin').length).toBeGreaterThanOrEqual(1)
+    expect((await screen.findAllByText('Admin')).length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText('Admin').closest('a')?.getAttribute('href')).toBe('/admin/blueprints')
   })
 
-  it('is not shown to anyone else', () => {
+  it('is not shown to anyone else', async () => {
     sessionState = asUser('tobias.rusas.olsen@gmail.com')
     render(<Header />)
+    // the menu appears once the view (full for the owner) is known
+    expect(await screen.findByText('Ukesmeny')).toBeTruthy()
     expect(screen.queryByText('Admin')).toBeNull()
-    expect(screen.getByText('Ukesmeny')).toBeTruthy()
   })
 })
 

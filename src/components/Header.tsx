@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useRouterState } from '@tanstack/react-router'
+import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
 import { useSession, signOut } from '../lib/auth-client'
 import { Button } from './ui/button'
 import { cn } from '../lib/utils'
 import { isSuperAdmin } from '../lib/super-admin'
-import { useSimpleMode } from '../lib/use-simple-mode'
+import { useViewMode } from '../lib/use-simple-mode'
 import {
   ChefHat,
   Settings,
@@ -17,6 +17,8 @@ import {
   ShoppingCart,
   Carrot,
   ShieldCheck,
+  ListTodo,
+  LayoutDashboard,
 } from 'lucide-react'
 
 const NAV_ITEMS = [
@@ -44,7 +46,8 @@ export default function Header() {
   const pathname = useRouterState({ select: state => state.location.pathname })
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
-  const simple = useSimpleMode()
+  const { simple, setSimple } = useViewMode()
+  const navigate = useNavigate()
 
   // Close the menu after navigating
   useEffect(() => {
@@ -68,6 +71,14 @@ export default function Header() {
     }
   }, [menuOpen])
 
+  // Switches between the simple view (only the latest shopping list) and the full app
+  const handleSwitchMode = () => {
+    const goSimple = !simple
+    setSimple(goSimple)
+    setMenuOpen(false)
+    navigate({ to: goSimple ? '/simple' : '/' })
+  }
+
   const handleSignOut = async () => {
     await signOut()
     window.location.href = '/login'
@@ -86,7 +97,11 @@ export default function Header() {
     )
   }
 
-  const navItems = simple
+  // While the view is being looked up no links are shown, so nobody sees the wrong menu for a moment
+  const lookingUpView = simple === null && Boolean(session.user.familyId)
+  const navItems = lookingUpView
+    ? []
+    : simple
     ? SIMPLE_NAV_ITEMS
     : isSuperAdmin(session.user.email)
       ? [...NAV_ITEMS, ADMIN_ITEM]
@@ -114,6 +129,12 @@ export default function Header() {
               {item.label}
             </Link>
           ))}
+          {simple !== null && (
+            <Button variant="outline" size="sm" onClick={handleSwitchMode}>
+              {simple ? <LayoutDashboard className="mr-1 h-4 w-4" /> : <ListTodo className="mr-1 h-4 w-4" />}
+              {simple ? 'Full visning' : 'Enkel visning'}
+            </Button>
+          )}
           <Link
             to={SETTINGS_ITEM.to}
             aria-label={SETTINGS_ITEM.label}
@@ -173,6 +194,18 @@ export default function Header() {
                   </Link>
                 )
               })}
+
+              {simple !== null && (
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={handleSwitchMode}
+                  className="flex min-h-12 w-full items-center gap-3 rounded-md px-3 text-sm font-medium hover:bg-accent"
+                >
+                  {simple ? <LayoutDashboard className="h-4 w-4 shrink-0" /> : <ListTodo className="h-4 w-4 shrink-0" />}
+                  {simple ? 'Bytt til full visning' : 'Bytt til enkel visning'}
+                </button>
+              )}
 
               <div className="my-1 border-t" />
 
