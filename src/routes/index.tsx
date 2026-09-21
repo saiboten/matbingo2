@@ -202,6 +202,7 @@ function HomePage() {
   const [weekOffset, setWeekOffset] = useState(0)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [noSuggestionDate, setNoSuggestionDate] = useState<Date | null>(null)
   const [suggestions, setSuggestions] = useState<Record<string, Recipe>>({})
   const [suggestionLoading, setSuggestionLoading] = useState<Record<string, boolean>>({})
   const [declinedIds, setDeclinedIds] = useState<Record<string, string[]>>({})
@@ -361,7 +362,7 @@ function HomePage() {
           return next
         })
         if (response.status === 404) {
-          alert('Fant ingen passende oppskrift for denne dagen med gjeldende filtre. Oppskrifter i dvale, oppskrifter som ikke passer denne ukedagen og forslag du allerede har avslått regnes ikke med.')
+          setNoSuggestionDate(date)
         }
       }
     } catch (error) {
@@ -818,6 +819,27 @@ function HomePage() {
               </div>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Shown when «Foreslå middag» finds nothing with the current filters */}
+      <Dialog open={noSuggestionDate !== null} onOpenChange={(open) => !open && setNoSuggestionDate(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Fant ingen passende oppskrift</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <p>
+              Ingen oppskrifter passer {noSuggestionDate ? `for ${formatDate(noSuggestionDate)}` : 'denne dagen'} med filtrene du har valgt.
+            </p>
+            <p className="text-muted-foreground">
+              Oppskrifter i dvale, oppskrifter som ikke passer denne ukedagen og forslag du allerede har avslått regnes ikke med.
+              Prøv å fjerne et filter.
+            </p>
+          </div>
+          <Button className="w-full sm:w-auto sm:self-end" onClick={() => setNoSuggestionDate(null)}>
+            Lukk
+          </Button>
         </DialogContent>
       </Dialog>
     </div>
