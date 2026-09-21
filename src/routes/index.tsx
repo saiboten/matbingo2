@@ -713,7 +713,7 @@ function HomePage() {
                           onClick={() => openPlanDialog(date)}
                         >
                           <Plus className="h-4 w-4 mr-1" />
-                          Legg til oppskrift
+                          Velg middag
                         </Button>
                       </div>
                     </div>
