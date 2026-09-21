@@ -35,10 +35,13 @@ function defaultClient(): BlobClient {
   if (!process.env.BLOB_READ_WRITE_TOKEN) {
     throw new ImageStorageError('Bildelagring er ikke satt opp (BLOB_READ_WRITE_TOKEN mangler)')
   }
+  // The token is passed on every call: without it the SDK prefers a Vercel OIDC login when the project is
+  // linked (a .vercel folder), which does not work for local scripts
+  const token = process.env.BLOB_READ_WRITE_TOKEN
   return {
-    put: (pathname, body, options) => put(pathname, body, options),
-    del: (url) => del(url),
-    copy: (fromUrl, toPathname, options) => copy(fromUrl, toPathname, options)
+    put: (pathname, body, options) => put(pathname, body, { ...options, token }),
+    del: (url) => del(url, { token }),
+    copy: (fromUrl, toPathname, options) => copy(fromUrl, toPathname, { ...options, token })
   }
 }
 
