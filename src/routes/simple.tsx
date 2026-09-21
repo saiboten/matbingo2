@@ -3,13 +3,12 @@ import { useEffect, useState } from 'react'
 import { useSession } from '../lib/auth-client'
 import { Button } from '../components/ui/button'
 import { Checkbox } from '../components/ui/checkbox'
-import { Input } from '../components/ui/input'
+import { AddListItemForm } from '../components/add-list-item-form'
 import { Skeleton } from '../components/ui/skeleton'
-import { useToast } from '../components/ui/toast'
 import { AISLE_LABELS, AISLE_ORDER } from '../lib/aisle'
 import { formatDate } from '../lib/utils'
 import type { ShoppingList, ShoppingListItem } from '../types'
-import { Eye, EyeOff, Plus } from 'lucide-react'
+import { Eye, EyeOff } from 'lucide-react'
 
 export const Route = createFileRoute('/simple')({
   component: SimpleListPage,
@@ -19,13 +18,10 @@ export const Route = createFileRoute('/simple')({
 export function SimpleListPage() {
   const { data: session, isPending } = useSession()
   const navigate = useNavigate()
-  const toast = useToast()
   const [list, setList] = useState<ShoppingList | null>(null)
   const [loading, setLoading] = useState(true)
   const [failed, setFailed] = useState(false)
   const [hideChecked, setHideChecked] = useState(false)
-  const [name, setName] = useState('')
-  const [adding, setAdding] = useState(false)
 
   useEffect(() => {
     if (!isPending && !session) {
@@ -75,31 +71,8 @@ export function SimpleListPage() {
     }
   }
 
-  const handleAdd = async () => {
-    const trimmed = name.trim()
-    if (!list || !trimmed) return
-    setAdding(true)
-    try {
-      const response = await fetch(`/api/shopping-lists/${list.id}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: trimmed }),
-      })
-      const data = await response.json().catch(() => ({}))
-      if (response.ok) {
-        // An item that was already there comes back (unchecked) instead of being added twice
-        setItems(items => [...items.filter(item => item.id !== data.item.id), data.item])
-        setName('')
-      } else {
-        toast(data.error || 'Kunne ikke legge til varen', 'error')
-      }
-    } catch (error) {
-      console.error('Error adding item:', error)
-      toast('Kunne ikke legge til varen', 'error')
-    } finally {
-      setAdding(false)
-    }
-  }
+  // An item that was already there comes back (unchecked) instead of being added twice
+  const handleAdded = (item: ShoppingListItem) => setItems(items => [...items.filter(row => row.id !== item.id), item])
 
   if (isPending || loading) {
     return (
@@ -142,19 +115,7 @@ export function SimpleListPage() {
         <p className="text-sm sm:text-base text-muted-foreground">Laget {formatDate(new Date(list.createdAt))}</p>
       </div>
 
-      <form
-        className="flex gap-2"
-        onSubmit={(e) => {
-          e.preventDefault()
-          handleAdd()
-        }}
-      >
-        <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Legg til en vare ..." aria-label="Ny vare" maxLength={100} />
-        <Button type="submit" disabled={adding || !name.trim()}>
-          <Plus className="mr-1 h-4 w-4" />
-          Legg til
-        </Button>
-      </form>
+      <AddListItemForm listId={list.id} onAdded={handleAdded} />
 
       <div className="flex items-center justify-between gap-2">
         <p className="font-medium">
@@ -200,6 +161,8 @@ export function SimpleListPage() {
           })}
         </div>
       )}
+
+      <AddListItemForm listId={list.id} onAdded={handleAdded} placeholder="Legg til vare ..." label="Ny vare nederst" />
     </div>
   )
 }

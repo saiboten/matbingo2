@@ -2,14 +2,13 @@ import { createFileRoute, Link, useNavigate, useParams } from '@tanstack/react-r
 import { useState, useEffect } from 'react'
 import { useSession } from '../../lib/auth-client'
 import { Button } from '../../components/ui/button'
-import { Input } from '../../components/ui/input'
-import { useToast } from '../../components/ui/toast'
+import { AddListItemForm } from '../../components/add-list-item-form'
 import { Checkbox } from '../../components/ui/checkbox'
 import { formatDate } from '../../lib/utils'
 import { AISLE_ORDER, AISLE_LABELS } from '../../lib/aisle'
 import { describeSources } from '../../lib/shopping-extras'
-import { ArrowLeft, Eye, EyeOff, Plus } from 'lucide-react'
-import type { ShoppingList } from '../../types'
+import { ArrowLeft, Eye, EyeOff } from 'lucide-react'
+import type { ShoppingList, ShoppingListItem } from '../../types'
 
 export const Route = createFileRoute('/shopping-lists/$listId')({
   component: ShoppingListPage,
@@ -22,9 +21,6 @@ function ShoppingListPage() {
   const [list, setList] = useState<ShoppingList | null>(null)
   const [loading, setLoading] = useState(true)
   const [hideChecked, setHideChecked] = useState(false)
-  const [name, setName] = useState('')
-  const [adding, setAdding] = useState(false)
-  const toast = useToast()
 
   useEffect(() => {
     if (!isPending && !session) {
@@ -77,33 +73,9 @@ function ShoppingListPage() {
     }
   }
 
-  const handleAdd = async () => {
-    const trimmed = name.trim()
-    if (!trimmed) return
-    setAdding(true)
-    try {
-      const response = await fetch(`/api/shopping-lists/${listId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: trimmed })
-      })
-      const data = await response.json().catch(() => ({}))
-      if (response.ok) {
-        // An item that was already on the list comes back (unchecked) instead of being added twice
-        setList(prev =>
-          prev && { ...prev, items: [...(prev.items ?? []).filter(item => item.id !== data.item.id), data.item] }
-        )
-        setName('')
-      } else {
-        toast(data.error || 'Kunne ikke legge til varen', 'error')
-      }
-    } catch (error) {
-      console.error('Error adding item:', error)
-      toast('Kunne ikke legge til varen', 'error')
-    } finally {
-      setAdding(false)
-    }
-  }
+  // An item that was already on the list comes back (unchecked) instead of being added twice
+  const handleAdded = (item: ShoppingListItem) =>
+    setList(prev => prev && { ...prev, items: [...(prev.items ?? []).filter(row => row.id !== item.id), item] })
 
   if (isPending || loading) {
     return <div className="flex justify-center p-8">Laster ...</div>
@@ -141,19 +113,7 @@ function ShoppingListPage() {
         </p>
       </div>
 
-      <form
-        className="flex gap-2"
-        onSubmit={(e) => {
-          e.preventDefault()
-          handleAdd()
-        }}
-      >
-        <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Legg til en vare ..." aria-label="Ny vare" maxLength={100} />
-        <Button type="submit" disabled={adding || !name.trim()}>
-          <Plus className="mr-1 h-4 w-4" />
-          Legg til
-        </Button>
-      </form>
+      <AddListItemForm listId={listId} onAdded={handleAdded} />
 
       <div className="flex items-center justify-between gap-2">
         <p className="font-medium">
@@ -210,6 +170,8 @@ function ShoppingListPage() {
           })}
         </div>
       )}
+
+      <AddListItemForm listId={listId} onAdded={handleAdded} placeholder="Legg til vare ..." label="Ny vare nederst" />
 
       <p className="text-sm text-muted-foreground">
         Havner en vare på feil hylle?{' '}

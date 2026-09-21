@@ -84,7 +84,7 @@ describe('simple mode list page', () => {
     renderPage()
     await screen.findByText('Melk')
     fireEvent.change(screen.getByLabelText('Ny vare'), { target: { value: ' Egg ' } })
-    fireEvent.click(screen.getByRole('button', { name: /Legg til/ }))
+    fireEvent.click(screen.getAllByRole('button', { name: /Legg til/ })[0])
     expect(await screen.findByText('Egg')).toBeTruthy()
     expect(JSON.parse(calls.find(call => call.method === 'POST')!.body!)).toEqual({ name: 'Egg' })
     expect((screen.getByLabelText('Ny vare') as HTMLInputElement).value).toBe('')
@@ -118,5 +118,18 @@ describe('simple mode guard', () => {
     // the answer is cached from the previous test; give the hook time to apply it
     await new Promise(resolve => setTimeout(resolve, 50))
     expect(navigate).not.toHaveBeenCalled()
+  })
+})
+
+describe('adding from the bottom of the list', () => {
+  it('has a second field below the items that adds to the same list', async () => {
+    const calls = mockServer()
+    renderPage()
+    await screen.findByText('Melk')
+    fireEvent.change(screen.getByLabelText('Ny vare nederst'), { target: { value: 'Egg' } })
+    fireEvent.click(screen.getAllByRole('button', { name: /Legg til/ })[1])
+    expect(await screen.findByText('Egg')).toBeTruthy()
+    expect(calls.find(call => call.method === 'POST')!.url).toBe('/api/shopping-lists/L1')
+    expect((screen.getByLabelText('Ny vare') as HTMLInputElement).value).toBe('')
   })
 })
