@@ -20,6 +20,8 @@ export interface Recipe {
   createdById: string
   createdAt: Date
   updatedAt: Date
+  // Link to the photo (Vercel Blob); `image` only says an older, not yet moved photo exists
+  imageUrl?: string | null
   image?: RecipeImage
   steps?: RecipeStep[]
   eatenLogs?: EatenLog[]

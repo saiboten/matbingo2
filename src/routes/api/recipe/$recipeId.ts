@@ -2,6 +2,8 @@ import { json } from '@tanstack/react-start'
 import { createFileRoute } from '@tanstack/react-router'
 import { prisma } from '../../../lib/prisma'
 import { normalizeSteps } from '../../../lib/recipe-steps'
+import { parseImageInput } from '../../../lib/blueprint-input'
+import { ImageStorageError, deleteImage, storeImage } from '../../../lib/image-storage'
 import type { Day, DishType } from '../../../types'
 
 export const Route = createFileRoute('/api/recipe/$recipeId')({
@@ -56,20 +58,14 @@ export const Route = createFileRoute('/api/recipe/$recipeId')({
             suitableDays: suitableDays as Day[]
           }
 
-          // Handle image update
-          if (image) {
-            await prisma.recipeImage.upsert({
-              where: { recipeId: params.recipeId },
-              update: {
-                base64: image.base64,
-                mimeType: image.mimeType
-              },
-              create: {
-                base64: image.base64,
-                mimeType: image.mimeType,
-                recipeId: params.recipeId
-              }
-            })
+          // A new photo is uploaded to Blob and only its link is saved; the old file is removed afterwards
+          let replacedImageUrl: string | null = null
+          const photo = parseImageInput(image)
+          if (!photo.ok) return json({ error: photo.error }, { status: 400 })
+          if (photo.value) {
+            const current = await prisma.recipe.findUnique({ where: { id: params.recipeId }, select: { imageUrl: true } })
+            replacedImageUrl = current?.imageUrl ?? null
+            updateData.imageUrl = await storeImage(photo.value, 'recipes')
           }
 
           // Steps are replaced as a whole when the editor sends them; left alone when it doesn't
@@ -97,18 +93,23 @@ export const Route = createFileRoute('/api/recipe/$recipeId')({
             }
           })
 
+          await deleteImage(replacedImageUrl)
+
           return json({ recipe })
         } catch (error) {
           console.error('Error updating recipe:', error)
+          if (error instanceof ImageStorageError) return json({ error: error.message }, { status: 500 })
           return json({ error: 'Kunne ikke oppdatere oppskriften' }, { status: 500 })
         }
       },
 
       DELETE: async ({ params }) => {
         try {
+          const existing = await prisma.recipe.findUnique({ where: { id: params.recipeId }, select: { imageUrl: true } })
           await prisma.recipe.delete({
             where: { id: params.recipeId }
           })
+          await deleteImage(existing?.imageUrl)
 
           return json({ success: true })
         } catch (error) {

@@ -1,4 +1,5 @@
 import { prisma } from './prisma'
+import { copyImage, storeImage, type BlobClient } from './image-storage'
 import { blueprintRecipeData, matchAddedBlueprints, toBlueprint } from './blueprints'
 
 // An error that is safe to show the user, with the HTTP status the API route should answer with
@@ -14,7 +15,8 @@ type Db = Pick<typeof prisma, 'recipe' | 'blueprint'>
 // of the blueprint: editing it later changes only the family's recipe.
 export async function addBlueprintToFamily(
   input: { blueprintId: string; familyId: string; userId: string },
-  db: Db = prisma
+  db: Db = prisma,
+  blobClient?: BlobClient
 ): Promise<{ id: string }> {
   const row = await db.blueprint.findUnique({
     where: { id: input.blueprintId },
@@ -33,6 +35,14 @@ export async function addBlueprintToFamily(
     throw new BlueprintError(`Du har allerede en oppskrift som heter «${blueprint.name}»`, 409, alreadyAdded)
   }
 
+  // The copy gets its own file, so removing the recipe never breaks the library photo. A photo that
+  // hasn't been moved to Blob yet is uploaded from its base64 copy.
+  const imageUrl = row.imageUrl
+    ? await copyImage(row.imageUrl, 'recipes', blobClient)
+    : row.image
+      ? await storeImage({ base64: row.image.base64, mimeType: row.image.mimeType }, 'recipes', blobClient)
+      : undefined
+
   const { steps, ...recipe } = blueprintRecipeData(blueprint)
   return db.recipe.create({
     data: {
@@ -40,7 +50,7 @@ export async function addBlueprintToFamily(
       familyId: input.familyId,
       createdById: input.userId,
       steps: { create: steps },
-      ...(row.image && { image: { create: { base64: row.image.base64, mimeType: row.image.mimeType } } }),
+      imageUrl,
     },
     select: { id: true },
   })

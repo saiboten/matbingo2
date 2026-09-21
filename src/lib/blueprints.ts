@@ -15,6 +15,8 @@ export interface Blueprint {
   position: number
   updatedAt: string
   hasImage: boolean
+  // Link to the photo (Vercel Blob), when it has been moved there
+  imageUrl: string | null
   steps: { position: number; title: string | null; text: string }[]
 }
 
@@ -32,6 +34,7 @@ interface BlueprintRow {
   position: number
   updatedAt: Date
   steps: { position: number; title: string | null; text: string }[]
+  imageUrl?: string | null
   image?: { id: string } | null
 }
 
@@ -46,7 +49,8 @@ export function toBlueprint(row: BlueprintRow): Blueprint {
     suitableDays: row.suitableDays,
     position: row.position,
     updatedAt: row.updatedAt.toISOString(),
-    hasImage: Boolean(row.image),
+    hasImage: Boolean(row.imageUrl || row.image),
+    imageUrl: row.imageUrl ?? null,
     steps: row.steps.map(({ position, title, text }) => ({ position, title, text })),
   }
 }
@@ -83,9 +87,10 @@ export function blueprintRecipeData(blueprint: Blueprint) {
   }
 }
 
-// URL of a blueprint's photo, or null. `updatedAt` is in the URL so a changed photo gets a new
-// address and old ones can be cached for good.
-export function blueprintImageUrl(blueprint: { id: string; updatedAt: string; hasImage: boolean }): string | null {
+// URL of a blueprint's photo, or null: the link to Blob, or for a photo not moved yet the old endpoint
+// (`updatedAt` is in that URL so a changed photo gets a new address).
+export function blueprintImageUrl(blueprint: { id: string; updatedAt: string; hasImage: boolean; imageUrl?: string | null }): string | null {
+  if (blueprint.imageUrl) return blueprint.imageUrl
   if (!blueprint.hasImage) return null
   return `/api/blueprint-image/${blueprint.id}?v=${new Date(blueprint.updatedAt).getTime()}`
 }

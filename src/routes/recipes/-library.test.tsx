@@ -30,6 +30,7 @@ const fakeBlueprint = (id: string, name: string, hasImage = false): Blueprint =>
   position: 0,
   updatedAt: '2026-09-20T10:00:00.000Z',
   hasImage,
+  imageUrl: null,
   steps: [
     { position: 1, title: 'Lag røren', text: 'Visp.' },
     { position: 2, title: 'Stek', text: 'Stek den.' },

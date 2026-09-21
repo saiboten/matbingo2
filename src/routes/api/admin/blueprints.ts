@@ -4,6 +4,7 @@ import { prisma } from '../../../lib/prisma'
 import { parseBlueprintInput, parseImageInput } from '../../../lib/blueprint-input'
 import { newBlueprintId } from '../../../lib/blueprint-id'
 import { requireSuperAdmin } from '../../../lib/session'
+import { ImageStorageError, storeImage } from '../../../lib/image-storage'
 
 export const Route = createFileRoute('/api/admin/blueprints')({
   server: {
@@ -26,13 +27,14 @@ export const Route = createFileRoute('/api/admin/blueprints')({
             prisma.blueprint.findFirst({ orderBy: { position: 'desc' }, select: { position: true } })
           ])
 
+          const imageUrl = image.value ? await storeImage(image.value, 'blueprints') : undefined
           const created = await prisma.blueprint.create({
             data: {
               ...fields,
               id: newBlueprintId(fields.name, new Set(taken.map(row => row.id))),
               position: (last?.position ?? -1) + 1,
               steps: { create: steps.map((step, index) => ({ position: index + 1, title: step.title || null, text: step.text })) },
-              ...(image.value && { image: { create: image.value } })
+              imageUrl
             },
             select: { id: true }
           })
@@ -40,6 +42,7 @@ export const Route = createFileRoute('/api/admin/blueprints')({
           return json({ blueprint: created })
         } catch (error) {
           console.error('Error creating blueprint:', error)
+          if (error instanceof ImageStorageError) return json({ error: error.message }, { status: 500 })
           return json({ error: 'Kunne ikke opprette oppskriften' }, { status: 500 })
         }
       }

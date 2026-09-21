@@ -1,6 +1,8 @@
 import { json } from '@tanstack/react-start'
 import { createFileRoute } from '@tanstack/react-router'
 import { prisma } from '../../lib/prisma'
+import { parseImageInput } from '../../lib/blueprint-input'
+import { ImageStorageError, storeImage } from '../../lib/image-storage'
 import type { Day, DishType } from '../../types'
 
 export const Route = createFileRoute('/api/recipes')({
@@ -65,6 +67,11 @@ export const Route = createFileRoute('/api/recipes')({
             image
           } = body
 
+          const photo = parseImageInput(image)
+          if (!photo.ok) return json({ error: photo.error }, { status: 400 })
+          // The photo goes to Blob first; only its link is saved with the recipe
+          const imageUrl = photo.value ? await storeImage(photo.value, 'recipes') : undefined
+
           const recipe = await prisma.recipe.create({
             data: {
               name,
@@ -76,14 +83,7 @@ export const Route = createFileRoute('/api/recipes')({
               suitableDays: suitableDays as Day[],
               familyId,
               createdById,
-              ...(image && {
-                image: {
-                  create: {
-                    base64: image.base64,
-                    mimeType: image.mimeType
-                  }
-                }
-              })
+              imageUrl
             },
             include: {
               image: { select: { id: true } }
@@ -93,6 +93,7 @@ export const Route = createFileRoute('/api/recipes')({
           return json({ recipe })
         } catch (error) {
           console.error('Error creating recipe:', error)
+          if (error instanceof ImageStorageError) return json({ error: error.message }, { status: 500 })
           return json({ error: 'Kunne ikke opprette oppskriften' }, { status: 500 })
         }
       }

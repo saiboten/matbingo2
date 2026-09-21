@@ -10,13 +10,16 @@ export function safeImageMimeType(mimeType: string | null | undefined): string |
   return ALLOWED_IMAGE_TYPES.has(normalized) ? normalized : null
 }
 
-// URL of a recipe's photo, or null if it has none. `updatedAt` is part of the URL, so a changed
-// photo gets a new address and the old one can be cached for as long as anyone wants.
+// URL of a recipe's photo, or null if it has none. For the old endpoint, `updatedAt` is part of the URL, so
+// a changed photo gets a new address and the old one can be cached for as long as anyone wants.
 export function recipeImageUrl(recipe: {
   id: string
   updatedAt: Date | string
+  imageUrl?: string | null
   image?: { id: string } | null
 }): string | null {
+  // The link to Blob when the photo has been moved there, else the old endpoint that reads the database
+  if (recipe.imageUrl) return recipe.imageUrl
   if (!recipe.image) return null
   return `/api/recipe-image/${recipe.id}?v=${new Date(recipe.updatedAt).getTime()}`
 }

@@ -6,6 +6,8 @@ import { PrismaClient } from '../src/generated/prisma/client'
 import { prisma as target } from '../src/lib/prisma'
 import { newBlueprintId } from '../src/lib/blueprint-id'
 import { recipeToBlueprintDraft } from '../src/lib/recipe-to-blueprint'
+import { storeImage } from '../src/lib/image-storage'
+import { safeImageMimeType } from '../src/lib/recipe-image'
 import type { Day, DishType } from '../src/types'
 
 // Copies one family's recipes (with steps and photos) into the shared blueprint library, to give new
@@ -51,6 +53,16 @@ if (!targetIsLocal && !dryRun && !confirmProduction) {
   process.exit(1)
 }
 
+// A recipe's photo as base64: from the old database copy, or downloaded from its Blob link
+async function loadPhoto(recipe: { image: { base64: string; mimeType: string } | null; imageUrl: string | null }) {
+  if (recipe.image) return { base64: recipe.image.base64, mimeType: recipe.image.mimeType }
+  if (!recipe.imageUrl) return null
+  const response = await fetch(recipe.imageUrl)
+  const mimeType = safeImageMimeType(response.headers.get('content-type'))
+  if (!response.ok || !mimeType) return null
+  return { base64: Buffer.from(await response.arrayBuffer()).toString('base64'), mimeType }
+}
+
 const source = new PrismaClient({ adapter: new PrismaPg({ connectionString: sourceUrl }) })
 
 const owner = await source.user.findUnique({ where: { email }, select: { familyId: true } })
@@ -86,7 +98,7 @@ for (const recipe of recipes) {
     score: recipe.score,
     suitableDays: recipe.suitableDays as Day[],
     steps: recipe.steps.map(step => ({ position: step.position, title: step.title, text: step.text })),
-    image: recipe.image ? { base64: recipe.image.base64, mimeType: recipe.image.mimeType } : null,
+    image: await loadPhoto(recipe),
   })
 
   if (!decision.ok) {
@@ -110,6 +122,8 @@ for (const recipe of recipes) {
 
   const id = newBlueprintId(draft.name, takenIds)
   takenIds.add(id)
+  // The blueprint's photo is uploaded to Blob; only its link is saved
+  const imageUrl = draft.image ? await storeImage(draft.image, 'blueprints') : undefined
   await target.blueprint.create({
     data: {
       id,
@@ -121,7 +135,7 @@ for (const recipe of recipes) {
       suitableDays: draft.suitableDays,
       position: nextPosition++,
       steps: { create: draft.steps.map(step => ({ position: step.position, title: step.title, text: step.text })) },
-      ...(draft.image && { image: { create: draft.image } }),
+      imageUrl,
     },
     select: { id: true },
   })

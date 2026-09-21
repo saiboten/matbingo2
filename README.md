@@ -26,6 +26,7 @@ Set these environment variables in the Vercel project (see `.env.example`):
 - `BETTER_AUTH_SECRET`
 - `BETTER_AUTH_URL` (the deployed URL, not localhost)
 - `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`
+- `BLOB_READ_WRITE_TOKEN` (added automatically when a Vercel Blob store is connected to the project)
 
 Also add `https://<your-domain>/api/auth/callback/google` as an authorized redirect URI for
 the Google OAuth client. `prisma generate` runs automatically on install.
@@ -361,3 +362,13 @@ Files prefixed with `demo` can be safely deleted. They are there to provide a st
 # Learn More
 
 You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
+
+## Photos (Vercel Blob)
+
+Recipe and blueprint photos are uploaded to a public Vercel Blob store and served from Vercel's CDN; a recipe or
+blueprint only stores the link (`imageUrl`). Uploading needs `BLOB_READ_WRITE_TOKEN` (in `.env.dev` / `.env.prod` and in Vercel).
+
+Photos that were saved as base64 in the database before are moved with
+`npm run script -- scripts/migrate-images-to-blob.ts [--dry-run]` (`script:prod` for production). It is safe to run again,
+and it leaves the old base64 rows in place. Until those rows are dropped, a photo without a link is still served from the
+old `/api/recipe-image` and `/api/blueprint-image` endpoints.

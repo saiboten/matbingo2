@@ -59,6 +59,16 @@ describe('blueprintImageUrl', () => {
   })
 })
 
+describe('blueprint photos in Blob', () => {
+  const link = 'https://abc.public.blob.vercel-storage.com/blueprints/photo-x1.jpg'
+
+  it('uses the Blob link, also when there is no old base64 copy', () => {
+    const blueprint = toBlueprint({ ...row, image: null, imageUrl: link })
+    expect(blueprint).toMatchObject({ hasImage: true, imageUrl: link })
+    expect(blueprintImageUrl(blueprint)).toBe(link)
+  })
+})
+
 describe('matchAddedBlueprints', () => {
   it('matches by recipe name, ignoring case and spacing', () => {
     const added = matchAddedBlueprints(
@@ -143,13 +153,32 @@ describe('addBlueprintToFamily', () => {
       { position: 1, title: 'Lag røren', text: 'Visp mel og egg.' },
       { position: 2, title: null, text: 'Stek pannekakene.' },
     ])
-    expect(data.image).toBeUndefined()
+    expect(data.imageUrl).toBeUndefined()
   })
 
-  it("copies the blueprint's photo too", async () => {
+  const blob = () => ({
+    put: vi.fn().mockResolvedValue({ url: 'https://s.public.blob.vercel-storage.com/recipes/photo-new.png' }),
+    del: vi.fn(),
+    copy: vi.fn().mockResolvedValue({ url: 'https://s.public.blob.vercel-storage.com/recipes/photo-copy.png' })
+  })
+
+  it("uploads a photo that only exists as base64 for the family's copy", async () => {
     const { db, create } = makeDb([], true)
-    await addBlueprintToFamily(input, db)
-    expect(create.mock.calls[0][0].data.image).toEqual({ create: { base64: 'AAAA', mimeType: 'image/png' } })
+    const client = blob()
+    await addBlueprintToFamily(input, db, client)
+    expect(create.mock.calls[0][0].data.imageUrl).toBe('https://s.public.blob.vercel-storage.com/recipes/photo-new.png')
+    expect(client.put).toHaveBeenCalledTimes(1)
+  })
+
+  it('gives the family its own copy of a photo already in Blob', async () => {
+    const link = 'https://s.public.blob.vercel-storage.com/blueprints/photo-lib.png'
+    const findUnique = vi.fn().mockResolvedValue({ ...row, image: null, imageUrl: link })
+    const create = vi.fn().mockResolvedValue({ id: 'new-recipe' })
+    const db = { recipe: { findMany: vi.fn().mockResolvedValue([]), create }, blueprint: { findUnique } } as never
+    const client = blob()
+    await addBlueprintToFamily(input, db, client)
+    expect(client.copy).toHaveBeenCalledWith(link, 'recipes/photo.png', expect.anything())
+    expect(create.mock.calls[0][0].data.imageUrl).toBe('https://s.public.blob.vercel-storage.com/recipes/photo-copy.png')
   })
 
   it('does not add the same recipe twice', async () => {

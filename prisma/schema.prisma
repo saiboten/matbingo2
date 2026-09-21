@@ -99,6 +99,8 @@ model Recipe {
   mealPlans    MealPlan[]
   createdBy    User         @relation("CreatedBy", fields: [createdById], references: [id])
   family       Family       @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  // Link to the photo in Vercel Blob. `image` is the old base64 copy, kept until every photo is moved
+  imageUrl     String?
   image        RecipeImage?
   steps        RecipeStep[]
 
@@ -132,6 +134,8 @@ model Blueprint {
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
   steps        BlueprintStep[]
+  // Link to the photo in Vercel Blob. `image` is the old base64 copy, kept until every photo is moved
+  imageUrl     String?
   image        BlueprintImage?
 }
 

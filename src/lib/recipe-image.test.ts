@@ -17,6 +17,15 @@ describe('recipeImageUrl', () => {
   })
 })
 
+describe('recipeImageUrl with a photo in Blob', () => {
+  const link = 'https://abc.public.blob.vercel-storage.com/recipes/photo-x1.jpg'
+
+  it('is the Blob link itself, which wins over an old base64 copy', () => {
+    expect(recipeImageUrl({ id: 'r1', updatedAt: '2026-09-18T10:00:00.000Z', imageUrl: link })).toBe(link)
+    expect(recipeImageUrl({ id: 'r1', updatedAt: '2026-09-18T10:00:00.000Z', imageUrl: link, image: { id: 'i1' } })).toBe(link)
+  })
+})
+
 describe('safeImageMimeType', () => {
   it('allows common image types, ignoring case', () => {
     expect(safeImageMimeType('image/jpeg')).toBe('image/jpeg')
