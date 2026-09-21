@@ -361,7 +361,7 @@ function HomePage() {
           return next
         })
         if (response.status === 404) {
-          alert('Fant ingen passende oppskrift for denne dagen med gjeldende filtre')
+          alert('Fant ingen passende oppskrift for denne dagen med gjeldende filtre. Oppskrifter i dvale, oppskrifter som ikke passer denne ukedagen og forslag du allerede har avslått regnes ikke med.')
         }
       }
     } catch (error) {

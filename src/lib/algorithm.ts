@@ -32,6 +32,8 @@ export async function selectOptimalRecipe(
       familyId,
       // Recipes the family has put to sleep are never suggested
       hibernating: false,
+      // Frequency 0 = never select automatically
+      score: { gt: 0 },
       suitableDays: {
         has: dayEnum
       },
@@ -80,11 +82,6 @@ export async function selectOptimalRecipe(
   
   // Score each recipe
   const scoredRecipes: RecipeWithScore[] = recipes.map(recipe => {
-    // Frequency 0 = never select automatically
-    if (recipe.score === 0) {
-      return { recipe: recipe as Recipe, score: -1000 }
-    }
-    
     let score = 0
     
     // 1. Base frequency score (0-100)
@@ -117,11 +114,11 @@ export async function selectOptimalRecipe(
     return { recipe: recipe as Recipe, score }
   })
   
-  // Sort by score and return best match
+  // Sort by score and return the best match. A low or negative score (e.g. eaten very recently) only
+  // ranks a recipe below others; it must not rule it out, or a filter that leaves just one recently
+  // eaten recipe would wrongly report that nothing was found.
   scoredRecipes.sort((a, b) => b.score - a.score)
-  
-  // Only return if score is positive
-  return scoredRecipes[0]?.score > 0 ? scoredRecipes[0].recipe : null
+  return scoredRecipes[0]?.recipe ?? null
 }
 
 function calculateMinDays(frequency: number): number {
