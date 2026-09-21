@@ -16,7 +16,7 @@ import { Plus, Sparkles, Utensils, Filter, Trash2, ChevronLeft, ChevronRight, Sh
 import type { MealPlan, Recipe, PlanOption, DishType } from '../types'
 import { buildShoppingItems } from '../lib/shopping-list'
 import { AISLE_ORDER, AISLE_LABELS, guessAisle, type Aisle } from '../lib/aisle'
-import { DISH_TYPE_OPTIONS, DISH_TYPE_LABELS } from '../types'
+import { DISH_TYPE_OPTIONS, DISH_TYPE_LABELS, DISH_TYPE_COLORS } from '../types'
 
 export const Route = createFileRoute('/')({
   component: HomePage,
@@ -594,12 +594,7 @@ function HomePage() {
                           <h3 className="font-medium">{plan.recipe.name}</h3>
                           <Badge
                             variant="secondary"
-                            className={
-                              plan.recipe.type === 'MEAT' ? 'bg-red-100 text-red-800' :
-                              plan.recipe.type === 'FISH' ? 'bg-blue-100 text-blue-800' :
-                              plan.recipe.type === 'VEGAN' ? 'bg-green-100 text-green-800' :
-                              'bg-gray-100 text-gray-800'
-                            }
+                            className={DISH_TYPE_COLORS[plan.recipe.type]}
                           >
                             {DISH_TYPE_LABELS[plan.recipe.type]}
                           </Badge>
@@ -667,12 +662,7 @@ function HomePage() {
                         </div>
                         <Badge
                           variant="secondary"
-                          className={
-                            suggestions[key].type === 'MEAT' ? 'bg-red-100 text-red-800' :
-                            suggestions[key].type === 'FISH' ? 'bg-blue-100 text-blue-800' :
-                            suggestions[key].type === 'VEGAN' ? 'bg-green-100 text-green-800' :
-                            'bg-gray-100 text-gray-800'
-                          }
+                          className={DISH_TYPE_COLORS[suggestions[key].type]}
                         >
                           {DISH_TYPE_LABELS[suggestions[key].type]}
                         </Badge>

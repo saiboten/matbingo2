@@ -43,6 +43,24 @@ export default {
           DEFAULT: 'hsl(var(--destructive))',
           foreground: 'hsl(var(--destructive-foreground))'
         },
+        warning: {
+          DEFAULT: 'hsl(var(--warning))',
+          foreground: 'hsl(var(--warning-foreground))'
+        },
+        header: {
+          DEFAULT: 'hsl(var(--header))',
+          foreground: 'hsl(var(--header-foreground))',
+          accent: 'hsl(var(--header-accent))'
+        },
+        overlay: 'hsl(var(--overlay))',
+        // Kinds of dishes: bg-dish-meat text-dish-meat-foreground border-dish-meat-border, and so on
+        ...Object.fromEntries(
+          ['meat', 'fish', 'vegan', 'other'].flatMap(kind => [
+            [`dish-${kind}`, `hsl(var(--dish-${kind}))`],
+            [`dish-${kind}-foreground`, `hsl(var(--dish-${kind}-foreground))`],
+            [`dish-${kind}-border`, `hsl(var(--dish-${kind}-border))`]
+          ])
+        ),
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',

@@ -34,6 +34,10 @@ const SIMPLE_NAV_ITEMS = [{ to: '/simple', label: 'Handleliste', icon: ShoppingC
 // Only shown to the super admin
 const ADMIN_ITEM = { to: '/admin/blueprints', label: 'Admin', icon: ShieldCheck } as const
 
+// Buttons sitting on the coloured top bar
+const HEADER_BUTTON =
+  'border-header-foreground/30 bg-transparent text-header-foreground hover:bg-header-foreground/15 hover:text-header-foreground'
+
 const SETTINGS_ITEM = { to: '/settings', label: 'Innstillinger', icon: Settings } as const
 
 function isActive(to: string, pathname: string): boolean {
@@ -86,10 +90,10 @@ export default function Header() {
 
   if (!session) {
     return (
-      <header className="border-b bg-background">
+      <header className="border-b border-header bg-header text-header-foreground shadow-sm">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 font-bold text-xl">
-            <ChefHat className="h-6 w-6" />
+            <ChefHat className="h-6 w-6 text-header-accent" />
             <span>Matbingo</span>
           </Link>
         </div>
@@ -108,10 +112,10 @@ export default function Header() {
       : NAV_ITEMS
 
   return (
-    <header className="border-b bg-background">
+    <header className="border-b border-header bg-header text-header-foreground shadow-sm">
       <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
         <Link to="/" className="flex items-center gap-2 font-bold text-xl">
-          <ChefHat className="h-6 w-6" />
+          <ChefHat className="h-6 w-6 text-header-accent" />
           <span>Matbingo</span>
         </Link>
 
@@ -122,15 +126,15 @@ export default function Header() {
               key={item.to}
               to={item.to}
               className={cn(
-                'text-sm font-medium hover:text-primary transition-colors py-2',
-                isActive(item.to, pathname) && 'text-primary'
+                'text-sm font-medium text-header-foreground/80 hover:text-header-foreground transition-colors py-2 border-b-2 border-transparent',
+                isActive(item.to, pathname) && 'text-header-foreground border-header-accent'
               )}
             >
               {item.label}
             </Link>
           ))}
           {simple !== null && (
-            <Button variant="outline" size="sm" onClick={handleSwitchMode}>
+            <Button variant="outline" size="sm" onClick={handleSwitchMode} className={HEADER_BUTTON}>
               {simple ? <LayoutDashboard className="mr-1 h-4 w-4" /> : <ListTodo className="mr-1 h-4 w-4" />}
               {simple ? 'Full visning' : 'Enkel visning'}
             </Button>
@@ -139,8 +143,8 @@ export default function Header() {
             to={SETTINGS_ITEM.to}
             aria-label={SETTINGS_ITEM.label}
             className={cn(
-              'text-sm font-medium hover:text-primary transition-colors py-2',
-              isActive(SETTINGS_ITEM.to, pathname) && 'text-primary'
+              'text-sm font-medium text-header-foreground/80 hover:text-header-foreground transition-colors py-2',
+              isActive(SETTINGS_ITEM.to, pathname) && 'text-header-accent'
             )}
           >
             <Settings className="h-4 w-4" />
@@ -150,9 +154,9 @@ export default function Header() {
             {session.user.image ? (
               <img src={session.user.image} alt={session.user.name} className="h-8 w-8 rounded-full" />
             ) : (
-              <User className="h-8 w-8 p-1 rounded-full bg-muted" />
+              <User className="h-8 w-8 p-1 rounded-full bg-header-foreground/15" />
             )}
-            <Button variant="ghost" size="icon" onClick={handleSignOut}>
+            <Button variant="ghost" size="icon" onClick={handleSignOut} className={HEADER_BUTTON}>
               <LogOut className="h-4 w-4" />
               <span className="sr-only">Logg ut</span>
             </Button>
@@ -165,6 +169,7 @@ export default function Header() {
             variant="ghost"
             size="icon"
             aria-label="Meny"
+            className={HEADER_BUTTON}
             aria-haspopup="menu"
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen(open => !open)}

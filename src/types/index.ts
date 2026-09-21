@@ -113,10 +113,10 @@ export const DAY_LABELS: Record<Day, string> = {
 }
 
 export const DISH_TYPE_COLORS: Record<DishType, string> = {
-  MEAT: 'bg-red-100 text-red-800 border-red-200',
-  FISH: 'bg-blue-100 text-blue-800 border-blue-200',
-  VEGAN: 'bg-green-100 text-green-800 border-green-200',
-  OTHER: 'bg-gray-100 text-gray-800 border-gray-200',
+  MEAT: 'bg-dish-meat text-dish-meat-foreground border-dish-meat-border',
+  FISH: 'bg-dish-fish text-dish-fish-foreground border-dish-fish-border',
+  VEGAN: 'bg-dish-vegan text-dish-vegan-foreground border-dish-vegan-border',
+  OTHER: 'bg-dish-other text-dish-other-foreground border-dish-other-border',
 }
 
 export interface ShoppingListItem {

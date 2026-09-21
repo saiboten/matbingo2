@@ -1,49 +1,136 @@
 @import "tailwindcss";
 @config "../tailwind.config.js";
 
+/*
+  Design tokens
+
+  Colours are HSL triplets ("H S% L%") so Tailwind can add opacity (bg-primary/90). There are two layers:
+
+  1. PALETTE (--palette-*): the raw colours of a theme. This is all a new theme needs to change.
+  2. SEMANTIC tokens (--primary, --background, --dish-meat, ...): what the interface uses. Components only ever
+     refer to these (bg-primary, text-muted-foreground, bg-dish-meat, ...), never to a palette colour or a hex value.
+
+  To change the look: edit the palette below, or add another block such as [data-theme="forest"] { ... } that
+  redefines the palette (and any semantic token that should differ) and set data-theme on <html>. .dark remaps
+  the semantic tokens for a dark appearance.
+
+  Current theme "Matbingo": https://coolors.co/124e78-f0f0c9-f2bb05-d74e09-6e0e0a
+*/
 :root {
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
-  --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
-  --primary: 222.2 47.4% 11.2%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 210 40% 96.1%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 222.2 47.4% 11.2%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 222.2 84% 4.9%;
+  /* Palette: deep blue, cream, amber, orange, maroon, plus lighter/darker steps of each */
+  --palette-blue: 205 74% 27%;
+  --palette-blue-deep: 205 74% 12%;
+  --palette-blue-tint: 205 45% 90%;
+  --palette-blue-line: 205 35% 78%;
+  --palette-cream: 60 57% 86%;
+  --palette-cream-light: 60 50% 95%;
+  --palette-cream-soft: 60 40% 98%;
+  --palette-cream-muted: 60 30% 91%;
+  --palette-cream-line: 58 25% 80%;
+  --palette-amber: 46 96% 48%;
+  --palette-amber-tint: 46 95% 88%;
+  --palette-amber-line: 46 70% 75%;
+  --palette-amber-deep: 40 90% 22%;
+  --palette-orange: 20 92% 44%;
+  --palette-orange-tint: 20 85% 92%;
+  --palette-maroon: 2 83% 24%;
+  --palette-maroon-tint: 2 55% 92%;
+  --palette-maroon-line: 2 40% 82%;
+  --palette-ink-muted: 205 22% 34%;
+
+  /* Surfaces and text */
+  --background: var(--palette-cream-light);
+  --foreground: var(--palette-blue-deep);
+  --card: var(--palette-cream-soft);
+  --card-foreground: var(--palette-blue-deep);
+  --popover: var(--palette-cream-soft);
+  --popover-foreground: var(--palette-blue-deep);
+
+  /* Actions and emphasis */
+  --primary: var(--palette-orange);
+  --primary-foreground: var(--palette-cream-soft);
+  --secondary: var(--palette-cream);
+  --secondary-foreground: var(--palette-blue);
+  --muted: var(--palette-cream-muted);
+  --muted-foreground: var(--palette-ink-muted);
+  --accent: var(--palette-amber-tint);
+  --accent-foreground: var(--palette-blue-deep);
+  --destructive: var(--palette-maroon);
+  --destructive-foreground: var(--palette-cream-light);
+  --warning: var(--palette-amber);
+  --warning-foreground: var(--palette-blue-deep);
+
+  /* Lines and focus */
+  --border: var(--palette-cream-line);
+  --input: var(--palette-cream-line);
+  --ring: var(--palette-blue);
+
+  /* The top bar */
+  --header: var(--palette-blue);
+  --header-foreground: var(--palette-cream-light);
+  --header-accent: var(--palette-amber);
+
+  /* Behind dialogs */
+  --overlay: var(--palette-blue-deep);
+
+  /* Kinds of dishes (badges) */
+  --dish-meat: var(--palette-maroon-tint);
+  --dish-meat-foreground: var(--palette-maroon);
+  --dish-meat-border: var(--palette-maroon-line);
+  --dish-fish: var(--palette-blue-tint);
+  --dish-fish-foreground: var(--palette-blue);
+  --dish-fish-border: var(--palette-blue-line);
+  --dish-vegan: var(--palette-amber-tint);
+  --dish-vegan-foreground: var(--palette-amber-deep);
+  --dish-vegan-border: var(--palette-amber-line);
+  --dish-other: var(--palette-cream-muted);
+  --dish-other-foreground: var(--palette-ink-muted);
+  --dish-other-border: var(--palette-cream-line);
+
+  --chart-1: var(--palette-blue);
+  --chart-2: var(--palette-orange);
+  --chart-3: var(--palette-amber);
+  --chart-4: var(--palette-maroon);
+  --chart-5: var(--palette-cream);
+
   --radius: 0.5rem;
 }
 
 .dark {
-  --background: 222.2 84% 4.9%;
-  --foreground: 210 40% 98%;
-  --card: 222.2 84% 4.9%;
-  --card-foreground: 210 40% 98%;
-  --popover: 222.2 84% 4.9%;
-  --popover-foreground: 210 40% 98%;
-  --primary: 210 40% 98%;
-  --primary-foreground: 222.2 47.4% 11.2%;
-  --secondary: 217.2 32.6% 17.5%;
-  --secondary-foreground: 210 40% 98%;
-  --muted: 217.2 32.6% 17.5%;
-  --muted-foreground: 215 20.2% 65.1%;
-  --accent: 217.2 32.6% 17.5%;
-  --accent-foreground: 210 40% 98%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 217.2 32.6% 17.5%;
-  --input: 217.2 32.6% 17.5%;
-  --ring: 212.7 26.8% 83.9%;
+  --background: 205 60% 8%;
+  --foreground: var(--palette-cream-light);
+  --card: 205 50% 11%;
+  --card-foreground: var(--palette-cream-light);
+  --popover: 205 50% 11%;
+  --popover-foreground: var(--palette-cream-light);
+  --primary: var(--palette-amber);
+  --primary-foreground: var(--palette-blue-deep);
+  --secondary: 205 40% 18%;
+  --secondary-foreground: var(--palette-cream-light);
+  --muted: 205 40% 16%;
+  --muted-foreground: 60 20% 70%;
+  --accent: 205 40% 20%;
+  --accent-foreground: var(--palette-cream-light);
+  --destructive: 2 70% 45%;
+  --destructive-foreground: var(--palette-cream-light);
+  --border: 205 35% 22%;
+  --input: 205 35% 22%;
+  --ring: var(--palette-amber);
+  --header: 205 74% 16%;
+  --header-foreground: var(--palette-cream-light);
+  --header-accent: var(--palette-amber);
+  --dish-meat: 2 45% 20%;
+  --dish-meat-foreground: 2 80% 82%;
+  --dish-meat-border: 2 40% 32%;
+  --dish-fish: 205 50% 20%;
+  --dish-fish-foreground: 205 70% 82%;
+  --dish-fish-border: 205 40% 32%;
+  --dish-vegan: 46 50% 20%;
+  --dish-vegan-foreground: 46 90% 78%;
+  --dish-vegan-border: 46 40% 32%;
+  --dish-other: 205 30% 18%;
+  --dish-other-foreground: 60 20% 75%;
+  --dish-other-border: 205 30% 28%;
 }
 
 * {
