@@ -75,7 +75,7 @@ function RecipesPage() {
           <Button asChild variant="outline">
             <Link to="/recipes/library">
               <Library className="h-4 w-4 mr-2" />
-              Hent fra biblioteket
+              Legg til ferdige oppskrifter
             </Link>
           </Button>
           <Button asChild variant="outline">
@@ -87,7 +87,7 @@ function RecipesPage() {
           <Link to="/recipes/new">
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              Legg til oppskrift
+              Legg til egen oppskrift
             </Button>
           </Link>
         </div>
@@ -130,7 +130,7 @@ function RecipesPage() {
           <Link to="/recipes/new">
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              Legg til oppskrift
+              Legg til egen oppskrift
             </Button>
           </Link>
         </div>
