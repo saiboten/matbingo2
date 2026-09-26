@@ -1,7 +1,7 @@
-export type Aisle = 'PRODUCE' | 'MEAT' | 'FISH' | 'FROZEN' | 'CHILLED' | 'BAKERY' | 'DRY' | 'OTHER'
+export type Aisle = 'PRODUCE' | 'MEAT' | 'FISH' | 'FROZEN' | 'CHILLED' | 'COLD_CUTS' | 'BAKERY' | 'DRY' | 'OTHER'
 
 // Order the aisles are walked in the store, so also the sort order of a shopping list.
-export const AISLE_ORDER: Aisle[] = ['PRODUCE', 'MEAT', 'FISH', 'FROZEN', 'CHILLED', 'BAKERY', 'DRY', 'OTHER']
+export const AISLE_ORDER: Aisle[] = ['PRODUCE', 'MEAT', 'FISH', 'FROZEN', 'CHILLED', 'COLD_CUTS', 'BAKERY', 'DRY', 'OTHER']
 
 export const AISLE_LABELS: Record<Aisle, string> = {
   PRODUCE: 'Frukt og grønt',
@@ -9,6 +9,7 @@ export const AISLE_LABELS: Record<Aisle, string> = {
   FISH: 'Fisk og sjømat',
   FROZEN: 'Frysevarer',
   CHILLED: 'Meieri og kjølevarer',
+  COLD_CUTS: 'Pålegg',
   BAKERY: 'Brød og bakevarer',
   DRY: 'Tørrvarer, sauser og krydder',
   OTHER: 'Annet',
@@ -55,6 +56,7 @@ const RULES: [Aisle, string[]][] = [
     'kokosmelk', 'bambusskudd', 'vannkastanje', 'garam', 'curry', 'karri', 'kanel', 'gurkemeie',
     'timian', 'oregano', 'laurbær', 'einebær', 'spisskummen', 'pepperkorn', 'chiliflakes', 'rød curry',
   ]],
+  ['COLD_CUTS', ['pålegg', 'leverpostei', 'salami', 'servelat', 'kokt skinke', 'spekeskinke', 'kaviar']],
   ['BAKERY', ['brød', 'baguett', 'loff', 'lomper', 'lefse', 'lefser', 'pizzabunn', 'tortilla', '=bolle', '=boller', 'rundstykke']],
   ['FISH', [
     'fisk', 'laks', 'ørret', 'torsk', 'kveite', '=reke', '=reker', 'scampi', '=sei', 'sild', 'makrell',

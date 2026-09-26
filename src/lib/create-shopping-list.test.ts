@@ -80,7 +80,7 @@ describe('createShoppingList', () => {
       db
     )
     const aisles = created.mock.calls[0][0].data.items.create.map((item: { aisle: string }) => item.aisle)
-    const order = ['PRODUCE', 'MEAT', 'FISH', 'FROZEN', 'CHILLED', 'BAKERY', 'DRY', 'OTHER']
+    const order = ['PRODUCE', 'MEAT', 'FISH', 'FROZEN', 'CHILLED', 'COLD_CUTS', 'BAKERY', 'DRY', 'OTHER']
     expect(aisles).toEqual([...aisles].sort((a: string, b: string) => order.indexOf(a) - order.indexOf(b)))
   })
 
