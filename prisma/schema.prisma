@@ -76,6 +76,7 @@ model Family {
   eatenLogs     EatenLog[]
   mealPlans     MealPlan[]
   shoppingList  ShoppingList?
+  baskets       Basket[]
   ingredients   Ingredient[]
   recipes       Recipe[]
   members       User[]
@@ -195,6 +196,30 @@ model ShoppingList {
   family      Family             @relation(fields: [familyId], references: [id], onDelete: Cascade)
   createdBy   User               @relation(fields: [createdById], references: [id])
   items       ShoppingListItem[]
+}
+
+// A named set of things the family buys again and again (e.g. "Ukeshandel": melk, brød, yoghurt),
+// put on the shopping list with one tap. Items are kept by name; the shelf comes from the family's
+// ingredients when the basket is added.
+model Basket {
+  id        String       @id @default(uuid())
+  familyId  String
+  name      String
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  family    Family       @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  items     BasketItem[]
+
+  @@index([familyId])
+}
+
+model BasketItem {
+  id       String @id @default(uuid())
+  basketId String
+  name     String
+  basket   Basket @relation(fields: [basketId], references: [id], onDelete: Cascade)
+
+  @@index([basketId])
 }
 
 model Ingredient {

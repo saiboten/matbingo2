@@ -15,6 +15,7 @@ import {
   CalendarDays,
   BookOpen,
   ShoppingCart,
+  ClipboardList,
   Carrot,
   ShieldCheck,
   ListTodo,
@@ -22,14 +23,18 @@ import {
 } from 'lucide-react'
 
 const NAV_ITEMS = [
-  { to: '/', label: 'Handleliste', icon: ShoppingCart },
+  { to: '/', label: 'Handleliste', icon: ClipboardList },
+  { to: '/shop', label: 'I butikken', icon: ShoppingCart },
   { to: '/meal-plan', label: 'Ukesmeny', icon: CalendarDays },
   { to: '/recipes', label: 'Oppskrifter', icon: BookOpen },
   { to: '/ingredients', label: 'Ingredienser', icon: Carrot },
 ] as const
 
-// The only page in the simple mode (everyone but the family owner)
-const SIMPLE_NAV_ITEMS = [{ to: '/', label: 'Handleliste', icon: ShoppingCart }] as const
+// The pages in the simple mode (everyone but the family owner): planning and doing the shopping
+const SIMPLE_NAV_ITEMS = [
+  { to: '/', label: 'Handleliste', icon: ClipboardList },
+  { to: '/shop', label: 'I butikken', icon: ShoppingCart },
+] as const
 
 // Only shown to the super admin
 const ADMIN_ITEM = { to: '/admin/blueprints', label: 'Admin', icon: ShieldCheck } as const

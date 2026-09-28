@@ -3,7 +3,7 @@ import { useNavigate, useRouterState } from '@tanstack/react-router'
 import { useSimpleMode } from '../lib/use-simple-mode'
 
 // The pages a user in the simple mode may open; everything else leads back to the list
-export const SIMPLE_MODE_PATHS = ['/shopping-lists/common-items', '/settings', '/login']
+export const SIMPLE_MODE_PATHS = ['/shop', '/shopping-lists/common-items', '/baskets', '/settings', '/login']
 
 export function isAllowedInSimpleMode(pathname: string): boolean {
   // The list itself is the home page, so only "/" exactly, not everything under it

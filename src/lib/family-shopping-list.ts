@@ -131,6 +131,41 @@ export async function addListItem(familyId: string, userId: string, rawName: unk
   })
 }
 
+// Puts several items on the list at once (a basket), the same way addListItem does for one: what is
+// already on the list is left alone, what was checked off comes back, the rest is added by hand.
+// Returns how many were put on the list.
+export async function addListItems(familyId: string, userId: string, names: string[], db: Db = prisma): Promise<number> {
+  const list = await getFamilyList(familyId, userId, db)
+  const wanted = new Map<string, string>()
+  for (const name of names) wanted.set(ingredientKey(name), name)
+
+  const uncheck: string[] = []
+  const create: string[] = []
+  for (const [key, name] of wanted) {
+    const same = list.items.filter(item => ingredientKey(item.name) === key)
+    if (same.some(item => !item.checked)) continue
+    const existing = same.find(item => !item.mealDate) ?? same[0]
+    if (existing) uncheck.push(existing.id)
+    else create.push(name)
+  }
+
+  if (uncheck.length > 0) {
+    await db.shoppingListItem.updateMany({ where: { id: { in: uncheck } }, data: { checked: false, checkedAt: null } })
+  }
+  if (create.length > 0) {
+    const aisles = await resolveAisles(familyId, create, {}, db)
+    await db.shoppingListItem.createMany({
+      data: create.map(name => ({
+        shoppingListId: list.id,
+        name,
+        sources: [EXTRA_SOURCE],
+        aisle: aisles.get(ingredientKey(name)) ?? guessAisle(name)
+      }))
+    })
+  }
+  return uncheck.length + create.length
+}
+
 // Checks items off (or back on); a line on the list can stand for several rows
 export async function setItemsChecked(familyId: string, itemIds: unknown, checked: unknown, db: Db = prisma, now: Date = new Date()) {
   const ids = Array.isArray(itemIds) ? itemIds.filter((id): id is string => typeof id === 'string').slice(0, MAX_IDS) : []

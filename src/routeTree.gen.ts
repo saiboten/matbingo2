@@ -12,8 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MealPlanRouteImport } from './routes/meal-plan'
+import { Route as ShopRouteImport } from './routes/shop'
 import { Route as SimpleRouteImport } from './routes/simple'
 import { Route as ApiAlgorithmRouteImport } from './routes/api/algorithm'
+import { Route as ApiBasketsRouteImport } from './routes/api/baskets'
 import { Route as ApiBlueprintLibraryRouteImport } from './routes/api/blueprint-library'
 import { Route as ApiBlueprintsRouteImport } from './routes/api/blueprints'
 import { Route as ApiCommonItemsRouteImport } from './routes/api/common-items'
@@ -29,6 +31,8 @@ import { Route as ApiRecipeOverviewRouteImport } from './routes/api/recipe-overv
 import { Route as ApiRecipesRouteImport } from './routes/api/recipes'
 import { Route as ApiShoppingListRouteImport } from './routes/api/shopping-list'
 import { Route as ApiSimpleModeRouteImport } from './routes/api/simple-mode'
+import { Route as BasketsBasketIdRouteImport } from './routes/baskets/$basketId'
+import { Route as BasketsNewRouteImport } from './routes/baskets/new'
 import { Route as IngredientsIndexRouteImport } from './routes/ingredients/index'
 import { Route as RecipesIndexRouteImport } from './routes/recipes/index'
 import { Route as RecipesRecipeIdRouteImport } from './routes/recipes/$recipeId'
@@ -43,6 +47,7 @@ import { Route as AdminBlueprintsBlueprintIdRouteImport } from './routes/admin/b
 import { Route as AdminBlueprintsNewRouteImport } from './routes/admin/blueprints/new'
 import { Route as ApiAdminBlueprintsRouteImport } from './routes/api/admin/blueprints'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiBasketsBasketIdRouteImport } from './routes/api/baskets/$basketId'
 import { Route as ApiBlueprintImageBlueprintIdRouteImport } from './routes/api/blueprint-image/$blueprintId'
 import { Route as ApiBlueprintsAddRouteImport } from './routes/api/blueprints/add'
 import { Route as ApiRecipeImageRecipeIdRouteImport } from './routes/api/recipe-image/$recipeId'
@@ -65,6 +70,11 @@ const MealPlanRoute = MealPlanRouteImport.update({
   path: '/meal-plan',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ShopRoute = ShopRouteImport.update({
+  id: '/shop',
+  path: '/shop',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SimpleRoute = SimpleRouteImport.update({
   id: '/simple',
   path: '/simple',
@@ -73,6 +83,11 @@ const SimpleRoute = SimpleRouteImport.update({
 const ApiAlgorithmRoute = ApiAlgorithmRouteImport.update({
   id: '/api/algorithm',
   path: '/api/algorithm',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBasketsRoute = ApiBasketsRouteImport.update({
+  id: '/api/baskets',
+  path: '/api/baskets',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiBlueprintLibraryRoute = ApiBlueprintLibraryRouteImport.update({
@@ -150,6 +165,16 @@ const ApiSimpleModeRoute = ApiSimpleModeRouteImport.update({
   path: '/api/simple-mode',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BasketsBasketIdRoute = BasketsBasketIdRouteImport.update({
+  id: '/baskets/$basketId',
+  path: '/baskets/$basketId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BasketsNewRoute = BasketsNewRouteImport.update({
+  id: '/baskets/new',
+  path: '/baskets/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IngredientsIndexRoute = IngredientsIndexRouteImport.update({
   id: '/ingredients/',
   path: '/ingredients/',
@@ -222,6 +247,11 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiBasketsBasketIdRoute = ApiBasketsBasketIdRouteImport.update({
+  id: '/$basketId',
+  path: '/$basketId',
+  getParentRoute: () => ApiBasketsRoute,
+} as any)
 const ApiBlueprintImageBlueprintIdRoute =
   ApiBlueprintImageBlueprintIdRouteImport.update({
     id: '/api/blueprint-image/$blueprintId',
@@ -259,8 +289,10 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/meal-plan': typeof MealPlanRoute
+  '/shop': typeof ShopRoute
   '/simple': typeof SimpleRoute
   '/api/algorithm': typeof ApiAlgorithmRoute
+  '/api/baskets': typeof ApiBasketsRouteWithChildren
   '/api/blueprint-library': typeof ApiBlueprintLibraryRoute
   '/api/blueprints': typeof ApiBlueprintsRouteWithChildren
   '/api/common-items': typeof ApiCommonItemsRoute
@@ -276,6 +308,8 @@ export interface FileRoutesByFullPath {
   '/api/recipes': typeof ApiRecipesRoute
   '/api/shopping-list': typeof ApiShoppingListRoute
   '/api/simple-mode': typeof ApiSimpleModeRoute
+  '/baskets/$basketId': typeof BasketsBasketIdRoute
+  '/baskets/new': typeof BasketsNewRoute
   '/recipes/$recipeId': typeof RecipesRecipeIdRoute
   '/recipes/library': typeof RecipesLibraryRoute
   '/recipes/new': typeof RecipesNewRoute
@@ -289,6 +323,7 @@ export interface FileRoutesByFullPath {
   '/admin/blueprints/new': typeof AdminBlueprintsNewRoute
   '/api/admin/blueprints': typeof ApiAdminBlueprintsRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/baskets/$basketId': typeof ApiBasketsBasketIdRoute
   '/api/blueprint-image/$blueprintId': typeof ApiBlueprintImageBlueprintIdRoute
   '/api/blueprints/add': typeof ApiBlueprintsAddRoute
   '/api/recipe-image/$recipeId': typeof ApiRecipeImageRecipeIdRoute
@@ -301,8 +336,10 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/meal-plan': typeof MealPlanRoute
+  '/shop': typeof ShopRoute
   '/simple': typeof SimpleRoute
   '/api/algorithm': typeof ApiAlgorithmRoute
+  '/api/baskets': typeof ApiBasketsRouteWithChildren
   '/api/blueprint-library': typeof ApiBlueprintLibraryRoute
   '/api/blueprints': typeof ApiBlueprintsRouteWithChildren
   '/api/common-items': typeof ApiCommonItemsRoute
@@ -318,6 +355,8 @@ export interface FileRoutesByTo {
   '/api/recipes': typeof ApiRecipesRoute
   '/api/shopping-list': typeof ApiShoppingListRoute
   '/api/simple-mode': typeof ApiSimpleModeRoute
+  '/baskets/$basketId': typeof BasketsBasketIdRoute
+  '/baskets/new': typeof BasketsNewRoute
   '/recipes/$recipeId': typeof RecipesRecipeIdRoute
   '/recipes/library': typeof RecipesLibraryRoute
   '/recipes/new': typeof RecipesNewRoute
@@ -331,6 +370,7 @@ export interface FileRoutesByTo {
   '/admin/blueprints/new': typeof AdminBlueprintsNewRoute
   '/api/admin/blueprints': typeof ApiAdminBlueprintsRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/baskets/$basketId': typeof ApiBasketsBasketIdRoute
   '/api/blueprint-image/$blueprintId': typeof ApiBlueprintImageBlueprintIdRoute
   '/api/blueprints/add': typeof ApiBlueprintsAddRoute
   '/api/recipe-image/$recipeId': typeof ApiRecipeImageRecipeIdRoute
@@ -344,8 +384,10 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/meal-plan': typeof MealPlanRoute
+  '/shop': typeof ShopRoute
   '/simple': typeof SimpleRoute
   '/api/algorithm': typeof ApiAlgorithmRoute
+  '/api/baskets': typeof ApiBasketsRouteWithChildren
   '/api/blueprint-library': typeof ApiBlueprintLibraryRoute
   '/api/blueprints': typeof ApiBlueprintsRouteWithChildren
   '/api/common-items': typeof ApiCommonItemsRoute
@@ -361,6 +403,8 @@ export interface FileRoutesById {
   '/api/recipes': typeof ApiRecipesRoute
   '/api/shopping-list': typeof ApiShoppingListRoute
   '/api/simple-mode': typeof ApiSimpleModeRoute
+  '/baskets/$basketId': typeof BasketsBasketIdRoute
+  '/baskets/new': typeof BasketsNewRoute
   '/recipes/$recipeId': typeof RecipesRecipeIdRoute
   '/recipes/library': typeof RecipesLibraryRoute
   '/recipes/new': typeof RecipesNewRoute
@@ -374,6 +418,7 @@ export interface FileRoutesById {
   '/admin/blueprints/new': typeof AdminBlueprintsNewRoute
   '/api/admin/blueprints': typeof ApiAdminBlueprintsRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/baskets/$basketId': typeof ApiBasketsBasketIdRoute
   '/api/blueprint-image/$blueprintId': typeof ApiBlueprintImageBlueprintIdRoute
   '/api/blueprints/add': typeof ApiBlueprintsAddRoute
   '/api/recipe-image/$recipeId': typeof ApiRecipeImageRecipeIdRoute
@@ -388,8 +433,10 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/meal-plan'
+    | '/shop'
     | '/simple'
     | '/api/algorithm'
+    | '/api/baskets'
     | '/api/blueprint-library'
     | '/api/blueprints'
     | '/api/common-items'
@@ -405,6 +452,8 @@ export interface FileRouteTypes {
     | '/api/recipes'
     | '/api/shopping-list'
     | '/api/simple-mode'
+    | '/baskets/$basketId'
+    | '/baskets/new'
     | '/recipes/$recipeId'
     | '/recipes/library'
     | '/recipes/new'
@@ -418,6 +467,7 @@ export interface FileRouteTypes {
     | '/admin/blueprints/new'
     | '/api/admin/blueprints'
     | '/api/auth/$'
+    | '/api/baskets/$basketId'
     | '/api/blueprint-image/$blueprintId'
     | '/api/blueprints/add'
     | '/api/recipe-image/$recipeId'
@@ -430,8 +480,10 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/meal-plan'
+    | '/shop'
     | '/simple'
     | '/api/algorithm'
+    | '/api/baskets'
     | '/api/blueprint-library'
     | '/api/blueprints'
     | '/api/common-items'
@@ -447,6 +499,8 @@ export interface FileRouteTypes {
     | '/api/recipes'
     | '/api/shopping-list'
     | '/api/simple-mode'
+    | '/baskets/$basketId'
+    | '/baskets/new'
     | '/recipes/$recipeId'
     | '/recipes/library'
     | '/recipes/new'
@@ -460,6 +514,7 @@ export interface FileRouteTypes {
     | '/admin/blueprints/new'
     | '/api/admin/blueprints'
     | '/api/auth/$'
+    | '/api/baskets/$basketId'
     | '/api/blueprint-image/$blueprintId'
     | '/api/blueprints/add'
     | '/api/recipe-image/$recipeId'
@@ -472,8 +527,10 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/meal-plan'
+    | '/shop'
     | '/simple'
     | '/api/algorithm'
+    | '/api/baskets'
     | '/api/blueprint-library'
     | '/api/blueprints'
     | '/api/common-items'
@@ -489,6 +546,8 @@ export interface FileRouteTypes {
     | '/api/recipes'
     | '/api/shopping-list'
     | '/api/simple-mode'
+    | '/baskets/$basketId'
+    | '/baskets/new'
     | '/recipes/$recipeId'
     | '/recipes/library'
     | '/recipes/new'
@@ -502,6 +561,7 @@ export interface FileRouteTypes {
     | '/admin/blueprints/new'
     | '/api/admin/blueprints'
     | '/api/auth/$'
+    | '/api/baskets/$basketId'
     | '/api/blueprint-image/$blueprintId'
     | '/api/blueprints/add'
     | '/api/recipe-image/$recipeId'
@@ -515,8 +575,10 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginRoute: typeof LoginRoute
   MealPlanRoute: typeof MealPlanRoute
+  ShopRoute: typeof ShopRoute
   SimpleRoute: typeof SimpleRoute
   ApiAlgorithmRoute: typeof ApiAlgorithmRoute
+  ApiBasketsRoute: typeof ApiBasketsRouteWithChildren
   ApiBlueprintLibraryRoute: typeof ApiBlueprintLibraryRoute
   ApiBlueprintsRoute: typeof ApiBlueprintsRouteWithChildren
   ApiCommonItemsRoute: typeof ApiCommonItemsRoute
@@ -532,6 +594,8 @@ export interface RootRouteChildren {
   ApiRecipesRoute: typeof ApiRecipesRoute
   ApiShoppingListRoute: typeof ApiShoppingListRoute
   ApiSimpleModeRoute: typeof ApiSimpleModeRoute
+  BasketsBasketIdRoute: typeof BasketsBasketIdRoute
+  BasketsNewRoute: typeof BasketsNewRoute
   RecipesRecipeIdRoute: typeof RecipesRecipeIdRoute
   RecipesLibraryRoute: typeof RecipesLibraryRoute
   RecipesNewRoute: typeof RecipesNewRoute
@@ -575,6 +639,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MealPlanRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/shop': {
+      id: '/shop'
+      path: '/shop'
+      fullPath: '/shop'
+      preLoaderRoute: typeof ShopRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/simple': {
       id: '/simple'
       path: '/simple'
@@ -587,6 +658,13 @@ declare module '@tanstack/react-router' {
       path: '/api/algorithm'
       fullPath: '/api/algorithm'
       preLoaderRoute: typeof ApiAlgorithmRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/baskets': {
+      id: '/api/baskets'
+      path: '/api/baskets'
+      fullPath: '/api/baskets'
+      preLoaderRoute: typeof ApiBasketsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/blueprint-library': {
@@ -694,6 +772,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSimpleModeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/baskets/$basketId': {
+      id: '/baskets/$basketId'
+      path: '/baskets/$basketId'
+      fullPath: '/baskets/$basketId'
+      preLoaderRoute: typeof BasketsBasketIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/baskets/new': {
+      id: '/baskets/new'
+      path: '/baskets/new'
+      fullPath: '/baskets/new'
+      preLoaderRoute: typeof BasketsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/ingredients/': {
       id: '/ingredients/'
       path: '/ingredients'
@@ -792,6 +884,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/baskets/$basketId': {
+      id: '/api/baskets/$basketId'
+      path: '/$basketId'
+      fullPath: '/api/baskets/$basketId'
+      preLoaderRoute: typeof ApiBasketsBasketIdRouteImport
+      parentRoute: typeof ApiBasketsRoute
+    }
     '/api/blueprint-image/$blueprintId': {
       id: '/api/blueprint-image/$blueprintId'
       path: '/api/blueprint-image/$blueprintId'
@@ -837,6 +936,18 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface ApiBasketsRouteChildren {
+  ApiBasketsBasketIdRoute: typeof ApiBasketsBasketIdRoute
+}
+
+const ApiBasketsRouteChildren: ApiBasketsRouteChildren = {
+  ApiBasketsBasketIdRoute: ApiBasketsBasketIdRoute,
+}
+
+const ApiBasketsRouteWithChildren = ApiBasketsRoute._addFileChildren(
+  ApiBasketsRouteChildren,
+)
+
 interface ApiBlueprintsRouteChildren {
   ApiBlueprintsAddRoute: typeof ApiBlueprintsAddRoute
 }
@@ -864,8 +975,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
   MealPlanRoute: MealPlanRoute,
+  ShopRoute: ShopRoute,
   SimpleRoute: SimpleRoute,
   ApiAlgorithmRoute: ApiAlgorithmRoute,
+  ApiBasketsRoute: ApiBasketsRouteWithChildren,
   ApiBlueprintLibraryRoute: ApiBlueprintLibraryRoute,
   ApiBlueprintsRoute: ApiBlueprintsRouteWithChildren,
   ApiCommonItemsRoute: ApiCommonItemsRoute,
@@ -881,6 +994,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiRecipesRoute: ApiRecipesRoute,
   ApiShoppingListRoute: ApiShoppingListRoute,
   ApiSimpleModeRoute: ApiSimpleModeRoute,
+  BasketsBasketIdRoute: BasketsBasketIdRoute,
+  BasketsNewRoute: BasketsNewRoute,
   RecipesRecipeIdRoute: RecipesRecipeIdRoute,
   RecipesLibraryRoute: RecipesLibraryRoute,
   RecipesNewRoute: RecipesNewRoute,

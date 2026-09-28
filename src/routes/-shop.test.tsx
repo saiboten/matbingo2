@@ -19,7 +19,7 @@ vi.mock('../lib/auth-client', () => ({
   useSession: () => ({ data: { user: { id: 'u1', familyId: 'f1' } }, isPending: false }),
 }))
 
-const { ShoppingListPage } = await import('./index')
+const { ShopPage } = await import('./shop')
 
 const ITEMS = [
   { id: 'a', name: 'Melk', aisle: 'CHILLED', checked: false, sources: ['Ekstra'], mealDate: null },
@@ -59,12 +59,8 @@ function mockServer(items: unknown[] = ITEMS) {
   return calls
 }
 
-const renderPage = () => render(<ToastProvider><ShoppingListPage /></ToastProvider>)
-// The names under «På listen»
-const listNames = () =>
-  Array.from(screen.getByRole('heading', { name: /På listen/ }).closest('section')!.querySelectorAll('li')).map(
-    li => li.querySelector('span span')!.textContent
-  )
+const renderPage = () => render(<ToastProvider><ShopPage /></ToastProvider>)
+const listNames = () => screen.getAllByRole('checkbox').map(box => box.closest('label')!.querySelector('p')!.textContent)
 
 afterEach(() => {
   cleanup()
@@ -73,79 +69,46 @@ afterEach(() => {
   pathname = '/'
 })
 
-describe('planning the shopping', () => {
-  it('shows what is still to be bought, one line per ingredient, and leads on to the shopping', async () => {
+describe('the shopping view', () => {
+  it('shows what is not yet bought, by aisle, with one line per ingredient', async () => {
     mockServer()
     renderPage()
     expect(await screen.findByText('fra: Taco (tor.), Suppe (lør.)')).toBeTruthy()
-    // Brød is checked off, so it only shows in the store
     expect(listNames()).toEqual(['Løk', 'Melk'])
-    expect(screen.queryAllByRole('checkbox')).toHaveLength(0)
-    const start = screen.getByRole('link', { name: /Start handelen \(2 varer\)/ })
-    expect(start.getAttribute('href')).toBe('/shop')
+    expect(screen.getByText('1 av 3 varer krysset av')).toBeTruthy()
   })
 
-  it('takes an item added by hand off the list, but not a recipe ingredient', async () => {
-    const calls = mockServer()
-    renderPage()
-    await screen.findAllByText('Melk')
-    expect(screen.queryByRole('button', { name: 'Fjern Løk' })).toBeNull()
-    fireEvent.click(screen.getByRole('button', { name: 'Fjern Melk' }))
-    await waitFor(() => expect(listNames()).toEqual(['Løk']))
-    expect(calls.find(call => call.method === 'DELETE')!.url).toBe('/api/shopping-list?itemId=a')
-  })
-
-  it('adds an everyday item with a tap, and takes it off with another', async () => {
-    const calls = mockServer()
-    renderPage()
-    await screen.findAllByText('Melk')
-
-    fireEvent.click(screen.getByRole('button', { name: 'Egg' }))
-    await waitFor(() => expect(listNames()).toContain('Egg'))
-    expect(JSON.parse(calls.find(call => call.method === 'POST')!.body!)).toEqual({ name: 'Egg', aisle: 'CHILLED' })
-
-    // Melk was added by hand, so tapping it takes it off
-    fireEvent.click(screen.getByRole('button', { name: 'Melk' }))
-    await waitFor(() => expect(listNames()).not.toContain('Melk'))
-    expect(calls.find(call => call.method === 'DELETE')!.url).toBe('/api/shopping-list?itemId=a')
-  })
-
-  it('does not let an everyday item take a recipe ingredient off', async () => {
+  it('shows the checked items only when asked', async () => {
     mockServer()
     renderPage()
     await screen.findAllByText('Melk')
-    const chip = screen.getByRole('button', { name: 'Løk' }) as HTMLButtonElement
-    expect(chip.disabled).toBe(true)
-    expect(chip.title).toBe('Kommer fra en oppskrift')
+    expect(screen.queryByText('Brød')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: /Vis avkryssede \(1\)/ }))
+    expect(listNames()).toEqual(['Løk', 'Melk', 'Brød'])
+    fireEvent.click(screen.getByRole('button', { name: /Skjul avkryssede/ }))
+    expect(screen.queryByText('Brød')).toBeNull()
   })
 
-  it('adds a typed item to the list', async () => {
+  it('checks off every dinner an ingredient is for at once', async () => {
+    const calls = mockServer()
+    renderPage()
+    await screen.findByText('fra: Taco (tor.), Suppe (lør.)')
+    fireEvent.click(screen.getAllByRole('checkbox')[0])
+    await waitFor(() => expect(screen.getByText('2 av 3 varer krysset av')).toBeTruthy())
+    const patch = calls.find(call => call.method === 'PATCH')!
+    expect(patch.url).toBe('/api/shopping-list')
+    expect(JSON.parse(patch.body!)).toEqual({ itemIds: ['c', 'd'], checked: true })
+  })
+
+  it('lets you add something you forgot, and links back to planning', async () => {
     const calls = mockServer()
     renderPage()
     await screen.findAllByText('Melk')
+    expect(screen.queryByText('Vanlige varer')).toBeNull()
+    expect(screen.getByRole('link', { name: /Tilbake til handlelisten/ }).getAttribute('href')).toBe('/')
     fireEvent.change(screen.getByLabelText('Ny vare'), { target: { value: 'Batterier' } })
-    fireEvent.click(screen.getAllByRole('button', { name: /Legg til/ })[0])
+    fireEvent.click(screen.getByRole('button', { name: /Legg til/ }))
     await waitFor(() => expect(listNames()).toContain('Batterier'))
     expect(calls.find(call => call.method === 'POST')!.url).toBe('/api/shopping-list')
-  })
-
-  it('points to the meal plan when the list is empty', async () => {
-    mockServer([])
-    renderPage()
-    expect(await screen.findByText(/Listen er tom/)).toBeTruthy()
-  })
-
-  it('puts a basket on the list with one tap, and links to making a new one', async () => {
-    const calls = mockServer()
-    renderPage()
-    await screen.findByText('Brød, Melk, Yoghurt')
-    expect(screen.getByRole('link', { name: /Ny kurv/ }).getAttribute('href')).toBe('/baskets/new')
-    expect(screen.getByRole('link', { name: 'Rediger Ukeshandel' }).getAttribute('href')).toBe('/baskets/$basketId')
-
-    fireEvent.click(screen.getByRole('button', { name: 'Legg Ukeshandel i handlelisten' }))
-    expect(await screen.findByText('La til 2 varer fra «Ukeshandel»')).toBeTruthy()
-    expect(calls.find(call => call.method === 'POST')!.url).toBe('/api/baskets/B1')
-    // the list is fetched again so it shows what the basket added
-    expect(calls.filter(call => call.url === '/api/shopping-list' && call.method === 'GET')).toHaveLength(2)
   })
 })
