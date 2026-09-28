@@ -22,14 +22,14 @@ import {
 } from 'lucide-react'
 
 const NAV_ITEMS = [
-  { to: '/', label: 'Ukesmeny', icon: CalendarDays },
+  { to: '/', label: 'Handleliste', icon: ShoppingCart },
+  { to: '/meal-plan', label: 'Ukesmeny', icon: CalendarDays },
   { to: '/recipes', label: 'Oppskrifter', icon: BookOpen },
-  { to: '/shopping-lists', label: 'Handleliste', icon: ShoppingCart },
   { to: '/ingredients', label: 'Ingredienser', icon: Carrot },
 ] as const
 
 // The only page in the simple mode (everyone but the family owner)
-const SIMPLE_NAV_ITEMS = [{ to: '/simple', label: 'Handleliste', icon: ShoppingCart }] as const
+const SIMPLE_NAV_ITEMS = [{ to: '/', label: 'Handleliste', icon: ShoppingCart }] as const
 
 // Only shown to the super admin
 const ADMIN_ITEM = { to: '/admin/blueprints', label: 'Admin', icon: ShieldCheck } as const
@@ -75,12 +75,12 @@ export default function Header() {
     }
   }, [menuOpen])
 
-  // Switches between the simple view (only the latest shopping list) and the full app
+  // Switches between the simple view (only the shopping list) and the full app
   const handleSwitchMode = () => {
     const goSimple = !simple
     setSimple(goSimple)
     setMenuOpen(false)
-    navigate({ to: goSimple ? '/simple' : '/' })
+    navigate({ to: '/' })
   }
 
   const handleSignOut = async () => {

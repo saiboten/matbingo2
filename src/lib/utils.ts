@@ -26,6 +26,19 @@ export function utcMidnight(year: number, month: number, day: number): Date {
   return new Date(Date.UTC(year, month, day))
 }
 
+// Today in Norway, as a whole day (UTC midnight) like the meal plan dates
+export function osloToday(now: Date = new Date()): Date {
+  return new Date(`${now.toLocaleDateString('sv-SE', { timeZone: 'Europe/Oslo' })}T00:00:00.000Z`)
+}
+
+// Monday of the week the day is in (UTC calendar days)
+export function mondayOf(day: Date): Date {
+  const monday = utcMidnight(day.getUTCFullYear(), day.getUTCMonth(), day.getUTCDate())
+  const dayOfWeek = monday.getUTCDay() // 0 = Sunday, 1 = Monday, ...
+  monday.setUTCDate(monday.getUTCDate() + (dayOfWeek === 0 ? -6 : 1 - dayOfWeek))
+  return monday
+}
+
 export function generateInviteCode(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
   let code = ''

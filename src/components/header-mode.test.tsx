@@ -42,7 +42,7 @@ describe('switching between the simple and the full view', () => {
     render(<Header />)
 
     fireEvent.click(await screen.findByRole('button', { name: /Enkel visning/ }))
-    expect(navigate).toHaveBeenCalledWith({ to: '/simple' })
+    expect(navigate).toHaveBeenCalledWith({ to: '/' })
     expect(localStorage.getItem(`matbingo-view-mode:${id}`)).toBe('simple')
 
     // now the bar only has the shopping list, and the button offers the way back
@@ -77,6 +77,6 @@ describe('switching between the simple and the full view', () => {
     await screen.findByRole('button', { name: /Enkel visning/ })
     fireEvent.click(screen.getByRole('button', { name: 'Meny' }))
     fireEvent.click(screen.getByRole('menuitem', { name: /Bytt til enkel visning/ }))
-    expect(navigate).toHaveBeenCalledWith({ to: '/simple' })
+    expect(navigate).toHaveBeenCalledWith({ to: '/' })
   })
 })

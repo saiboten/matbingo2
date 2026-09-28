@@ -75,7 +75,7 @@ model Family {
   updatedAt     DateTime       @updatedAt
   eatenLogs     EatenLog[]
   mealPlans     MealPlan[]
-  shoppingLists ShoppingList[]
+  shoppingList  ShoppingList?
   ingredients   Ingredient[]
   recipes       Recipe[]
   members       User[]
@@ -185,17 +185,16 @@ model MealPlan {
   @@index([familyId, date])
 }
 
+// The family's one shopping list. Recipes planned for today and later are put on it automatically
+// (see lib/family-shopping-list.ts); anything else is added by hand.
 model ShoppingList {
   id          String             @id @default(uuid())
-  familyId    String
+  familyId    String             @unique
   createdById String
   createdAt   DateTime           @default(now())
-  dates       DateTime[]         @db.Date
   family      Family             @relation(fields: [familyId], references: [id], onDelete: Cascade)
   createdBy   User               @relation(fields: [createdById], references: [id])
   items       ShoppingListItem[]
-
-  @@index([familyId, createdAt])
 }
 
 model Ingredient {
@@ -220,6 +219,10 @@ model ShoppingListItem {
   sources        String[]
   aisle          Aisle        @default(OTHER)
   checked        Boolean      @default(false)
+  checkedAt      DateTime?
+  // The dinner a recipe item is for; null for an item added by hand
+  mealDate       DateTime?    @db.Date
+  createdAt      DateTime     @default(now())
   shoppingList   ShoppingList @relation(fields: [shoppingListId], references: [id], onDelete: Cascade)
 
   @@index([shoppingListId])

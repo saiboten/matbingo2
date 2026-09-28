@@ -126,6 +126,9 @@ export interface ShoppingListItem {
   sources: string[]
   aisle: Aisle
   checked: boolean
+  checkedAt?: string | null
+  // The dinner a recipe item is for; null for an item added by hand
+  mealDate?: string | null
 }
 
 export interface ShoppingList {
@@ -133,7 +136,5 @@ export interface ShoppingList {
   familyId: string
   createdById: string
   createdAt: string
-  dates: string[]
   items?: ShoppingListItem[]
-  _count?: { items: number }
 }

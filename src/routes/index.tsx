@@ -1,224 +1,82 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useSession } from '../lib/auth-client'
 import { Button } from '../components/ui/button'
-import { RecipeCombobox } from '../components/recipe-combobox'
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
-import { Badge } from '../components/ui/badge'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import { Checkbox } from '../components/ui/checkbox'
 import { Skeleton } from '../components/ui/skeleton'
-import { IngredientMultiSelect } from '../components/ingredient-multi-select'
-import { formatDate, dateKey, utcMidnight, cn } from '../lib/utils'
-import { recipeImageUrl } from '../lib/recipe-image'
-import { Plus, Sparkles, Utensils, Filter, Trash2, ChevronLeft, ChevronRight, ShoppingCart, Pencil, CookingPot } from 'lucide-react'
-import type { MealPlan, Recipe, PlanOption, DishType } from '../types'
-import { buildShoppingItems } from '../lib/shopping-list'
-import { AISLE_ORDER, AISLE_LABELS, guessAisle, type Aisle } from '../lib/aisle'
-import { DISH_TYPE_OPTIONS, DISH_TYPE_LABELS, DISH_TYPE_COLORS } from '../types'
+import { useToast } from '../components/ui/toast'
+import { AddListItemForm } from '../components/add-list-item-form'
+import { AISLE_LABELS, AISLE_ORDER, type Aisle } from '../lib/aisle'
+import { EXTRA_SOURCE, describeSources } from '../lib/shopping-extras'
+import { cn } from '../lib/utils'
+import { useSimpleMode } from '../lib/use-simple-mode'
+import type { ShoppingListItem } from '../types'
+import { Check, Eye, EyeOff, Pencil } from 'lucide-react'
 
 export const Route = createFileRoute('/')({
-  component: HomePage,
-  beforeLoad: async () => {
-    // Check session on client side in component
-  },
+  component: ShoppingListPage,
 })
 
-// Placeholder shown while the session and first week load; mirrors the real layout so nothing jumps.
-function WeekSkeleton() {
-  return (
-    <div className="space-y-6" aria-busy="true" aria-label="Laster ukesmeny">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl sm:text-3xl font-bold">Ukesmeny</h1>
-        <div className="flex flex-wrap items-center gap-2">
-          <Skeleton className="h-10 w-10" />
-          <Skeleton className="h-5 w-40" />
-          <Skeleton className="h-10 w-10" />
-          <Skeleton className="h-9 w-36" />
-        </div>
-      </div>
-
-      <Skeleton className="h-[52px] w-full" />
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
-        {Array.from({ length: 7 }, (_, i) => (
-          <Card key={i}>
-            <CardHeader className="pb-3">
-              <Skeleton className="h-6 w-16" />
-              <Skeleton className="mt-1 h-4 w-12" />
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Skeleton className="h-32 w-full" />
-              <Skeleton className="h-5 w-3/4" />
-              <Skeleton className="h-5 w-14 rounded-full" />
-              <Skeleton className="h-3 w-full" />
-              <Skeleton className="h-3 w-2/3" />
-              <div className="flex gap-2">
-                <Skeleton className="h-9 flex-1" />
-                <Skeleton className="h-10 w-10" />
-                <Skeleton className="h-10 w-10" />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// What the shopping list summary needs to remember about each selected day (kept across weeks)
-interface SelectedRecipe {
+// One line on the list. The same ingredient can be on the list for several dinners (one row each);
+// they are shown, and checked off, together.
+interface Line {
+  key: string
   name: string
-  ingredients: string
+  aisle: Aisle
+  checked: boolean
+  rows: ShoppingListItem[]
 }
 
-// Ingredients of the selected recipes, grouped by aisle like the finished shopping list
-function SelectionSummary({
-  selectedDates,
-  aisles,
-}: {
-  selectedDates: ReadonlyMap<string, SelectedRecipe>
-  aisles: ReadonlyMap<string, Aisle>
-}) {
-  const recipes = Array.from(selectedDates.values())
-  const items = buildShoppingItems(recipes)
+const nameKey = (name: string) => name.trim().toLowerCase()
 
-  if (items.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        Velg dager for å se hvilke ingredienser som kommer med på handlelisten.
-      </p>
-    )
-  }
+const weekday = (day: string) =>
+  new Intl.DateTimeFormat('nb-NO', { weekday: 'short', timeZone: 'UTC' }).format(new Date(day))
 
-  const byAisle = new Map<Aisle, string[]>()
+function toLines(items: ShoppingListItem[]): Line[] {
+  const lines = new Map<string, Line>()
   for (const item of items) {
-    const aisle = aisles.get(item.name.toLowerCase()) ?? guessAisle(item.name)
-    byAisle.set(aisle, [...(byAisle.get(aisle) ?? []), item.name])
+    const key = `${nameKey(item.name)}|${item.checked}`
+    const line = lines.get(key)
+    if (line) line.rows.push(item)
+    else lines.set(key, { key, name: item.name, aisle: item.aisle, checked: item.checked, rows: [item] })
   }
-
-  return (
-    <section className="space-y-3">
-      <h2 className="font-semibold">
-        Ingredienser ({items.length}) fra {recipes.length} {recipes.length === 1 ? 'oppskrift' : 'oppskrifter'}
-      </h2>
-      <div className="divide-y rounded-lg border">
-        {AISLE_ORDER.filter(aisle => byAisle.has(aisle)).map(aisle => (
-          <div key={aisle} className="px-3 py-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {AISLE_LABELS[aisle]}
-            </p>
-            <p className="text-sm">{byAisle.get(aisle)!.join(', ')}</p>
-          </div>
-        ))}
-      </div>
-    </section>
-  )
+  return Array.from(lines.values()).sort((a, b) => a.name.localeCompare(b.name, 'nb'))
 }
 
-// One line per day of the week, used while picking days for a shopping list
-function WeekSelectList({
-  weekDays,
-  getPlan,
-  todayKey,
-  selectedDates,
-  onToggle,
-}: {
-  weekDays: Date[]
-  getPlan: (date: Date) => MealPlan | undefined
-  todayKey: string
-  selectedDates: ReadonlyMap<string, SelectedRecipe>
-  onToggle: (key: string, recipe: SelectedRecipe) => void
-}) {
-  return (
-    <div className="divide-y rounded-lg border">
-      {weekDays.map((date, index) => {
-        const plan = getPlan(date)
-        const key = dateKey(date)
-        const selectable = !!plan?.recipe
-        const selected = selectedDates.has(key)
-        const label = `${DAY_NAMES[index]} ${date.getUTCDate()}. ${date.toLocaleDateString('nb-NO', { month: 'short', timeZone: 'UTC' })}`
-
-        return (
-          <label
-            key={key}
-            className={cn(
-              'flex min-h-12 items-center gap-3 px-3 py-2',
-              selectable ? 'cursor-pointer active:bg-muted/60' : 'opacity-50',
-              selected && 'bg-muted'
-            )}
-          >
-            <Checkbox
-              checked={selected}
-              disabled={!selectable}
-              onCheckedChange={() => plan?.recipe && onToggle(key, plan.recipe)}
-              className="h-6 w-6 shrink-0 [&_svg]:h-5 [&_svg]:w-5"
-            />
-            <span
-              className={cn(
-                'w-20 shrink-0 text-sm',
-                key === todayKey ? 'font-semibold text-primary' : 'text-muted-foreground'
-              )}
-            >
-              {label}
-            </span>
-            <span className={cn('min-w-0 flex-1 line-clamp-2', selectable ? 'font-medium' : 'text-sm text-muted-foreground')}>
-              {plan?.recipe?.name ?? (plan?.otherText || 'Ingen oppskrift')}
-            </span>
-          </label>
-        )
-      })}
-    </div>
-  )
+// "fra: Taco (tor.), Suppe (lør.)" for recipe rows, "Ekstra vare" for items added by hand
+function describeLine(line: Line): string {
+  const sources = line.rows
+    .slice()
+    .sort((a, b) => (a.mealDate ?? '').localeCompare(b.mealDate ?? ''))
+    .flatMap(row => (row.mealDate ? row.sources.map(source => `${source} (${weekday(row.mealDate!)})`) : [EXTRA_SOURCE]))
+  return describeSources(Array.from(new Set(sources)))
 }
 
-const DAY_NAMES = ['Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør', 'Søn']
-const DAY_NAMES_FULL = ['Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag', 'Søndag']
+const COMMON_OPEN_KEY = 'matbingo-common-items-open'
 
-// Monday of the week `weekOffset` weeks from the current week (UTC calendar days).
-function getWeekStart(weekOffset: number): Date {
-  const now = new Date()
-  const today = utcMidnight(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
-  const dayOfWeek = today.getUTCDay() // 0 = Sunday, 1 = Monday, ...
-  const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
-  today.setUTCDate(today.getUTCDate() + diffToMonday + weekOffset * 7)
-  return today
+function readCommonOpen(): boolean {
+  try {
+    return localStorage.getItem(COMMON_OPEN_KEY) !== 'closed'
+  } catch {
+    return true
+  }
 }
 
-function getWeekDays(weekOffset: number): Date[] {
-  const monday = getWeekStart(weekOffset)
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(monday)
-    d.setUTCDate(monday.getUTCDate() + i)
-    return d
-  })
-}
-
-function HomePage() {
+// The family's one shopping list: the ingredients of the dinners from today on are put here
+// automatically, and anything else can be added, by typing or from the everyday items.
+export function ShoppingListPage() {
   const { data: session, isPending } = useSession()
-  const [mealPlans, setMealPlans] = useState<MealPlan[]>([])
-  const [recipes, setRecipes] = useState<Recipe[]>([])
-  const [loading, setLoading] = useState(true)
-  const [weekOffset, setWeekOffset] = useState(0)
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [noSuggestionDate, setNoSuggestionDate] = useState<Date | null>(null)
-  const [suggestions, setSuggestions] = useState<Record<string, Recipe>>({})
-  const [suggestionLoading, setSuggestionLoading] = useState<Record<string, boolean>>({})
-  const [declinedIds, setDeclinedIds] = useState<Record<string, string[]>>({})
-  const [suggestionType, setSuggestionType] = useState<DishType | 'ALL'>('ALL')
-  const [suggestionIngredients, setSuggestionIngredients] = useState<string[]>([])
-  const [availableIngredients, setAvailableIngredients] = useState<string[]>([])
-  const [selectMode, setSelectMode] = useState(false)
-  const [selectedDates, setSelectedDates] = useState<Map<string, SelectedRecipe>>(new Map())
-  const [aisles, setAisles] = useState<Map<string, Aisle>>(new Map())
   const navigate = useNavigate()
+  const toast = useToast()
+  const simple = useSimpleMode()
+  const [items, setItems] = useState<ShoppingListItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [failed, setFailed] = useState(false)
+  const [showChecked, setShowChecked] = useState(false)
+  const [commonItems, setCommonItems] = useState<{ name: string; aisle: Aisle }[]>([])
+  const [commonOpen, setCommonOpen] = useState(readCommonOpen)
+  const [busyChip, setBusyChip] = useState<string | null>(null)
 
-  const weekDays = getWeekDays(weekOffset)
-  const todayKey = dateKey(new Date())
-
-  // Redirect to login if not authenticated
   useEffect(() => {
     if (!isPending && !session) {
       navigate({ to: '/login', replace: true })
@@ -227,591 +85,260 @@ function HomePage() {
     }
   }, [isPending, session, navigate])
 
-  useEffect(() => {
-    if (session?.user.familyId) {
-      fetchMealPlans()
-    }
-  }, [session, weekOffset])
-
-  useEffect(() => {
-    if (session?.user.familyId) {
-      fetchIngredients()
-    }
-  }, [session])
-
-  const fetchMealPlans = async () => {
-    if (!session?.user.familyId) return
-
-    const startDate = weekDays[0]
-    const endDate = weekDays[6]
-
+  const load = async () => {
+    setFailed(false)
     try {
-      const response = await fetch(
-        `/api/meal-plans?familyId=${session.user.familyId}&startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`
-      )
-      const data = await response.json()
-      setMealPlans(data.mealPlans || [])
+      const response = await fetch('/api/shopping-list')
+      if (response.ok) setItems((await response.json()).shoppingList?.items ?? [])
+      else setFailed(true)
     } catch (error) {
-      console.error('Error fetching meal plans:', error)
+      console.error('Error fetching shopping list:', error)
+      setFailed(true)
     } finally {
       setLoading(false)
     }
   }
 
-  // The recipes are only needed for the "add recipe" dialog, so they are fetched when it is first opened
-  const openPlanDialog = (date: Date) => {
-    setSelectedDate(date)
-    setDialogOpen(true)
-    if (recipes.length === 0) fetchRecipes()
-  }
-
-  const fetchRecipes = async () => {
+  useEffect(() => {
     if (!session?.user.familyId) return
-
-    try {
-      const response = await fetch(`/api/recipes?familyId=${session.user.familyId}`)
-      const data = await response.json()
-      setRecipes(data.recipes || [])
-    } catch (error) {
-      console.error('Error fetching recipes:', error)
-    }
-  }
-
-  const fetchIngredients = async () => {
-    if (!session?.user.familyId) return
-
-    try {
-      const response = await fetch(`/api/ingredients?familyId=${session.user.familyId}`)
-      const data = await response.json()
-      setAvailableIngredients(data.ingredients || [])
-    } catch (error) {
-      console.error('Error fetching ingredients:', error)
-    }
-  }
-
-  const handlePlanMeal = async (date: Date, option: PlanOption, recipeId?: string, otherText?: string) => {
-    if (!session?.user.familyId) return
-
-    try {
-      const response = await fetch('/api/meal-plans', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          date: date.toISOString(),
-          option,
-          recipeId,
-          otherText,
-          familyId: session.user.familyId,
-          plannedById: session.user.id
-        })
-      })
-
-      if (response.ok) {
-        fetchMealPlans()
-        setDialogOpen(false)
+    load()
+    const loadCommon = async () => {
+      try {
+        const response = await fetch('/api/common-items')
+        if (response.ok) setCommonItems((await response.json()).items || [])
+      } catch (error) {
+        console.error('Error fetching common items:', error)
       }
-    } catch (error) {
-      console.error('Error planning meal:', error)
     }
-  }
+    loadCommon()
+  }, [session?.user.familyId])
 
-  const handleDeleteMealPlan = async (date: Date) => {
-    if (!session?.user.familyId) return
-    if (!confirm('Fjerne middagen for denne dagen?')) return
+  const handleToggle = async (line: Line, checked: boolean) => {
+    const ids = new Set(line.rows.map(row => row.id))
+    const setChecked = (value: boolean) =>
+      setItems(prev => prev.map(item => (ids.has(item.id) ? { ...item, checked: value } : item)))
 
+    // Optimistic update, rolled back if the save fails
+    setChecked(checked)
     try {
-      const response = await fetch(
-        `/api/meal-plans?familyId=${session.user.familyId}&date=${encodeURIComponent(date.toISOString())}`,
-        { method: 'DELETE' }
-      )
-
-      if (response.ok) {
-        fetchMealPlans()
-      }
-    } catch (error) {
-      console.error('Error removing meal plan:', error)
-    }
-  }
-
-  const fetchSuggestion = async (date: Date, excludeIds: string[]) => {
-    if (!session?.user.familyId) return
-    const key = dateKey(date)
-
-    setSuggestionLoading(prev => ({ ...prev, [key]: true }))
-    try {
-      const response = await fetch('/api/algorithm', {
-        method: 'POST',
+      const response = await fetch('/api/shopping-list', {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          familyId: session.user.familyId,
-          date: date.toISOString(),
-          excludeRecipeIds: excludeIds,
-          type: suggestionType !== 'ALL' ? suggestionType : undefined,
-          ingredients: suggestionIngredients.length > 0 ? suggestionIngredients : undefined
-        })
+        body: JSON.stringify({ itemIds: Array.from(ids), checked }),
       })
+      if (!response.ok) setChecked(!checked)
+    } catch (error) {
+      console.error('Error updating item:', error)
+      setChecked(!checked)
+    }
+  }
 
-      if (response.ok) {
-        const data = await response.json()
-        if (data.recipe) {
-          setSuggestions(prev => ({ ...prev, [key]: data.recipe }))
-        }
+  // An item that was already on the list comes back (unchecked) instead of being added twice
+  const handleAdded = (item: ShoppingListItem) => setItems(prev => [...prev.filter(row => row.id !== item.id), item])
+
+  const toggleCommonOpen = (open: boolean) => {
+    setCommonOpen(open)
+    try {
+      localStorage.setItem(COMMON_OPEN_KEY, open ? 'open' : 'closed')
+    } catch {
+      // Blocked storage: it just opens again next time
+    }
+  }
+
+  // Tapping an everyday item puts it on the list; tapping it again takes it off
+  const handleChip = async (common: { name: string; aisle: Aisle }, manualRow: ShoppingListItem | undefined) => {
+    setBusyChip(common.name)
+    try {
+      if (manualRow) {
+        const response = await fetch(`/api/shopping-list?itemId=${encodeURIComponent(manualRow.id)}`, { method: 'DELETE' })
+        if (response.ok) setItems(prev => prev.filter(item => item.id !== manualRow.id))
+        else toast('Kunne ikke fjerne varen', 'error')
       } else {
-        setSuggestions(prev => {
-          const next = { ...prev }
-          delete next[key]
-          return next
+        const response = await fetch('/api/shopping-list', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: common.name, aisle: common.aisle }),
         })
-        if (response.status === 404) {
-          setNoSuggestionDate(date)
-        }
+        const data = await response.json().catch(() => ({}))
+        if (response.ok) handleAdded(data.item)
+        else toast(data.error || 'Kunne ikke legge til varen', 'error')
       }
     } catch (error) {
-      console.error('Error running algorithm:', error)
+      console.error('Error changing everyday item:', error)
+      toast('Noe gikk galt', 'error')
     } finally {
-      setSuggestionLoading(prev => ({ ...prev, [key]: false }))
+      setBusyChip(null)
     }
-  }
-
-  const handleAutoPick = (date: Date) => {
-    const key = dateKey(date)
-    setDeclinedIds(prev => ({ ...prev, [key]: [] }))
-    fetchSuggestion(date, [])
-  }
-
-  const handleAcceptSuggestion = async (date: Date) => {
-    const key = dateKey(date)
-    const suggestion = suggestions[key]
-    if (!suggestion) return
-
-    await handlePlanMeal(date, 'ALGORITHM', suggestion.id)
-    setSuggestions(prev => {
-      const next = { ...prev }
-      delete next[key]
-      return next
-    })
-    setDeclinedIds(prev => {
-      const next = { ...prev }
-      delete next[key]
-      return next
-    })
-  }
-
-  const handleDeclineSuggestion = (date: Date) => {
-    const key = dateKey(date)
-    const suggestion = suggestions[key]
-    const nextDeclined = suggestion
-      ? [...(declinedIds[key] || []), suggestion.id]
-      : declinedIds[key] || []
-    setDeclinedIds(prev => ({ ...prev, [key]: nextDeclined }))
-    fetchSuggestion(date, nextDeclined)
-  }
-
-  const handleCancelSuggestion = (date: Date) => {
-    const key = dateKey(date)
-    setSuggestions(prev => {
-      const next = { ...prev }
-      delete next[key]
-      return next
-    })
-    setDeclinedIds(prev => {
-      const next = { ...prev }
-      delete next[key]
-      return next
-    })
-  }
-
-  const startSelectMode = async () => {
-    setSelectMode(true)
-    if (!session?.user.familyId || aisles.size > 0) return
-
-    // The family's aisle choices, so the summary is grouped the same way as the finished list
-    try {
-      const response = await fetch(`/api/ingredient-aisles?familyId=${session.user.familyId}`)
-      const data = await response.json()
-      setAisles(new Map((data.ingredients || []).map((i: { nameKey: string; aisle: Aisle }) => [i.nameKey, i.aisle])))
-    } catch (error) {
-      console.error('Error fetching aisles:', error)
-    }
-  }
-
-  const exitSelectMode = () => {
-    setSelectMode(false)
-    setSelectedDates(new Map())
-  }
-
-  const toggleSelectedDate = (key: string, recipe: SelectedRecipe) => {
-    setSelectedDates(prev => {
-      const next = new Map(prev)
-      if (next.has(key)) next.delete(key)
-      else next.set(key, { name: recipe.name, ingredients: recipe.ingredients })
-      return next
-    })
-  }
-
-  // Continue to the step where extra items can be added; the list is made there
-  const handleContinueToExtras = () => {
-    if (selectedDates.size === 0) return
-
-    // dateKeys are UTC calendar days (YYYY-MM-DD), same convention as the meal plan dates
-    const dates = Array.from(selectedDates.keys()).sort().join(',')
-    exitSelectMode()
-    navigate({ to: '/shopping-lists/new', search: { dates } })
-  }
-
-  const getPlanForDate = (date: Date) => {
-    const key = dateKey(date)
-    return mealPlans.find(plan => dateKey(new Date(plan.date)) === key)
   }
 
   if (isPending || loading) {
-    return <WeekSkeleton />
+    return (
+      <div className="max-w-2xl space-y-4" aria-busy="true" aria-label="Laster">
+        <Skeleton className="h-9 w-48" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    )
   }
 
-  // Prevent rendering if redirecting
-  if (!isPending && (!session || !session.user.familyId)) {
-    return null
+  if (failed) {
+    return (
+      <div className="max-w-md space-y-3">
+        <p>Kunne ikke hente handlelisten.</p>
+        <Button variant="outline" onClick={load}>
+          Prøv igjen
+        </Button>
+      </div>
+    )
   }
+
+  const lines = toLines(items)
+  const openLines = lines.filter(line => !line.checked)
+  const checkedCount = lines.length - openLines.length
+  const visible = showChecked ? lines : openLines
+  const openRows = items.filter(item => !item.checked)
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl sm:text-3xl font-bold">Ukesmeny</h1>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" size="icon" onClick={() => setWeekOffset(o => o - 1)}>
-            <ChevronLeft className="h-4 w-4" />
-            <span className="sr-only">Forrige uke</span>
-          </Button>
-          <p className="text-muted-foreground text-sm sm:text-base sm:w-44 text-center">
-            {formatDate(weekDays[0])} - {formatDate(weekDays[6])}
-          </p>
-          <Button variant="outline" size="icon" onClick={() => setWeekOffset(o => o + 1)}>
-            <ChevronRight className="h-4 w-4" />
-            <span className="sr-only">Neste uke</span>
-          </Button>
-          {weekOffset !== 0 && (
-            <Button variant="ghost" size="sm" onClick={() => setWeekOffset(0)}>
-              I dag
-            </Button>
+    <div className="max-w-2xl space-y-4 sm:space-y-6">
+      <h1 className="text-2xl sm:text-3xl font-bold">Handleliste</h1>
+
+      <AddListItemForm onAdded={handleAdded} />
+
+      <details
+        open={commonOpen}
+        onToggle={(e) => toggleCommonOpen((e.currentTarget as HTMLDetailsElement).open)}
+        className="rounded-lg border"
+      >
+        <summary className="cursor-pointer select-none p-3 font-medium">Vanlige varer</summary>
+        <div className="space-y-4 border-t p-3">
+          {commonItems.length === 0 && (
+            <p className="text-sm text-muted-foreground">Ingen vanlige varer i listen din ennå. Legg til noen med «Rediger listen».</p>
           )}
-          {!selectMode && (
-            <Button variant="secondary" size="sm" onClick={startSelectMode}>
-              <ShoppingCart className="h-4 w-4 mr-1" />
-              Lag handleliste
-            </Button>
-          )}
+          {AISLE_ORDER.map(aisle => {
+            const group = commonItems.filter(item => item.aisle === aisle)
+            if (group.length === 0) return null
+            return (
+              <div key={aisle} className="space-y-2">
+                <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{AISLE_LABELS[aisle]}</h2>
+                <div className="flex flex-wrap gap-2">
+                  {group.map(common => {
+                    const same = openRows.filter(row => nameKey(row.name) === nameKey(common.name))
+                    const fromRecipe = same.some(row => row.mealDate)
+                    const manualRow = same.find(row => !row.mealDate)
+                    const selected = same.length > 0
+                    return (
+                      <button
+                        key={common.name}
+                        type="button"
+                        aria-pressed={selected}
+                        disabled={fromRecipe || busyChip === common.name}
+                        title={fromRecipe ? 'Kommer fra en oppskrift' : undefined}
+                        onClick={() => handleChip(common, manualRow)}
+                        className={cn(
+                          'flex min-h-10 items-center gap-1 rounded-full border px-3 text-sm transition-colors',
+                          selected && !fromRecipe && 'border-primary bg-primary text-primary-foreground',
+                          fromRecipe && 'cursor-default bg-muted text-muted-foreground',
+                          !selected && 'hover:bg-accent'
+                        )}
+                      >
+                        {selected && <Check className="h-4 w-4" />}
+                        {common.name}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })}
+          <Button asChild variant="ghost" size="sm">
+            <Link to="/shopping-lists/common-items">
+              <Pencil className="mr-1 h-4 w-4" />
+              Rediger listen
+            </Link>
+          </Button>
         </div>
+      </details>
+
+      <div className="flex items-center justify-between gap-2">
+        <p className="font-medium">
+          {checkedCount} av {lines.length} varer krysset av
+        </p>
+        <Button
+          variant="outline"
+          size="sm"
+          className="min-w-44 shrink-0 justify-center"
+          disabled={checkedCount === 0}
+          onClick={() => setShowChecked(show => !show)}
+        >
+          {showChecked ? <EyeOff className="mr-1 h-4 w-4" /> : <Eye className="mr-1 h-4 w-4" />}
+          {showChecked ? 'Skjul avkryssede' : `Vis avkryssede (${checkedCount})`}
+        </Button>
       </div>
 
-      {selectMode && (
-        <div className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-2 p-3 bg-muted border rounded-lg shadow-sm">
-          <p className="text-sm">
-            Velg dagene du vil handle til
-            <span className="text-muted-foreground"> ({selectedDates.size} valgt)</span>
-          </p>
-          <div className="flex gap-2">
-            <Button variant="ghost" size="sm" onClick={exitSelectMode}>
-              Avbryt
-            </Button>
-            <Button
-              size="sm"
-              onClick={handleContinueToExtras}
-              disabled={selectedDates.size === 0}
-            >
-              Neste
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {!selectMode && (
-        <div className="flex flex-wrap items-center gap-2 p-3 bg-muted/50 rounded-lg">
-          <div className="flex items-center gap-1 text-sm text-muted-foreground mr-1">
-            <Filter className="h-4 w-4" />
-            Filtre for forslag
-          </div>
-          <Select value={suggestionType} onValueChange={(value) => setSuggestionType(value as DishType | 'ALL')}>
-            <SelectTrigger className="w-full sm:w-36">
-              <SelectValue placeholder="Alle typer" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">Alle typer</SelectItem>
-              {DISH_TYPE_OPTIONS.map((type) => (
-                <SelectItem key={type.value} value={type.value}>
-                  {type.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <IngredientMultiSelect
-            options={availableIngredients}
-            selected={suggestionIngredients}
-            onChange={setSuggestionIngredients}
-            placeholder="Ingredienser ..."
-            className="w-full sm:w-72"
-          />
-        </div>
-      )}
-
-      {!selectMode && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
-          {weekDays.map((date, index) => {
-            const plan = getPlanForDate(date)
-            const key = dateKey(date)
-            const isToday = key === todayKey
-            const dayName = DAY_NAMES_FULL[index]
-
+      {lines.length === 0 ? (
+        <p className="text-muted-foreground">
+          {simple === false ? (
+            <>
+              Listen er tom. Planlegg middager på{' '}
+              <Link to="/meal-plan" className="text-primary hover:underline">
+                ukesmenyen
+              </Link>
+              , så kommer ingrediensene hit.
+            </>
+          ) : (
+            'Listen er tom.'
+          )}
+        </p>
+      ) : visible.length === 0 ? (
+        <p className="text-muted-foreground">Alle varer er krysset av.</p>
+      ) : (
+        <div>
+          {AISLE_ORDER.map(aisle => {
+            const aisleLines = visible.filter(line => line.aisle === aisle)
+            if (aisleLines.length === 0) return null
             return (
-              <Card key={key} className={isToday ? 'border-primary' : ''}>
-                <CardHeader className="pb-3">
-                  <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
-                    <CardTitle className="flex flex-wrap items-baseline gap-x-2 text-lg">
-                      {dayName}
-                      <span className="text-sm font-normal text-muted-foreground">
-                        {date.getUTCDate()}. {date.toLocaleDateString('nb-NO', { month: 'short', timeZone: 'UTC' })}
-                      </span>
-                    </CardTitle>
-                    {isToday && <Badge variant="default" className="whitespace-nowrap">I dag</Badge>}
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {plan ? (
-                    <div className="space-y-3">
-                      {plan.option === 'OTHER' ? (
-                        <div className="p-3 bg-muted rounded-lg">
-                          <p className="text-sm font-medium">{plan.otherText}</p>
-                          <Badge variant="outline" className="mt-2">Egendefinert</Badge>
-                        </div>
-                      ) : plan.recipe ? (
-                        <div className="space-y-2">
-                          {recipeImageUrl(plan.recipe) && (
-                            <img
-                              src={recipeImageUrl(plan.recipe)!}
-                              alt={plan.recipe.name}
-                              className="w-full h-32 object-cover rounded-lg"
-                            />
-                          )}
-                          <h3 className="font-medium">{plan.recipe.name}</h3>
-                          <Badge
-                            variant="secondary"
-                            className={DISH_TYPE_COLORS[plan.recipe.type]}
-                          >
-                            {DISH_TYPE_LABELS[plan.recipe.type]}
-                          </Badge>
-                          {plan.option === 'ALGORITHM' && (
-                            <Badge variant="outline" className="ml-2">
-                              <Sparkles className="h-3 w-3 mr-1" />
-                              Forslag
-                            </Badge>
-                          )}
-                          <p className="text-xs text-muted-foreground">
-                            {plan.recipe.ingredients
-                              .split(',')
-                              .map(ingredient => ingredient.trim())
-                              .filter(Boolean)
-                              .join(', ')}
-                          </p>
-                          <Button asChild variant="secondary" size="sm" className="w-full">
-                            <Link to="/recipes/$recipeId/cook" params={{ recipeId: plan.recipe.id }}>
-                              <CookingPot className="h-4 w-4 mr-1" />
-                              Lag maten
-                            </Link>
-                          </Button>
-                        </div>
-                      ) : null}
-
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => openPlanDialog(date)}
-                        >
-                          Endre
-                        </Button>
-                        {plan.recipe && (
-                          <Button asChild variant="outline" size="icon">
-                            <Link
-                              to="/recipes/$recipeId"
-                              params={{ recipeId: plan.recipe.id }}
-                              search={{ edit: true }}
-                            >
-                              <Pencil className="h-4 w-4" />
-                              <span className="sr-only">Rediger oppskrift</span>
-                            </Link>
-                          </Button>
-                        )}
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => handleDeleteMealPlan(date)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          <span className="sr-only">Fjern</span>
-                        </Button>
-                      </div>
-                    </div>
-                  ) : suggestions[key] ? (
-                    <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">Forslag</p>
-                      <div className="p-3 bg-muted rounded-lg space-y-2">
-                        {recipeImageUrl(suggestions[key]) && (
-                          <img
-                            src={recipeImageUrl(suggestions[key])!}
-                            alt={suggestions[key].name}
-                            className="w-full h-32 object-cover rounded-lg"
+              <section key={aisle}>
+                <h2 className="sticky top-0 z-10 -mx-4 flex items-center justify-between bg-muted px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:mx-0 sm:rounded-md">
+                  {AISLE_LABELS[aisle]}
+                  <span className="font-normal">{aisleLines.length}</span>
+                </h2>
+                <ul className="divide-y">
+                  {aisleLines.map(line => {
+                    const description = describeLine(line)
+                    return (
+                      <li key={line.key}>
+                        <label className="flex min-h-14 cursor-pointer items-center gap-4 py-3 active:bg-muted/60">
+                          <Checkbox
+                            checked={line.checked}
+                            onCheckedChange={(value) => handleToggle(line, value === true)}
+                            className="h-6 w-6 shrink-0 [&_svg]:h-5 [&_svg]:w-5"
                           />
-                        )}
-                        <div className="flex items-center gap-2">
-                          <Sparkles className="h-4 w-4 text-muted-foreground" />
-                          <h3 className="font-medium">{suggestions[key].name}</h3>
-                        </div>
-                        <Badge
-                          variant="secondary"
-                          className={DISH_TYPE_COLORS[suggestions[key].type]}
-                        >
-                          {DISH_TYPE_LABELS[suggestions[key].type]}
-                        </Badge>
-                      </div>
-                      <Button
-                        size="sm"
-                        className="w-full"
-                        onClick={() => handleAcceptSuggestion(date)}
-                      >
-                        Godta
-                      </Button>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1"
-                          disabled={suggestionLoading[key]}
-                          onClick={() => handleDeclineSuggestion(date)}
-                        >
-                          {suggestionLoading[key] ? 'Finner ...' : 'Prøv et annet'}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => handleCancelSuggestion(date)}
-                        >
-                          Avbryt
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">Ingen middag planlagt</p>
-                      <div className="flex flex-col gap-2">
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          disabled={suggestionLoading[key]}
-                          onClick={() => handleAutoPick(date)}
-                        >
-                          <Sparkles className="h-4 w-4 mr-1" />
-                          {suggestionLoading[key] ? 'Finner ...' : 'Foreslå middag'}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openPlanDialog(date)}
-                        >
-                          <Plus className="h-4 w-4 mr-1" />
-                          Velg middag
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                          <div className={cn('min-w-0', line.checked && 'line-through text-muted-foreground')}>
+                            <p className="break-words text-base font-medium">{line.name}</p>
+                            {description && <p className="text-xs text-muted-foreground">{description}</p>}
+                          </div>
+                        </label>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </section>
             )
           })}
         </div>
       )}
 
-      {selectMode && (
-        <WeekSelectList
-          weekDays={weekDays}
-          getPlan={getPlanForDate}
-          todayKey={todayKey}
-          selectedDates={selectedDates}
-          onToggle={toggleSelectedDate}
-        />
+      {lines.length > 0 && <AddListItemForm onAdded={handleAdded} placeholder="Legg til vare ..." label="Ny vare nederst" />}
+
+      {simple === false && (
+        <p className="text-sm text-muted-foreground">
+          Havner en vare på feil hylle?{' '}
+          <Link to="/ingredients" className="text-primary hover:underline">
+            Rediger ingrediensene
+          </Link>
+        </p>
       )}
-
-      {selectMode && <SelectionSummary selectedDates={selectedDates} aisles={aisles} />}
-
-      {/* Meal Selection Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              Planlegg middag for {selectedDate && formatDate(selectedDate)}
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div className="grid gap-4">
-              <h3 className="font-medium">Velg en oppskrift</h3>
-              <RecipeCombobox recipes={recipes} onSelect={(recipe) => handlePlanMeal(selectedDate!, 'MANUAL', recipe.id)} />
-            </div>
-
-            <div className="border-t pt-4">
-              <h3 className="font-medium mb-2">Eller</h3>
-              <div className="flex gap-2">
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    if (selectedDate) {
-                      handleAutoPick(selectedDate)
-                      setDialogOpen(false)
-                    }
-                  }}
-                >
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  La appen foreslå
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    const otherText = prompt('Hva skal dere spise?')
-                    if (otherText && selectedDate) {
-                      handlePlanMeal(selectedDate, 'OTHER', undefined, otherText)
-                    }
-                  }}
-                >
-                  <Utensils className="h-4 w-4 mr-2" />
-                  Noe annet
-                </Button>
-              </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Shown when «Foreslå middag» finds nothing with the current filters */}
-      <Dialog open={noSuggestionDate !== null} onOpenChange={(open) => !open && setNoSuggestionDate(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Fant ingen passende oppskrift</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 text-sm">
-            <p>
-              Ingen oppskrifter passer {noSuggestionDate ? `for ${formatDate(noSuggestionDate)}` : 'denne dagen'} med filtrene du har valgt.
-            </p>
-            <p className="text-muted-foreground">
-              Oppskrifter i dvale, oppskrifter som ikke passer denne ukedagen og forslag du allerede har avslått regnes ikke med.
-              Prøv å fjerne et filter.
-            </p>
-          </div>
-          <Button className="w-full sm:w-auto sm:self-end" onClick={() => setNoSuggestionDate(null)}>
-            Lukk
-          </Button>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

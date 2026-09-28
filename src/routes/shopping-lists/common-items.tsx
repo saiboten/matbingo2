@@ -122,9 +122,9 @@ export function CommonItemsPage() {
     <div className="max-w-2xl space-y-4 sm:space-y-6">
       <div className="flex items-start gap-3">
         <Button asChild variant="outline" size="icon" className="shrink-0">
-          <Link to="/shopping-lists">
+          <Link to="/">
             <ArrowLeft className="h-4 w-4" />
-            <span className="sr-only">Tilbake til handlelistene</span>
+            <span className="sr-only">Tilbake til handlelisten</span>
           </Link>
         </Button>
         <div>

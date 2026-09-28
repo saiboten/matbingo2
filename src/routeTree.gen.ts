@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as MealPlanRouteImport } from './routes/meal-plan'
 import { Route as SimpleRouteImport } from './routes/simple'
 import { Route as ApiAlgorithmRouteImport } from './routes/api/algorithm'
 import { Route as ApiBlueprintLibraryRouteImport } from './routes/api/blueprint-library'
@@ -26,7 +27,7 @@ import { Route as ApiKnownIngredientsRouteImport } from './routes/api/known-ingr
 import { Route as ApiMealPlansRouteImport } from './routes/api/meal-plans'
 import { Route as ApiRecipeOverviewRouteImport } from './routes/api/recipe-overview'
 import { Route as ApiRecipesRouteImport } from './routes/api/recipes'
-import { Route as ApiShoppingListsRouteImport } from './routes/api/shopping-lists'
+import { Route as ApiShoppingListRouteImport } from './routes/api/shopping-list'
 import { Route as ApiSimpleModeRouteImport } from './routes/api/simple-mode'
 import { Route as IngredientsIndexRouteImport } from './routes/ingredients/index'
 import { Route as RecipesIndexRouteImport } from './routes/recipes/index'
@@ -36,9 +37,7 @@ import { Route as RecipesNewRouteImport } from './routes/recipes/new'
 import { Route as RecipesOverviewRouteImport } from './routes/recipes/overview'
 import { Route as SettingsIndexRouteImport } from './routes/settings/index'
 import { Route as ShoppingListsIndexRouteImport } from './routes/shopping-lists/index'
-import { Route as ShoppingListsListIdRouteImport } from './routes/shopping-lists/$listId'
 import { Route as ShoppingListsCommonItemsRouteImport } from './routes/shopping-lists/common-items'
-import { Route as ShoppingListsNewRouteImport } from './routes/shopping-lists/new'
 import { Route as AdminBlueprintsIndexRouteImport } from './routes/admin/blueprints/index'
 import { Route as AdminBlueprintsBlueprintIdRouteImport } from './routes/admin/blueprints/$blueprintId'
 import { Route as AdminBlueprintsNewRouteImport } from './routes/admin/blueprints/new'
@@ -48,9 +47,6 @@ import { Route as ApiBlueprintImageBlueprintIdRouteImport } from './routes/api/b
 import { Route as ApiBlueprintsAddRouteImport } from './routes/api/blueprints/add'
 import { Route as ApiRecipeImageRecipeIdRouteImport } from './routes/api/recipe-image/$recipeId'
 import { Route as ApiRecipeRecipeIdRouteImport } from './routes/api/recipe/$recipeId'
-import { Route as ApiShoppingListsListIdRouteImport } from './routes/api/shopping-lists/$listId'
-import { Route as ApiShoppingListsLatestRouteImport } from './routes/api/shopping-lists/latest'
-import { Route as ApiShoppingListsPreviewRouteImport } from './routes/api/shopping-lists/preview'
 import { Route as RecipesRecipeIdCookRouteImport } from './routes/recipes/$recipeId_.cook'
 import { Route as ApiAdminBlueprintsBlueprintIdRouteImport } from './routes/api/admin/blueprints/$blueprintId'
 
@@ -62,6 +58,11 @@ const IndexRoute = IndexRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MealPlanRoute = MealPlanRouteImport.update({
+  id: '/meal-plan',
+  path: '/meal-plan',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SimpleRoute = SimpleRouteImport.update({
@@ -139,9 +140,9 @@ const ApiRecipesRoute = ApiRecipesRouteImport.update({
   path: '/api/recipes',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiShoppingListsRoute = ApiShoppingListsRouteImport.update({
-  id: '/api/shopping-lists',
-  path: '/api/shopping-lists',
+const ApiShoppingListRoute = ApiShoppingListRouteImport.update({
+  id: '/api/shopping-list',
+  path: '/api/shopping-list',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiSimpleModeRoute = ApiSimpleModeRouteImport.update({
@@ -189,22 +190,12 @@ const ShoppingListsIndexRoute = ShoppingListsIndexRouteImport.update({
   path: '/shopping-lists/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ShoppingListsListIdRoute = ShoppingListsListIdRouteImport.update({
-  id: '/shopping-lists/$listId',
-  path: '/shopping-lists/$listId',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ShoppingListsCommonItemsRoute =
   ShoppingListsCommonItemsRouteImport.update({
     id: '/shopping-lists/common-items',
     path: '/shopping-lists/common-items',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ShoppingListsNewRoute = ShoppingListsNewRouteImport.update({
-  id: '/shopping-lists/new',
-  path: '/shopping-lists/new',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AdminBlueprintsIndexRoute = AdminBlueprintsIndexRouteImport.update({
   id: '/admin/blueprints/',
   path: '/admin/blueprints/',
@@ -252,21 +243,6 @@ const ApiRecipeRecipeIdRoute = ApiRecipeRecipeIdRouteImport.update({
   path: '/api/recipe/$recipeId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiShoppingListsListIdRoute = ApiShoppingListsListIdRouteImport.update({
-  id: '/$listId',
-  path: '/$listId',
-  getParentRoute: () => ApiShoppingListsRoute,
-} as any)
-const ApiShoppingListsLatestRoute = ApiShoppingListsLatestRouteImport.update({
-  id: '/latest',
-  path: '/latest',
-  getParentRoute: () => ApiShoppingListsRoute,
-} as any)
-const ApiShoppingListsPreviewRoute = ApiShoppingListsPreviewRouteImport.update({
-  id: '/preview',
-  path: '/preview',
-  getParentRoute: () => ApiShoppingListsRoute,
-} as any)
 const RecipesRecipeIdCookRoute = RecipesRecipeIdCookRouteImport.update({
   id: '/recipes/$recipeId_/cook',
   path: '/recipes/$recipeId/cook',
@@ -282,6 +258,7 @@ const ApiAdminBlueprintsBlueprintIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/meal-plan': typeof MealPlanRoute
   '/simple': typeof SimpleRoute
   '/api/algorithm': typeof ApiAlgorithmRoute
   '/api/blueprint-library': typeof ApiBlueprintLibraryRoute
@@ -297,15 +274,13 @@ export interface FileRoutesByFullPath {
   '/api/meal-plans': typeof ApiMealPlansRoute
   '/api/recipe-overview': typeof ApiRecipeOverviewRoute
   '/api/recipes': typeof ApiRecipesRoute
-  '/api/shopping-lists': typeof ApiShoppingListsRouteWithChildren
+  '/api/shopping-list': typeof ApiShoppingListRoute
   '/api/simple-mode': typeof ApiSimpleModeRoute
   '/recipes/$recipeId': typeof RecipesRecipeIdRoute
   '/recipes/library': typeof RecipesLibraryRoute
   '/recipes/new': typeof RecipesNewRoute
   '/recipes/overview': typeof RecipesOverviewRoute
-  '/shopping-lists/$listId': typeof ShoppingListsListIdRoute
   '/shopping-lists/common-items': typeof ShoppingListsCommonItemsRoute
-  '/shopping-lists/new': typeof ShoppingListsNewRoute
   '/ingredients/': typeof IngredientsIndexRoute
   '/recipes/': typeof RecipesIndexRoute
   '/settings/': typeof SettingsIndexRoute
@@ -318,9 +293,6 @@ export interface FileRoutesByFullPath {
   '/api/blueprints/add': typeof ApiBlueprintsAddRoute
   '/api/recipe-image/$recipeId': typeof ApiRecipeImageRecipeIdRoute
   '/api/recipe/$recipeId': typeof ApiRecipeRecipeIdRoute
-  '/api/shopping-lists/$listId': typeof ApiShoppingListsListIdRoute
-  '/api/shopping-lists/latest': typeof ApiShoppingListsLatestRoute
-  '/api/shopping-lists/preview': typeof ApiShoppingListsPreviewRoute
   '/recipes/$recipeId/cook': typeof RecipesRecipeIdCookRoute
   '/admin/blueprints/': typeof AdminBlueprintsIndexRoute
   '/api/admin/blueprints/$blueprintId': typeof ApiAdminBlueprintsBlueprintIdRoute
@@ -328,6 +300,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/meal-plan': typeof MealPlanRoute
   '/simple': typeof SimpleRoute
   '/api/algorithm': typeof ApiAlgorithmRoute
   '/api/blueprint-library': typeof ApiBlueprintLibraryRoute
@@ -343,15 +316,13 @@ export interface FileRoutesByTo {
   '/api/meal-plans': typeof ApiMealPlansRoute
   '/api/recipe-overview': typeof ApiRecipeOverviewRoute
   '/api/recipes': typeof ApiRecipesRoute
-  '/api/shopping-lists': typeof ApiShoppingListsRouteWithChildren
+  '/api/shopping-list': typeof ApiShoppingListRoute
   '/api/simple-mode': typeof ApiSimpleModeRoute
   '/recipes/$recipeId': typeof RecipesRecipeIdRoute
   '/recipes/library': typeof RecipesLibraryRoute
   '/recipes/new': typeof RecipesNewRoute
   '/recipes/overview': typeof RecipesOverviewRoute
-  '/shopping-lists/$listId': typeof ShoppingListsListIdRoute
   '/shopping-lists/common-items': typeof ShoppingListsCommonItemsRoute
-  '/shopping-lists/new': typeof ShoppingListsNewRoute
   '/ingredients': typeof IngredientsIndexRoute
   '/recipes': typeof RecipesIndexRoute
   '/settings': typeof SettingsIndexRoute
@@ -364,9 +335,6 @@ export interface FileRoutesByTo {
   '/api/blueprints/add': typeof ApiBlueprintsAddRoute
   '/api/recipe-image/$recipeId': typeof ApiRecipeImageRecipeIdRoute
   '/api/recipe/$recipeId': typeof ApiRecipeRecipeIdRoute
-  '/api/shopping-lists/$listId': typeof ApiShoppingListsListIdRoute
-  '/api/shopping-lists/latest': typeof ApiShoppingListsLatestRoute
-  '/api/shopping-lists/preview': typeof ApiShoppingListsPreviewRoute
   '/recipes/$recipeId/cook': typeof RecipesRecipeIdCookRoute
   '/admin/blueprints': typeof AdminBlueprintsIndexRoute
   '/api/admin/blueprints/$blueprintId': typeof ApiAdminBlueprintsBlueprintIdRoute
@@ -375,6 +343,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/meal-plan': typeof MealPlanRoute
   '/simple': typeof SimpleRoute
   '/api/algorithm': typeof ApiAlgorithmRoute
   '/api/blueprint-library': typeof ApiBlueprintLibraryRoute
@@ -390,15 +359,13 @@ export interface FileRoutesById {
   '/api/meal-plans': typeof ApiMealPlansRoute
   '/api/recipe-overview': typeof ApiRecipeOverviewRoute
   '/api/recipes': typeof ApiRecipesRoute
-  '/api/shopping-lists': typeof ApiShoppingListsRouteWithChildren
+  '/api/shopping-list': typeof ApiShoppingListRoute
   '/api/simple-mode': typeof ApiSimpleModeRoute
   '/recipes/$recipeId': typeof RecipesRecipeIdRoute
   '/recipes/library': typeof RecipesLibraryRoute
   '/recipes/new': typeof RecipesNewRoute
   '/recipes/overview': typeof RecipesOverviewRoute
-  '/shopping-lists/$listId': typeof ShoppingListsListIdRoute
   '/shopping-lists/common-items': typeof ShoppingListsCommonItemsRoute
-  '/shopping-lists/new': typeof ShoppingListsNewRoute
   '/ingredients/': typeof IngredientsIndexRoute
   '/recipes/': typeof RecipesIndexRoute
   '/settings/': typeof SettingsIndexRoute
@@ -411,9 +378,6 @@ export interface FileRoutesById {
   '/api/blueprints/add': typeof ApiBlueprintsAddRoute
   '/api/recipe-image/$recipeId': typeof ApiRecipeImageRecipeIdRoute
   '/api/recipe/$recipeId': typeof ApiRecipeRecipeIdRoute
-  '/api/shopping-lists/$listId': typeof ApiShoppingListsListIdRoute
-  '/api/shopping-lists/latest': typeof ApiShoppingListsLatestRoute
-  '/api/shopping-lists/preview': typeof ApiShoppingListsPreviewRoute
   '/recipes/$recipeId_/cook': typeof RecipesRecipeIdCookRoute
   '/admin/blueprints/': typeof AdminBlueprintsIndexRoute
   '/api/admin/blueprints/$blueprintId': typeof ApiAdminBlueprintsBlueprintIdRoute
@@ -423,6 +387,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/meal-plan'
     | '/simple'
     | '/api/algorithm'
     | '/api/blueprint-library'
@@ -438,15 +403,13 @@ export interface FileRouteTypes {
     | '/api/meal-plans'
     | '/api/recipe-overview'
     | '/api/recipes'
-    | '/api/shopping-lists'
+    | '/api/shopping-list'
     | '/api/simple-mode'
     | '/recipes/$recipeId'
     | '/recipes/library'
     | '/recipes/new'
     | '/recipes/overview'
-    | '/shopping-lists/$listId'
     | '/shopping-lists/common-items'
-    | '/shopping-lists/new'
     | '/ingredients/'
     | '/recipes/'
     | '/settings/'
@@ -459,9 +422,6 @@ export interface FileRouteTypes {
     | '/api/blueprints/add'
     | '/api/recipe-image/$recipeId'
     | '/api/recipe/$recipeId'
-    | '/api/shopping-lists/$listId'
-    | '/api/shopping-lists/latest'
-    | '/api/shopping-lists/preview'
     | '/recipes/$recipeId/cook'
     | '/admin/blueprints/'
     | '/api/admin/blueprints/$blueprintId'
@@ -469,6 +429,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/meal-plan'
     | '/simple'
     | '/api/algorithm'
     | '/api/blueprint-library'
@@ -484,15 +445,13 @@ export interface FileRouteTypes {
     | '/api/meal-plans'
     | '/api/recipe-overview'
     | '/api/recipes'
-    | '/api/shopping-lists'
+    | '/api/shopping-list'
     | '/api/simple-mode'
     | '/recipes/$recipeId'
     | '/recipes/library'
     | '/recipes/new'
     | '/recipes/overview'
-    | '/shopping-lists/$listId'
     | '/shopping-lists/common-items'
-    | '/shopping-lists/new'
     | '/ingredients'
     | '/recipes'
     | '/settings'
@@ -505,9 +464,6 @@ export interface FileRouteTypes {
     | '/api/blueprints/add'
     | '/api/recipe-image/$recipeId'
     | '/api/recipe/$recipeId'
-    | '/api/shopping-lists/$listId'
-    | '/api/shopping-lists/latest'
-    | '/api/shopping-lists/preview'
     | '/recipes/$recipeId/cook'
     | '/admin/blueprints'
     | '/api/admin/blueprints/$blueprintId'
@@ -515,6 +471,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/login'
+    | '/meal-plan'
     | '/simple'
     | '/api/algorithm'
     | '/api/blueprint-library'
@@ -530,15 +487,13 @@ export interface FileRouteTypes {
     | '/api/meal-plans'
     | '/api/recipe-overview'
     | '/api/recipes'
-    | '/api/shopping-lists'
+    | '/api/shopping-list'
     | '/api/simple-mode'
     | '/recipes/$recipeId'
     | '/recipes/library'
     | '/recipes/new'
     | '/recipes/overview'
-    | '/shopping-lists/$listId'
     | '/shopping-lists/common-items'
-    | '/shopping-lists/new'
     | '/ingredients/'
     | '/recipes/'
     | '/settings/'
@@ -551,9 +506,6 @@ export interface FileRouteTypes {
     | '/api/blueprints/add'
     | '/api/recipe-image/$recipeId'
     | '/api/recipe/$recipeId'
-    | '/api/shopping-lists/$listId'
-    | '/api/shopping-lists/latest'
-    | '/api/shopping-lists/preview'
     | '/recipes/$recipeId_/cook'
     | '/admin/blueprints/'
     | '/api/admin/blueprints/$blueprintId'
@@ -562,6 +514,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginRoute: typeof LoginRoute
+  MealPlanRoute: typeof MealPlanRoute
   SimpleRoute: typeof SimpleRoute
   ApiAlgorithmRoute: typeof ApiAlgorithmRoute
   ApiBlueprintLibraryRoute: typeof ApiBlueprintLibraryRoute
@@ -577,15 +530,13 @@ export interface RootRouteChildren {
   ApiMealPlansRoute: typeof ApiMealPlansRoute
   ApiRecipeOverviewRoute: typeof ApiRecipeOverviewRoute
   ApiRecipesRoute: typeof ApiRecipesRoute
-  ApiShoppingListsRoute: typeof ApiShoppingListsRouteWithChildren
+  ApiShoppingListRoute: typeof ApiShoppingListRoute
   ApiSimpleModeRoute: typeof ApiSimpleModeRoute
   RecipesRecipeIdRoute: typeof RecipesRecipeIdRoute
   RecipesLibraryRoute: typeof RecipesLibraryRoute
   RecipesNewRoute: typeof RecipesNewRoute
   RecipesOverviewRoute: typeof RecipesOverviewRoute
-  ShoppingListsListIdRoute: typeof ShoppingListsListIdRoute
   ShoppingListsCommonItemsRoute: typeof ShoppingListsCommonItemsRoute
-  ShoppingListsNewRoute: typeof ShoppingListsNewRoute
   IngredientsIndexRoute: typeof IngredientsIndexRoute
   RecipesIndexRoute: typeof RecipesIndexRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
@@ -615,6 +566,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/meal-plan': {
+      id: '/meal-plan'
+      path: '/meal-plan'
+      fullPath: '/meal-plan'
+      preLoaderRoute: typeof MealPlanRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/simple': {
@@ -722,11 +680,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiRecipesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/shopping-lists': {
-      id: '/api/shopping-lists'
-      path: '/api/shopping-lists'
-      fullPath: '/api/shopping-lists'
-      preLoaderRoute: typeof ApiShoppingListsRouteImport
+    '/api/shopping-list': {
+      id: '/api/shopping-list'
+      path: '/api/shopping-list'
+      fullPath: '/api/shopping-list'
+      preLoaderRoute: typeof ApiShoppingListRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/simple-mode': {
@@ -792,25 +750,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShoppingListsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/shopping-lists/$listId': {
-      id: '/shopping-lists/$listId'
-      path: '/shopping-lists/$listId'
-      fullPath: '/shopping-lists/$listId'
-      preLoaderRoute: typeof ShoppingListsListIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/shopping-lists/common-items': {
       id: '/shopping-lists/common-items'
       path: '/shopping-lists/common-items'
       fullPath: '/shopping-lists/common-items'
       preLoaderRoute: typeof ShoppingListsCommonItemsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/shopping-lists/new': {
-      id: '/shopping-lists/new'
-      path: '/shopping-lists/new'
-      fullPath: '/shopping-lists/new'
-      preLoaderRoute: typeof ShoppingListsNewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/blueprints/': {
@@ -876,27 +820,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiRecipeRecipeIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/shopping-lists/$listId': {
-      id: '/api/shopping-lists/$listId'
-      path: '/$listId'
-      fullPath: '/api/shopping-lists/$listId'
-      preLoaderRoute: typeof ApiShoppingListsListIdRouteImport
-      parentRoute: typeof ApiShoppingListsRoute
-    }
-    '/api/shopping-lists/latest': {
-      id: '/api/shopping-lists/latest'
-      path: '/latest'
-      fullPath: '/api/shopping-lists/latest'
-      preLoaderRoute: typeof ApiShoppingListsLatestRouteImport
-      parentRoute: typeof ApiShoppingListsRoute
-    }
-    '/api/shopping-lists/preview': {
-      id: '/api/shopping-lists/preview'
-      path: '/preview'
-      fullPath: '/api/shopping-lists/preview'
-      preLoaderRoute: typeof ApiShoppingListsPreviewRouteImport
-      parentRoute: typeof ApiShoppingListsRoute
-    }
     '/recipes/$recipeId_/cook': {
       id: '/recipes/$recipeId_/cook'
       path: '/recipes/$recipeId/cook'
@@ -926,21 +849,6 @@ const ApiBlueprintsRouteWithChildren = ApiBlueprintsRoute._addFileChildren(
   ApiBlueprintsRouteChildren,
 )
 
-interface ApiShoppingListsRouteChildren {
-  ApiShoppingListsListIdRoute: typeof ApiShoppingListsListIdRoute
-  ApiShoppingListsLatestRoute: typeof ApiShoppingListsLatestRoute
-  ApiShoppingListsPreviewRoute: typeof ApiShoppingListsPreviewRoute
-}
-
-const ApiShoppingListsRouteChildren: ApiShoppingListsRouteChildren = {
-  ApiShoppingListsListIdRoute: ApiShoppingListsListIdRoute,
-  ApiShoppingListsLatestRoute: ApiShoppingListsLatestRoute,
-  ApiShoppingListsPreviewRoute: ApiShoppingListsPreviewRoute,
-}
-
-const ApiShoppingListsRouteWithChildren =
-  ApiShoppingListsRoute._addFileChildren(ApiShoppingListsRouteChildren)
-
 interface ApiAdminBlueprintsRouteChildren {
   ApiAdminBlueprintsBlueprintIdRoute: typeof ApiAdminBlueprintsBlueprintIdRoute
 }
@@ -955,6 +863,7 @@ const ApiAdminBlueprintsRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
+  MealPlanRoute: MealPlanRoute,
   SimpleRoute: SimpleRoute,
   ApiAlgorithmRoute: ApiAlgorithmRoute,
   ApiBlueprintLibraryRoute: ApiBlueprintLibraryRoute,
@@ -970,15 +879,13 @@ const rootRouteChildren: RootRouteChildren = {
   ApiMealPlansRoute: ApiMealPlansRoute,
   ApiRecipeOverviewRoute: ApiRecipeOverviewRoute,
   ApiRecipesRoute: ApiRecipesRoute,
-  ApiShoppingListsRoute: ApiShoppingListsRouteWithChildren,
+  ApiShoppingListRoute: ApiShoppingListRoute,
   ApiSimpleModeRoute: ApiSimpleModeRoute,
   RecipesRecipeIdRoute: RecipesRecipeIdRoute,
   RecipesLibraryRoute: RecipesLibraryRoute,
   RecipesNewRoute: RecipesNewRoute,
   RecipesOverviewRoute: RecipesOverviewRoute,
-  ShoppingListsListIdRoute: ShoppingListsListIdRoute,
   ShoppingListsCommonItemsRoute: ShoppingListsCommonItemsRoute,
-  ShoppingListsNewRoute: ShoppingListsNewRoute,
   IngredientsIndexRoute: IngredientsIndexRoute,
   RecipesIndexRoute: RecipesIndexRoute,
   SettingsIndexRoute: SettingsIndexRoute,

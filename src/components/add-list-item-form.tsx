@@ -29,17 +29,16 @@ function loadKnown(): Promise<KnownIngredient[]> {
 const MAX_SUGGESTIONS = 8
 
 interface AddListItemFormProps {
-  listId: string
   // Called with the item the server returned (an existing one comes back un-crossed)
   onAdded: (item: ShoppingListItem) => void
   placeholder?: string
   label?: string
 }
 
-// One-line form that adds an item to a shopping list. While typing, the ingredients the family
+// One-line form that adds an item to the family's shopping list. While typing, the ingredients the family
 // knows are offered, so the item lands on the right shelf. The last option adds the text as typed,
 // on the «Annet» shelf.
-export function AddListItemForm({ listId, onAdded, placeholder = 'Legg til en vare ...', label = 'Ny vare' }: AddListItemFormProps) {
+export function AddListItemForm({ onAdded, placeholder = 'Legg til en vare ...', label = 'Ny vare' }: AddListItemFormProps) {
   const toast = useToast()
   const [name, setName] = useState('')
   const [adding, setAdding] = useState(false)
@@ -86,7 +85,7 @@ export function AddListItemForm({ listId, onAdded, placeholder = 'Legg til en va
     if (!itemName || adding) return
     setAdding(true)
     try {
-      const response = await fetch(`/api/shopping-lists/${listId}`, {
+      const response = await fetch('/api/shopping-list', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: itemName, ...(aisle ? { aisle } : {}) })
