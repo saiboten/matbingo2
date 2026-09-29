@@ -11,6 +11,10 @@ model User {
   id             String         @id @default(uuid())
   email          String         @unique
   name           String
+  // For accounts that log in with a username and password (Better Auth's username plugin). They
+  // also get a made-up email, see lib/username-account.ts.
+  username        String?       @unique
+  displayUsername String?
   image          String?
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt

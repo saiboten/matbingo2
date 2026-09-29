@@ -72,6 +72,8 @@ export interface Family {
 export interface User {
   id: string
   email: string
+  username?: string | null
+  displayUsername?: string | null
   name: string
   image?: string
   familyId?: string

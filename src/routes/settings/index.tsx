@@ -12,6 +12,7 @@ import { buildInviteMessage } from '../../lib/family'
 import type { Family } from '../../types'
 import { Users, Copy, Check, LogOut, UserPlus, ChefHat, Share2, UserMinus } from 'lucide-react'
 import { Spinner } from '../../components/ui/spinner'
+import { accountLabel } from '../../lib/username-account'
 
 // A message to show after the page reloads (leaving the family reloads it to refresh the session)
 const FLASH_KEY = 'matbingo:flash'
@@ -391,7 +392,7 @@ export function SettingsPage() {
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="font-medium">{member.name}</p>
-                    <p className="text-sm text-muted-foreground truncate">{member.email}</p>
+                    <p className="text-sm text-muted-foreground truncate">{accountLabel(member)}</p>
                   </div>
                   {member.id === family.adminId && (
                     <Badge variant="outline">Administrator</Badge>
@@ -460,7 +461,7 @@ export function SettingsPage() {
                   />
                   <div className="min-w-0">
                     <p className="font-medium">{member.name}</p>
-                    <p className="truncate text-sm text-muted-foreground">{member.email}</p>
+                    <p className="truncate text-sm text-muted-foreground">{accountLabel(member)}</p>
                   </div>
                 </label>
               ))}

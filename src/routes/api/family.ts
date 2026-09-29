@@ -24,6 +24,8 @@ export const Route = createFileRoute('/api/family')({
                   id: true,
                   name: true,
                   email: true,
+                  username: true,
+                  displayUsername: true,
                   image: true,
                   createdAt: true
                 }
