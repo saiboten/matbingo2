@@ -72,17 +72,28 @@ export const Route = createRootRoute({
       },
       {
         name: 'viewport',
-        content: 'width=device-width, initial-scale=1',
+        content: 'width=device-width, initial-scale=1, viewport-fit=cover',
       },
       {
         title: 'Matbingo – familiens matplanlegger',
       },
+      // Installed on a phone's home screen: the app's name, and the header blue around it
+      { name: 'theme-color', content: '#124d78' },
+      { name: 'application-name', content: 'Matbingo' },
+      { name: 'apple-mobile-web-app-title', content: 'Matbingo' },
+      { name: 'apple-mobile-web-app-capable', content: 'yes' },
+      { name: 'mobile-web-app-capable', content: 'yes' },
+      { name: 'apple-mobile-web-app-status-bar-style', content: 'default' },
     ],
     links: [
       {
         rel: 'stylesheet',
         href: appCss,
       },
+      { rel: 'icon', href: '/favicon.ico', sizes: '48x48' },
+      { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' },
+      { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
+      { rel: 'manifest', href: '/manifest.json' },
     ],
   }),
 
@@ -120,7 +131,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           <div className="min-h-screen bg-background">
             <Header />
             <SimpleModeGuard />
-            <main className="container mx-auto px-4 py-4 sm:py-8">
+            <main className="container mx-auto px-4 pt-4 sm:pt-8 page-bottom-space">
               {children}
             </main>
           </div>

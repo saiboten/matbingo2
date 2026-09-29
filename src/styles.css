@@ -158,3 +158,15 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
 }
+
+/* iPhones: keep content clear of the home indicator and Safari's bottom bar (needs viewport-fit=cover).
+   Every page gets room at the bottom; a sticky bottom button bar reaches the screen edge and carries
+   that room inside it instead. */
+@utility page-bottom-space {
+  padding-bottom: calc(3rem + env(safe-area-inset-bottom));
+}
+
+@utility sticky-bottom-bar {
+  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+  margin-bottom: calc(-3rem - env(safe-area-inset-bottom));
+}

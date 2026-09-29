@@ -334,7 +334,7 @@ export function ShoppingListPage() {
         )}
       </section>
 
-      <div className="sticky bottom-0 -mx-4 border-t bg-background px-4 py-3">
+      <div className="sticky bottom-0 -mx-4 border-t bg-background px-4 pt-3 sticky-bottom-bar">
         <Button asChild className="h-12 w-full text-base">
           <Link to="/shop">
             <ShoppingCart className="mr-2 h-5 w-5" />

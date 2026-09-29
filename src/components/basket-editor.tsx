@@ -258,7 +258,7 @@ export function BasketEditor({ basketId }: { basketId?: string }) {
         </div>
       )}
 
-      <div className="sticky bottom-0 -mx-4 border-t bg-background px-4 py-3">
+      <div className="sticky bottom-0 -mx-4 border-t bg-background px-4 pt-3 sticky-bottom-bar">
         <Button className="h-12 w-full text-base" disabled={saving || count === 0 || !name.trim()} onClick={handleSave}>
           {saving ? 'Lagrer ...' : `Lagre kurven (${count} ${count === 1 ? 'vare' : 'varer'})`}
         </Button>
