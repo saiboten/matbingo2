@@ -148,4 +148,62 @@ describe('planning the shopping', () => {
     // the list is fetched again so it shows what the basket added
     expect(calls.filter(call => call.url === '/api/shopping-list' && call.method === 'GET')).toHaveLength(2)
   })
+
+  it('shows a typed item at once, before the server has answered', async () => {
+    const calls = mockServer()
+    let answer!: (value: unknown) => void
+    const fetchMock = globalThis.fetch as unknown as ReturnType<typeof vi.fn>
+    const server = fetchMock.getMockImplementation()!
+    fetchMock.mockImplementation((url: string, init?: RequestInit) => {
+      if (init?.method === 'POST') {
+        calls.push({ url, method: 'POST', body: init.body as string })
+        return new Promise(resolve => (answer = resolve))
+      }
+      return server(url, init)
+    })
+    renderPage()
+    await screen.findAllByText('Melk')
+
+    fireEvent.change(screen.getByLabelText('Ny vare'), { target: { value: 'Batterier' } })
+    fireEvent.click(screen.getAllByRole('button', { name: /Legg til/ })[0])
+    expect(listNames()).toContain('Batterier')
+    expect((screen.getByLabelText('Ny vare') as HTMLInputElement).value).toBe('')
+    // not removable until it is saved
+    expect((screen.getByRole('button', { name: 'Fjern Batterier' }) as HTMLButtonElement).disabled).toBe(true)
+
+    answer({ ok: true, status: 200, json: async () => ({ item: { id: 'saved', name: 'Batterier', aisle: 'OTHER', checked: false, sources: ['Ekstra'], mealDate: null } }) })
+    await waitFor(() => expect((screen.getByRole('button', { name: 'Fjern Batterier' }) as HTMLButtonElement).disabled).toBe(false))
+    expect(listNames().filter(name => name === 'Batterier')).toHaveLength(1)
+  })
+
+  it('takes an everyday item off again, and says so, when it cannot be saved', async () => {
+    mockServer()
+    const fetchMock = globalThis.fetch as unknown as ReturnType<typeof vi.fn>
+    const server = fetchMock.getMockImplementation()!
+    fetchMock.mockImplementation((url: string, init?: RequestInit) =>
+      init?.method === 'POST' ? Promise.resolve({ ok: false, status: 500, json: async () => ({ error: 'Kunne ikke legge til varen' }) }) : server(url, init)
+    )
+    renderPage()
+    await screen.findAllByText('Melk')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Egg' }))
+    expect(listNames()).toContain('Egg')
+    expect(await screen.findByText('Kunne ikke legge til varen')).toBeTruthy()
+    await waitFor(() => expect(listNames()).not.toContain('Egg'))
+  })
+
+  it('shows the items of a basket at once', async () => {
+    mockServer()
+    const fetchMock = globalThis.fetch as unknown as ReturnType<typeof vi.fn>
+    const server = fetchMock.getMockImplementation()!
+    fetchMock.mockImplementation((url: string, init?: RequestInit) =>
+      init?.method === 'POST' ? new Promise(() => {}) : server(url, init)
+    )
+    renderPage()
+    await screen.findByText('Brød, Melk, Yoghurt')
+    fireEvent.click(screen.getByRole('button', { name: 'Legg Ukeshandel i handlelisten' }))
+    // Brød was checked off and comes back; Melk is already there; Yoghurt is new
+    expect(listNames()).toEqual(['Løk', 'Melk', 'Yoghurt', 'Brød'])
+    expect(screen.getByText('La til 2 varer fra «Ukeshandel»')).toBeTruthy()
+  })
 })

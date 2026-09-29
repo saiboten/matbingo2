@@ -3,10 +3,11 @@ import { useState } from 'react'
 import { Button } from '../components/ui/button'
 import { Checkbox } from '../components/ui/checkbox'
 import { Skeleton } from '../components/ui/skeleton'
+import { useToast } from '../components/ui/toast'
 import { AddListItemForm } from '../components/add-list-item-form'
 import { AISLE_LABELS, AISLE_ORDER } from '../lib/aisle'
 import { describeLine, toLines, type Line } from '../lib/shopping-lines'
-import { useFamilyList } from '../lib/use-family-list'
+import { isUnsaved, useFamilyList } from '../lib/use-family-list'
 import { useSimpleMode } from '../lib/use-simple-mode'
 import { cn } from '../lib/utils'
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react'
@@ -18,12 +19,15 @@ export const Route = createFileRoute('/shop')({
 // Doing the shopping: the list by shelf, checked off while walking the store. Planning what to buy
 // happens on the home page.
 export function ShopPage() {
-  const { ready, items, setItems, failed, load, addItem } = useFamilyList()
+  const toast = useToast()
+  const { ready, items, setItems, failed, load, addByName } = useFamilyList({ onError: message => toast(message, 'error') })
   const simple = useSimpleMode()
   const [showChecked, setShowChecked] = useState(false)
 
   const handleToggle = async (line: Line, checked: boolean) => {
-    const ids = new Set(line.rows.map(row => row.id))
+    // A row the server has not saved yet (just added) is left as it is
+    const ids = new Set(line.rows.filter(row => !isUnsaved(row)).map(row => row.id))
+    if (ids.size === 0) return
     const setChecked = (value: boolean) =>
       setItems(prev => prev.map(item => (ids.has(item.id) ? { ...item, checked: value } : item)))
 
@@ -146,7 +150,7 @@ export function ShopPage() {
 
       <div className="space-y-2">
         <h2 className="text-sm font-medium text-muted-foreground">Glemt noe?</h2>
-        <AddListItemForm onAdded={addItem} placeholder="Legg til vare ..." label="Ny vare" />
+        <AddListItemForm onAdd={addByName} placeholder="Legg til vare ..." label="Ny vare" />
       </div>
 
       {simple === false && (

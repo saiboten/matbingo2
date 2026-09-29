@@ -6,7 +6,7 @@ import { useToast } from '../components/ui/toast'
 import { AddListItemForm } from '../components/add-list-item-form'
 import { AISLE_LABELS, AISLE_ORDER, type Aisle } from '../lib/aisle'
 import { describeLine, nameKey, toLines, type Line } from '../lib/shopping-lines'
-import { useFamilyList } from '../lib/use-family-list'
+import { isUnsaved, unsavedItem, useFamilyList } from '../lib/use-family-list'
 import { useSimpleMode } from '../lib/use-simple-mode'
 import { cn } from '../lib/utils'
 import type { ShoppingListItem } from '../types'
@@ -36,14 +36,14 @@ function readCommonOpen(): boolean {
 // the everyday items. The ingredients of the dinners from today on are put there automatically.
 // The shopping itself is done on /shop.
 export function ShoppingListPage() {
-  const { familyId, ready, items, setItems, failed, load, addItem } = useFamilyList()
   const toast = useToast()
+  const { familyId, ready, items, setItems, failed, load, addByName, removeRows } = useFamilyList({
+    onError: message => toast(message, 'error'),
+  })
   const simple = useSimpleMode()
   const [commonItems, setCommonItems] = useState<{ name: string; aisle: Aisle }[]>([])
   const [commonOpen, setCommonOpen] = useState(readCommonOpen)
-  const [busyChip, setBusyChip] = useState<string | null>(null)
   const [baskets, setBaskets] = useState<Basket[]>([])
-  const [busyBasket, setBusyBasket] = useState<string | null>(null)
 
   useEffect(() => {
     if (!familyId) return
@@ -67,21 +67,9 @@ export function ShoppingListPage() {
     loadBaskets()
   }, [familyId])
 
-  // Takes an item added by hand off the list; recipe items follow the meal plan
-  const handleRemove = async (line: Line) => {
-    const ids = line.rows.map(row => row.id)
-    try {
-      const results = await Promise.all(
-        ids.map(id => fetch(`/api/shopping-list?itemId=${encodeURIComponent(id)}`, { method: 'DELETE' }))
-      )
-      const removed = new Set(ids.filter((_, i) => results[i].ok))
-      setItems(prev => prev.filter(item => !removed.has(item.id)))
-      if (removed.size < ids.length) toast(`Kunne ikke fjerne ${line.name}`, 'error')
-    } catch (error) {
-      console.error('Error removing item:', error)
-      toast(`Kunne ikke fjerne ${line.name}`, 'error')
-    }
-  }
+  // Takes an item added by hand off the list (at once; put back if deleting fails). Recipe items
+  // follow the meal plan.
+  const handleRemove = (line: Line) => removeRows(line.rows)
 
   const toggleCommonOpen = (open: boolean) => {
     setCommonOpen(open)
@@ -92,54 +80,38 @@ export function ShoppingListPage() {
     }
   }
 
-  // Puts everything in a basket on the list, then shows the list as the server has it
+  // Puts everything in a basket on the list: shown at once, saved in one request, then the list is
+  // fetched again so it matches what the server has
   const handleAddBasket = async (basket: Basket) => {
-    setBusyBasket(basket.id)
+    const open = new Set(items.filter(item => !item.checked).map(item => nameKey(item.name)))
+    const shelves = new Map(commonItems.map(item => [nameKey(item.name), item.aisle]))
+    const missing = basket.items.filter(name => !open.has(nameKey(name)))
+    const temps = missing.map(name =>
+      unsavedItem(name, shelves.get(nameKey(name)) ?? items.find(item => nameKey(item.name) === nameKey(name))?.aisle)
+    )
+    const keys = new Set(missing.map(nameKey))
+    setItems(prev => [...prev.filter(item => !(item.checked && keys.has(nameKey(item.name)))), ...temps])
+    toast(
+      missing.length > 0
+        ? `La til ${missing.length} ${missing.length === 1 ? 'vare' : 'varer'} fra «${basket.name}»`
+        : `Alt fra «${basket.name}» er allerede på listen`
+    )
+    if (missing.length === 0) return
+
     try {
       const response = await fetch(`/api/baskets/${basket.id}`, { method: 'POST' })
-      const data = await response.json().catch(() => ({}))
-      if (response.ok) {
-        toast(
-          data.added > 0
-            ? `La til ${data.added} ${data.added === 1 ? 'vare' : 'varer'} fra «${basket.name}»`
-            : `Alt fra «${basket.name}» er allerede på listen`
-        )
-        await load()
-      } else {
-        toast(data.error || 'Kunne ikke legge kurven i handlelisten', 'error')
-      }
+      if (!response.ok) throw new Error((await response.json().catch(() => ({}))).error)
     } catch (error) {
       console.error('Error adding basket:', error)
-      toast('Kunne ikke legge kurven i handlelisten', 'error')
-    } finally {
-      setBusyBasket(null)
+      toast(error instanceof Error && error.message ? error.message : 'Kunne ikke legge kurven i handlelisten', 'error')
     }
+    await load()
   }
 
-  // Tapping an everyday item puts it on the list; tapping it again takes it off
-  const handleChip = async (common: { name: string; aisle: Aisle }, manualRow: ShoppingListItem | undefined) => {
-    setBusyChip(common.name)
-    try {
-      if (manualRow) {
-        const response = await fetch(`/api/shopping-list?itemId=${encodeURIComponent(manualRow.id)}`, { method: 'DELETE' })
-        if (response.ok) setItems(prev => prev.filter(item => item.id !== manualRow.id))
-        else toast('Kunne ikke fjerne varen', 'error')
-      } else {
-        const response = await fetch('/api/shopping-list', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: common.name, aisle: common.aisle }),
-        })
-        const data = await response.json().catch(() => ({}))
-        if (response.ok) addItem(data.item)
-        else toast(data.error || 'Kunne ikke legge til varen', 'error')
-      }
-    } catch (error) {
-      console.error('Error changing everyday item:', error)
-      toast('Noe gikk galt', 'error')
-    } finally {
-      setBusyChip(null)
-    }
+  // Tapping an everyday item puts it on the list; tapping it again takes it off (both at once)
+  const handleChip = (common: { name: string; aisle: Aisle }, manualRow: ShoppingListItem | undefined) => {
+    if (manualRow) removeRows([manualRow])
+    else addByName({ name: common.name, aisle: common.aisle, sendAisle: true })
   }
 
   if (!ready) {
@@ -175,7 +147,7 @@ export function ShoppingListPage() {
         <p className="text-sm sm:text-base text-muted-foreground">Legg til det dere trenger. Handler du nå? Trykk «Start handelen».</p>
       </div>
 
-      <AddListItemForm onAdded={addItem} />
+      <AddListItemForm onAdd={addByName} />
 
       <section className="space-y-2">
         <div className="flex items-center justify-between gap-2">
@@ -198,7 +170,6 @@ export function ShoppingListPage() {
                 <button
                   type="button"
                   aria-label={`Legg ${basket.name} i handlelisten`}
-                  disabled={busyBasket === basket.id}
                   onClick={() => handleAddBasket(basket)}
                   className="flex min-h-14 min-w-0 flex-1 items-center gap-3 rounded-l-lg p-3 text-left hover:bg-accent disabled:opacity-60"
                 >
@@ -250,7 +221,7 @@ export function ShoppingListPage() {
                         key={common.name}
                         type="button"
                         aria-pressed={selected}
-                        disabled={fromRecipe || busyChip === common.name}
+                        disabled={fromRecipe || (manualRow !== undefined && isUnsaved(manualRow))}
                         title={fromRecipe ? 'Kommer fra en oppskrift' : undefined}
                         onClick={() => handleChip(common, manualRow)}
                         className={cn(
@@ -307,6 +278,7 @@ export function ShoppingListPage() {
                   <ul>
                     {aisleLines.map(line => {
                       const byHand = line.rows.every(row => !row.mealDate)
+                      const saving = line.rows.some(isUnsaved)
                       return (
                         <li key={line.key} className="flex min-h-10 items-center justify-between gap-2">
                           <span className="min-w-0">
@@ -316,6 +288,7 @@ export function ShoppingListPage() {
                           {byHand && (
                             <button
                               type="button"
+                              disabled={saving}
                               onClick={() => handleRemove(line)}
                               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-accent"
                             >

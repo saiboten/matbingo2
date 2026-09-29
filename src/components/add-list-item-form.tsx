@@ -2,10 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Plus } from 'lucide-react'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
-import { useToast } from './ui/toast'
 import { AISLE_LABELS, type Aisle } from '../lib/aisle'
 import { cn } from '../lib/utils'
-import type { ShoppingListItem } from '../types'
 
 interface KnownIngredient {
   name: string
@@ -29,8 +27,9 @@ function loadKnown(): Promise<KnownIngredient[]> {
 const MAX_SUGGESTIONS = 8
 
 interface AddListItemFormProps {
-  // Called with the item the server returned (an existing one comes back un-crossed)
-  onAdded: (item: ShoppingListItem) => void
+  // Puts the item on the list (showing it at once) and resolves to whether it was saved. `aisle` is
+  // the shelf to show it on; it is only sent to the server when `sendAisle` is set.
+  onAdd: (input: { name: string; aisle?: Aisle; sendAisle?: boolean }) => Promise<boolean>
   placeholder?: string
   label?: string
 }
@@ -38,10 +37,8 @@ interface AddListItemFormProps {
 // One-line form that adds an item to the family's shopping list. While typing, the ingredients the family
 // knows are offered, so the item lands on the right shelf. The last option adds the text as typed,
 // on the «Annet» shelf.
-export function AddListItemForm({ onAdded, placeholder = 'Legg til en vare ...', label = 'Ny vare' }: AddListItemFormProps) {
-  const toast = useToast()
+export function AddListItemForm({ onAdd, placeholder = 'Legg til en vare ...', label = 'Ny vare' }: AddListItemFormProps) {
   const [name, setName] = useState('')
-  const [adding, setAdding] = useState(false)
   const [known, setKnown] = useState<KnownIngredient[]>([])
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(0)
@@ -81,38 +78,26 @@ export function AddListItemForm({ onAdded, placeholder = 'Legg til en vare ...',
   // What Enter does without moving: the exact match if there is one, else adding the text as typed
   useEffect(() => setActive(exact !== -1 ? exact : suggestions.length), [typed, exact, suggestions.length])
 
-  const add = async (itemName: string, aisle?: Aisle) => {
-    if (!itemName || adding) return
-    setAdding(true)
-    try {
-      const response = await fetch('/api/shopping-list', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: itemName, ...(aisle ? { aisle } : {}) })
-      })
-      const data = await response.json().catch(() => ({}))
-      if (response.ok) {
-        onAdded(data.item)
-        setName('')
-        setOpen(false)
-        knownCache = null
-        loadKnown().then(setKnown)
-      } else {
-        toast(data.error || 'Kunne ikke legge til varen', 'error')
-      }
-    } catch (error) {
-      console.error('Error adding item:', error)
-      toast('Kunne ikke legge til varen', 'error')
-    } finally {
-      setAdding(false)
-    }
+  // The item goes on the list at once (the page saves it in the background), so the field is
+  // cleared straight away and the next item can be typed
+  const add = (itemName: string, aisle: Aisle | undefined, sendAisle: boolean) => {
+    if (!itemName) return
+    setName('')
+    setOpen(false)
+    onAdd({ name: itemName, aisle, sendAisle }).then(saved => {
+      if (!saved) return
+      // A new name is now known to the family, with its shelf
+      knownCache = null
+      loadKnown().then(setKnown)
+    })
   }
 
-  // A known ingredient is added by name (the server uses the family's shelf); anything else goes to «Annet»
+  // A known ingredient is added by name (the server uses the family's shelf, shown meanwhile);
+  // anything else goes to «Annet»
   const choose = (index: number) => {
     const picked = suggestions[index]
-    if (picked) add(picked.name)
-    else add(typed, 'OTHER')
+    if (picked) add(picked.name, picked.aisle, false)
+    else add(typed, 'OTHER', true)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -149,7 +134,7 @@ export function AddListItemForm({ onAdded, placeholder = 'Legg til en vare ...',
         autoComplete="off"
         maxLength={100}
       />
-      <Button type="submit" disabled={adding || !typed}>
+      <Button type="submit" disabled={!typed}>
         <Plus className="mr-1 h-4 w-4" />
         Legg til
       </Button>
