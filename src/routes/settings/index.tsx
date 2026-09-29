@@ -11,6 +11,7 @@ import { useToast } from '../../components/ui/toast'
 import { buildInviteMessage } from '../../lib/family'
 import type { Family } from '../../types'
 import { Users, Copy, Check, LogOut, UserPlus, ChefHat, Share2, UserMinus } from 'lucide-react'
+import { Spinner } from '../../components/ui/spinner'
 
 // A message to show after the page reloads (leaving the family reloads it to refresh the session)
 const FLASH_KEY = 'matbingo:flash'
@@ -230,7 +231,7 @@ export function SettingsPage() {
   }
 
   if (isPending || loading) {
-    return <div className="flex justify-center p-8">Laster ...</div>
+    return <Spinner />
   }
 
   // In a family, but it could not be loaded: say so instead of offering to join one

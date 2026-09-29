@@ -18,6 +18,7 @@ import { recipeImageUrl } from '../../lib/recipe-image'
 import { DISH_TYPE_OPTIONS, DAYS, DISH_TYPE_COLORS, DISH_TYPE_LABELS, DAY_LABELS } from '../../types'
 import type { Recipe, Day, DishType } from '../../types'
 import { ArrowLeft, Upload, ChefHat, ExternalLink, Trash2, Save, CookingPot, Pencil } from 'lucide-react'
+import { Spinner } from '../../components/ui/spinner'
 
 export const Route = createFileRoute('/recipes/$recipeId')({
   component: RecipeDetailPage,
@@ -170,7 +171,7 @@ function RecipeDetailPage() {
   }
 
   if (loading) {
-    return <div className="flex justify-center p-8">Laster ...</div>
+    return <Spinner />
   }
 
   if (!recipe) {

@@ -11,6 +11,7 @@ import { rememberScroll, rememberedScroll } from '../../lib/scroll-memory'
 import { Plus, Search, ChefHat, Moon, Library } from 'lucide-react'
 import type { Recipe, DishType } from '../../types'
 import { DISH_TYPE_OPTIONS, DISH_TYPE_COLORS, DISH_TYPE_LABELS } from '../../types'
+import { Spinner } from '../../components/ui/spinner'
 
 export const Route = createFileRoute('/recipes/')({
   component: RecipesPage,
@@ -78,7 +79,7 @@ function RecipesPage() {
   }, [searchQuery, selectedType])
 
   if (loading) {
-    return <div className="flex justify-center p-8">Laster oppskrifter ...</div>
+    return <Spinner label="Laster oppskrifter ..." />
   }
 
   return (
@@ -91,7 +92,7 @@ function RecipesPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button asChild variant="outline">
+          <Button asChild>
             <Link to="/recipes/library">
               <Library className="h-4 w-4 mr-2" />
               Legg til ferdige oppskrifter
@@ -104,7 +105,7 @@ function RecipesPage() {
             </Link>
           </Button>
           <Link to="/recipes/new">
-            <Button>
+            <Button variant="outline">
               <Plus className="h-4 w-4 mr-2" />
               Legg til egen oppskrift
             </Button>

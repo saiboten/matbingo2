@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/ca
 import { fileToBase64, validateImage } from '../../lib/utils'
 import { DISH_TYPE_OPTIONS, DAYS } from '../../types'
 import type { Day, DishType } from '../../types'
-import { ArrowLeft, Upload, ChefHat } from 'lucide-react'
+import { ArrowLeft, Upload, ChefHat, Loader2 } from 'lucide-react'
 
 export const Route = createFileRoute('/recipes/new')({
   component: NewRecipePage,
@@ -299,6 +299,7 @@ function NewRecipePage() {
             disabled={loading || !name || ingredients.length === 0 || suitableDays.length === 0}
             className="flex-1"
           >
+            {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             {loading ? 'Oppretter ...' : 'Opprett oppskrift'}
           </Button>
           <Button 

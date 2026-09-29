@@ -5,6 +5,7 @@ import { Input } from '../../components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
 import { AISLE_ORDER, AISLE_LABELS, type Aisle } from '../../lib/aisle'
 import { Search } from 'lucide-react'
+import { Spinner } from '../../components/ui/spinner'
 
 interface IngredientRow {
   id: string
@@ -69,7 +70,7 @@ function IngredientsPage() {
   }
 
   if (isPending || loading) {
-    return <div className="flex justify-center p-8">Laster ...</div>
+    return <Spinner />
   }
 
   const needle = query.trim().toLowerCase()
