@@ -4,13 +4,14 @@ import { Button } from '../components/ui/button'
 import { Skeleton } from '../components/ui/skeleton'
 import { useToast } from '../components/ui/toast'
 import { AddListItemForm } from '../components/add-list-item-form'
-import { AISLE_LABELS, AISLE_ORDER, type Aisle } from '../lib/aisle'
+import { groupByAisle, type Aisle } from '../lib/aisle'
+import { useAisles } from '../lib/use-aisles'
 import { describeLine, nameKey, toLines, type Line } from '../lib/shopping-lines'
 import { isUnsaved, unsavedItem, useFamilyList } from '../lib/use-family-list'
 import { useSimpleMode } from '../lib/use-simple-mode'
 import { cn } from '../lib/utils'
 import type { ShoppingListItem } from '../types'
-import { Check, Pencil, Plus, ShoppingBasket, ShoppingCart, X } from 'lucide-react'
+import { Check, Minus, Pencil, Plus, ShoppingBasket, ShoppingCart, X } from 'lucide-react'
 
 export const Route = createFileRoute('/')({
   component: ShoppingListPage,
@@ -37,13 +38,14 @@ function readCommonOpen(): boolean {
 // The shopping itself is done on /shop.
 export function ShoppingListPage() {
   const toast = useToast()
-  const { familyId, ready, items, setItems, failed, load, addByName, removeRows } = useFamilyList({
+  const { familyId, ready, items, setItems, failed, load, addByName, removeRows, changeQuantity } = useFamilyList({
     onError: message => toast(message, 'error'),
   })
   const simple = useSimpleMode()
   const [commonItems, setCommonItems] = useState<{ name: string; aisle: Aisle }[]>([])
   const [commonOpen, setCommonOpen] = useState(readCommonOpen)
   const [baskets, setBaskets] = useState<Basket[]>([])
+  const { options } = useAisles()
 
   useEffect(() => {
     if (!familyId) return
@@ -67,9 +69,9 @@ export function ShoppingListPage() {
     loadBaskets()
   }, [familyId])
 
-  // Takes an item added by hand off the list (at once; put back if deleting fails). Recipe items
-  // follow the meal plan.
-  const handleRemove = (line: Line) => removeRows(line.rows)
+  // One more of an item: the row added by hand gets one more, or one is added next to the dinners' rows
+  const handleMore = (line: Line, byHand: ShoppingListItem | undefined) =>
+    byHand ? changeQuantity(byHand, (byHand.quantity ?? 1) + 1) : addByName({ name: line.name })
 
   const toggleCommonOpen = (open: boolean) => {
     setCommonOpen(open)
@@ -204,12 +206,10 @@ export function ShoppingListPage() {
           {commonItems.length === 0 && (
             <p className="text-sm text-muted-foreground">Ingen vanlige varer i listen din ennå. Legg til noen med «Rediger listen».</p>
           )}
-          {AISLE_ORDER.map(aisle => {
-            const group = commonItems.filter(item => item.aisle === aisle)
-            if (group.length === 0) return null
+          {groupByAisle(commonItems, options).map(({ option, items: group }) => {
             return (
-              <div key={aisle} className="space-y-2">
-                <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{AISLE_LABELS[aisle]}</h2>
+              <div key={option.value} className="space-y-2">
+                <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{option.label}</h2>
                 <div className="flex flex-wrap gap-2">
                   {group.map(common => {
                     const same = openRows.filter(row => nameKey(row.name) === nameKey(common.name))
@@ -269,33 +269,51 @@ export function ShoppingListPage() {
           </p>
         ) : (
           <div className="divide-y rounded-lg border">
-            {AISLE_ORDER.map(aisle => {
-              const aisleLines = openLines.filter(line => line.aisle === aisle)
-              if (aisleLines.length === 0) return null
+            {groupByAisle(openLines, options).map(({ option, items: aisleLines }) => {
               return (
-                <div key={aisle} className="px-3 py-2">
-                  <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{AISLE_LABELS[aisle]}</h3>
+                <div key={option.value} className="px-3 py-2">
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{option.label}</h3>
                   <ul>
                     {aisleLines.map(line => {
-                      const byHand = line.rows.every(row => !row.mealDate)
+                      // The part added by hand can be changed here; the dinners' part follows the meal plan
+                      const byHand = line.rows.find(row => !row.mealDate)
+                      const onlyByHand = line.rows.every(row => !row.mealDate)
                       const saving = line.rows.some(isUnsaved)
+                      const handQuantity = byHand?.quantity ?? 1
                       return (
-                        <li key={line.key} className="flex min-h-10 items-center justify-between gap-2">
-                          <span className="min-w-0">
-                            <span className="break-words">{line.name}</span>
-                            {!byHand && <span className="ml-2 text-xs text-muted-foreground">{describeLine(line)}</span>}
+                        <li key={line.key} className="flex min-h-10 items-center gap-2">
+                          <span
+                            aria-label={`Antall: ${line.quantity}`}
+                            className="flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full bg-muted px-1.5 text-xs font-semibold tabular-nums"
+                          >
+                            {line.quantity}
                           </span>
-                          {byHand && (
+                          <span className="min-w-0 flex-1">
+                            <span className="break-words">{line.name}</span>
+                            {!onlyByHand && <span className="ml-2 text-xs text-muted-foreground">{describeLine(line)}</span>}
+                          </span>
+                          <span className="flex shrink-0 items-center">
+                            {byHand && (
+                              <button
+                                type="button"
+                                disabled={saving}
+                                onClick={() => changeQuantity(byHand, handQuantity - 1)}
+                                className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-accent"
+                              >
+                                {handQuantity > 1 ? <Minus className="h-4 w-4" /> : <X className="h-4 w-4" />}
+                                <span className="sr-only">{handQuantity > 1 ? `Én mindre ${line.name}` : `Fjern ${line.name}`}</span>
+                              </button>
+                            )}
                             <button
                               type="button"
                               disabled={saving}
-                              onClick={() => handleRemove(line)}
-                              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-accent"
+                              onClick={() => handleMore(line, byHand)}
+                              className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-accent"
                             >
-                              <X className="h-4 w-4" />
-                              <span className="sr-only">Fjern {line.name}</span>
+                              <Plus className="h-4 w-4" />
+                              <span className="sr-only">Én til {line.name}</span>
                             </button>
-                          )}
+                          </span>
                         </li>
                       )
                     })}

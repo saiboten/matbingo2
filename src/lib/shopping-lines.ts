@@ -2,13 +2,15 @@ import type { Aisle } from './aisle'
 import { EXTRA_SOURCE, describeSources } from './shopping-extras'
 import type { ShoppingListItem } from '../types'
 
-// One line on the list. The same ingredient can be on the list for several dinners (one row each);
-// they are shown, and checked off, together.
+// One line on the list. The same ingredient can be on the list for several dinners (one row each)
+// and by hand; they are shown, and checked off, together.
 export interface Line {
   key: string
   name: string
   aisle: Aisle
   checked: boolean
+  // How many to buy: one for each dinner, plus however many were added by hand
+  quantity: number
   rows: ShoppingListItem[]
 }
 
@@ -22,8 +24,13 @@ export function toLines(items: ShoppingListItem[]): Line[] {
   for (const item of items) {
     const key = `${nameKey(item.name)}|${item.checked}`
     const line = lines.get(key)
-    if (line) line.rows.push(item)
-    else lines.set(key, { key, name: item.name, aisle: item.aisle, checked: item.checked, rows: [item] })
+    const quantity = item.quantity ?? 1
+    if (line) {
+      line.rows.push(item)
+      line.quantity += quantity
+    } else {
+      lines.set(key, { key, name: item.name, aisle: item.aisle, checked: item.checked, quantity, rows: [item] })
+    }
   }
   return Array.from(lines.values()).sort((a, b) => a.name.localeCompare(b.name, 'nb'))
 }

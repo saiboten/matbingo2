@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('./prisma', () => ({ prisma: {} }))
-const { ShoppingListError, addListItem, readFamilyList, removeListItem, setItemsChecked } = await import('./family-shopping-list')
+const { ShoppingListError, addListItem, readFamilyList, removeListItem, setItemQuantity, setItemsChecked } = await import('./family-shopping-list')
 
 // Thursday 2026-10-01, noon in Norway; the week started Monday 2026-09-28
 const NOW = new Date('2026-10-01T10:00:00.000Z')
@@ -13,6 +13,7 @@ interface Item {
   name: string
   sources: string[]
   aisle: string
+  quantity: number
   checked: boolean
   checkedAt: Date | null
   mealDate: Date | null
@@ -23,6 +24,7 @@ const item = (fields: Partial<Item> & { name: string }): Item => ({
   shoppingListId: 'L',
   sources: ['Ekstra'],
   aisle: 'OTHER',
+  quantity: 1,
   checked: false,
   checkedAt: null,
   mealDate: null,
@@ -46,6 +48,8 @@ function makeDb({
       (where.checkedAt === null ? row.checkedAt === null : row.checkedAt !== null && row.checkedAt < where.checkedAt.lt))
 
   const db = {
+    // The family has none of its own aisles
+    familyAisle: { count: vi.fn(async () => 0), findMany: vi.fn(async () => []) },
     shoppingList: {
       upsert: vi.fn(async () => ({ id: 'L', familyId: 'f', items: rows.map(row => ({ ...row })) })),
     },
@@ -168,14 +172,20 @@ describe('addListItem', () => {
     expect(await addListItem('f', 'u', 'Gulrøtter', makeDb().db)).toMatchObject({ aisle: 'PRODUCE' })
   })
 
-  it('leaves an item that is already on the list alone, and puts a checked one back', async () => {
-    const open = makeDb({ items: [item({ name: 'Løk', mealDate: day('2026-10-02') })] })
-    expect(await addListItem('f', 'u', 'løk', open.db)).toMatchObject({ id: 'Løk', checked: false })
+  it('adds one more of an item already added by hand, and puts a checked one back as one', async () => {
+    const open = makeDb({ items: [item({ name: 'Melk', quantity: 2 })] })
+    expect(await addListItem('f', 'u', 'melk', open.db)).toMatchObject({ id: 'Melk', quantity: 3 })
     expect(open.rows()).toHaveLength(1)
 
-    const bought = makeDb({ items: [item({ name: 'Melk', checked: true, checkedAt: NOW })] })
-    expect(await addListItem('f', 'u', 'melk', bought.db)).toMatchObject({ id: 'Melk', checked: false, checkedAt: null })
+    const bought = makeDb({ items: [item({ name: 'Melk', checked: true, checkedAt: NOW, quantity: 4 })] })
+    expect(await addListItem('f', 'u', 'melk', bought.db)).toMatchObject({ id: 'Melk', checked: false, checkedAt: null, quantity: 1 })
     expect(bought.rows()).toHaveLength(1)
+  })
+
+  it('adds one by hand next to an ingredient that is there for a dinner', async () => {
+    const { db, rows } = makeDb({ items: [item({ name: 'Løk', mealDate: day('2026-10-02') })] })
+    expect(await addListItem('f', 'u', 'Løk', db)).toMatchObject({ name: 'Løk', mealDate: null, sources: ['Ekstra'] })
+    expect(rows()).toHaveLength(2)
   })
 
   it('refuses empty and too long names', async () => {
@@ -201,6 +211,22 @@ describe('setItemsChecked', () => {
     await expect(setItemsChecked('f', [], true, makeDb().db)).rejects.toMatchObject({ status: 400 })
     await expect(setItemsChecked('f', ['a'], 'yes', makeDb().db)).rejects.toMatchObject({ status: 400 })
     await expect(setItemsChecked('f', ['nope'], true, makeDb().db)).rejects.toMatchObject({ status: 404 })
+  })
+})
+
+describe('setItemQuantity', () => {
+  it('sets how many of an item added by hand, but not of a recipe item', async () => {
+    const { db, rows } = makeDb({ items: [item({ name: 'Melk' }), item({ name: 'Løk', mealDate: day('2026-10-02') })] })
+    await setItemQuantity('f', 'Melk', 3, db)
+    expect(rows().find(row => row.name === 'Melk')!.quantity).toBe(3)
+    await expect(setItemQuantity('f', 'Løk', 2, db)).rejects.toMatchObject({ status: 404 })
+  })
+
+  it('refuses a quantity that is not a whole number from 1 to 99', async () => {
+    const { db } = makeDb({ items: [item({ name: 'Melk' })] })
+    for (const bad of [0, 1.5, 100, '2', undefined]) {
+      await expect(setItemQuantity('f', 'Melk', bad, db)).rejects.toMatchObject({ status: 400 })
+    }
   })
 })
 

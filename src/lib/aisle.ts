@@ -1,9 +1,12 @@
-export type Aisle = 'PRODUCE' | 'MEAT' | 'FISH' | 'FROZEN' | 'CHILLED' | 'COLD_CUTS' | 'BAKERY' | 'DRY' | 'OTHER'
+export type BuiltInAisle = 'PRODUCE' | 'MEAT' | 'FISH' | 'FROZEN' | 'CHILLED' | 'COLD_CUTS' | 'BAKERY' | 'DRY' | 'OTHER'
 
-// Order the aisles are walked in the store, so also the sort order of a shopping list.
-export const AISLE_ORDER: Aisle[] = ['PRODUCE', 'MEAT', 'FISH', 'FROZEN', 'CHILLED', 'COLD_CUTS', 'BAKERY', 'DRY', 'OTHER']
+// A built-in aisle, or the id of an aisle the family has made itself (FamilyAisle)
+export type Aisle = BuiltInAisle | (string & {})
 
-export const AISLE_LABELS: Record<Aisle, string> = {
+// Order the built-in aisles are walked in the store, so also the sort order of a shopping list.
+export const AISLE_ORDER: BuiltInAisle[] = ['PRODUCE', 'MEAT', 'FISH', 'FROZEN', 'CHILLED', 'COLD_CUTS', 'BAKERY', 'DRY', 'OTHER']
+
+export const AISLE_LABELS: Record<BuiltInAisle, string> = {
   PRODUCE: 'Frukt og grønt',
   MEAT: 'Kjøtt',
   FISH: 'Fisk og sjømat',
@@ -16,7 +19,7 @@ export const AISLE_LABELS: Record<Aisle, string> = {
 }
 
 // Whole-name overrides for names the keyword rules would get wrong (lowercase).
-const EXACT: Record<string, Aisle> = {
+const EXACT: Record<string, BuiltInAisle> = {
   'pepperoni': 'MEAT',
   'kjøtt til betasuppe - svineknoke': 'MEAT',
   'aspargesbønner': 'PRODUCE',
@@ -44,7 +47,7 @@ const EXACT: Record<string, Aisle> = {
 // Ordered: first aisle with a matching keyword wins. A keyword of 4+ characters matches anywhere
 // in the name; a shorter one (3 or fewer) must end a word (Norwegian compounds put the head word last, so
 // "ris" matches "risottoris" but not "brisling"). A leading "=" requires the whole word.
-const RULES: [Aisle, string[]][] = [
+const RULES: [BuiltInAisle, string[]][] = [
   ['FROZEN', ['frossen', 'fryst', 'frosne', 'pommes frittes', 'findus', 'steam buns', 'fiskepinner']],
   ['DRY', [
     'buljong', 'kraft', 'hermetisk', 'hakkede', 'pakke', 'saus', 'krydder', 'paste', 'chutney', 'chips',
@@ -90,7 +93,7 @@ function matches(name: string, words: string[], keyword: string): boolean {
   return words.some(word => word.endsWith(keyword))
 }
 
-export function guessAisle(ingredient: string): Aisle {
+export function guessAisle(ingredient: string): BuiltInAisle {
   const name = ingredient.trim().toLowerCase()
   if (EXACT[name]) return EXACT[name]
 
@@ -101,6 +104,46 @@ export function guessAisle(ingredient: string): Aisle {
   return 'OTHER'
 }
 
-export function aisleRank(aisle: Aisle): number {
-  return AISLE_ORDER.indexOf(aisle)
+export const isBuiltInAisle = (value: unknown): value is BuiltInAisle => AISLE_ORDER.includes(value as BuiltInAisle)
+
+export const MAX_AISLE_NAME_LENGTH = 40
+
+export function aisleNameKey(name: string): string {
+  return name.replace(/\s+/g, ' ').trim().toLowerCase()
+}
+
+// One of the family's own aisles
+export interface FamilyAisle {
+  id: string
+  name: string
+}
+
+export interface AisleOption {
+  value: Aisle
+  label: string
+}
+
+// Every aisle the family can pick, in store order: the family's own come after the built-in ones,
+// just before «Annet»
+export function aisleOptions(custom: FamilyAisle[] = []): AisleOption[] {
+  const builtIn = AISLE_ORDER.map(value => ({ value, label: AISLE_LABELS[value] }))
+  return [...builtIn.slice(0, -1), ...custom.map(aisle => ({ value: aisle.id, label: aisle.name })), builtIn[builtIn.length - 1]]
+}
+
+// An aisle that is not among the options (one of the family's own not loaded yet) counts as «Annet»
+export function aisleRank(aisle: Aisle, options: AisleOption[] = aisleOptions()): number {
+  const index = options.findIndex(option => option.value === aisle)
+  return index === -1 ? options.length - 1 : index
+}
+
+// The items under each aisle that has any, in store order. An item whose aisle is not among the
+// options is shown under «Annet», so nothing on a list goes missing.
+export function groupByAisle<T extends { aisle: Aisle }>(items: T[], options: AisleOption[]): { option: AisleOption; items: T[] }[] {
+  const known = new Set(options.map(option => option.value))
+  return options
+    .map(option => ({
+      option,
+      items: items.filter(item => item.aisle === option.value || (option.value === 'OTHER' && !known.has(item.aisle))),
+    }))
+    .filter(group => group.items.length > 0)
 }

@@ -1,10 +1,11 @@
 import { prisma } from './prisma'
 import { COMMON_ITEMS } from '../data/common-items'
-import { AISLE_ORDER, guessAisle, type Aisle } from './aisle'
+import { guessAisle, type Aisle } from './aisle'
+import { isFamilyAisle } from './family-aisles'
 import { ingredientKey } from './ingredients'
 import { MAX_EXTRA_NAME_LENGTH } from './shopping-extras'
 
-type Db = Pick<typeof prisma, 'ingredient' | 'family'>
+type Db = Pick<typeof prisma, 'ingredient' | 'family' | 'familyAisle'>
 
 export interface FamilyCommonItem {
   id: string
@@ -17,8 +18,6 @@ export class CommonItemError extends Error {
     super(message)
   }
 }
-
-const isAisle = (value: unknown): value is Aisle => AISLE_ORDER.includes(value as Aisle)
 
 // A family's everyday items live on its Ingredient rows (common = true), so the aisle is the same one
 // used on the ingredients page and on shopping lists. The first time a family asks, it is given the
@@ -65,7 +64,7 @@ export async function addCommonItem(
   const name = typeof input.name === 'string' ? input.name.replace(/\s+/g, ' ').trim() : ''
   if (!name) throw new CommonItemError('Skriv inn navnet på varen', 400)
   if (name.length > MAX_EXTRA_NAME_LENGTH) throw new CommonItemError('Navnet er for langt', 400)
-  if (input.aisle !== undefined && !isAisle(input.aisle)) throw new CommonItemError('Ugyldig hylle', 400)
+  if (input.aisle !== undefined && !(await isFamilyAisle(familyId, input.aisle, db))) throw new CommonItemError('Ugyldig hylle', 400)
 
   await ensureCommonItems(familyId, db)
   const nameKey = ingredientKey(name)
@@ -85,8 +84,8 @@ export async function addCommonItem(
 
 // Changes the aisle of one of the family's items (which also changes it for the ingredient itself)
 export async function changeCommonItemAisle(familyId: string, id: string, aisle: unknown, db: Db = prisma): Promise<FamilyCommonItem> {
-  if (!isAisle(aisle)) throw new CommonItemError('Ugyldig hylle', 400)
-  const result = await db.ingredient.updateMany({ where: { id, familyId, common: true }, data: { aisle } })
+  if (!(await isFamilyAisle(familyId, aisle, db))) throw new CommonItemError('Ugyldig hylle', 400)
+  const result = await db.ingredient.updateMany({ where: { id, familyId, common: true }, data: { aisle: aisle as Aisle } })
   if (result.count === 0) throw new CommonItemError('Fant ikke varen', 404)
   const row = await db.ingredient.findUniqueOrThrow({ where: { id } })
   return { id: row.id, name: row.name, aisle: row.aisle as Aisle }

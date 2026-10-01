@@ -95,6 +95,23 @@ describe('planning the shopping', () => {
     expect(calls.find(call => call.method === 'DELETE')!.url).toBe('/api/shopping-list?itemId=a')
   })
 
+  it('shows how many to buy, counting every dinner, and changes how many added by hand', async () => {
+    const calls = mockServer()
+    renderPage()
+    await screen.findAllByText('Melk')
+    // Løk is in two dinners
+    expect(screen.getByLabelText('Antall: 2')).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Én til Melk' }))
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Én mindre Melk' })).toBeTruthy())
+    expect(JSON.parse(calls.find(call => call.method === 'PATCH')!.body!)).toEqual({ itemId: 'a', quantity: 2 })
+
+    // One more Løk by hand comes on top of the dinners
+    fireEvent.click(screen.getByRole('button', { name: 'Én til Løk' }))
+    await waitFor(() => expect(screen.getByLabelText('Antall: 3')).toBeTruthy())
+    expect(JSON.parse(calls.find(call => call.method === 'POST')!.body!)).toEqual({ name: 'Løk' })
+  })
+
   it('adds an everyday item with a tap, and takes it off with another', async () => {
     const calls = mockServer()
     renderPage()

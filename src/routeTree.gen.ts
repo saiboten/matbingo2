@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as MealPlanRouteImport } from './routes/meal-plan'
 import { Route as ShopRouteImport } from './routes/shop'
 import { Route as SimpleRouteImport } from './routes/simple'
+import { Route as ApiAislesRouteImport } from './routes/api/aisles'
 import { Route as ApiAlgorithmRouteImport } from './routes/api/algorithm'
 import { Route as ApiBasketsRouteImport } from './routes/api/baskets'
 import { Route as ApiBlueprintLibraryRouteImport } from './routes/api/blueprint-library'
@@ -78,6 +79,11 @@ const ShopRoute = ShopRouteImport.update({
 const SimpleRoute = SimpleRouteImport.update({
   id: '/simple',
   path: '/simple',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAislesRoute = ApiAislesRouteImport.update({
+  id: '/api/aisles',
+  path: '/api/aisles',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAlgorithmRoute = ApiAlgorithmRouteImport.update({
@@ -291,6 +297,7 @@ export interface FileRoutesByFullPath {
   '/meal-plan': typeof MealPlanRoute
   '/shop': typeof ShopRoute
   '/simple': typeof SimpleRoute
+  '/api/aisles': typeof ApiAislesRoute
   '/api/algorithm': typeof ApiAlgorithmRoute
   '/api/baskets': typeof ApiBasketsRouteWithChildren
   '/api/blueprint-library': typeof ApiBlueprintLibraryRoute
@@ -338,6 +345,7 @@ export interface FileRoutesByTo {
   '/meal-plan': typeof MealPlanRoute
   '/shop': typeof ShopRoute
   '/simple': typeof SimpleRoute
+  '/api/aisles': typeof ApiAislesRoute
   '/api/algorithm': typeof ApiAlgorithmRoute
   '/api/baskets': typeof ApiBasketsRouteWithChildren
   '/api/blueprint-library': typeof ApiBlueprintLibraryRoute
@@ -386,6 +394,7 @@ export interface FileRoutesById {
   '/meal-plan': typeof MealPlanRoute
   '/shop': typeof ShopRoute
   '/simple': typeof SimpleRoute
+  '/api/aisles': typeof ApiAislesRoute
   '/api/algorithm': typeof ApiAlgorithmRoute
   '/api/baskets': typeof ApiBasketsRouteWithChildren
   '/api/blueprint-library': typeof ApiBlueprintLibraryRoute
@@ -435,6 +444,7 @@ export interface FileRouteTypes {
     | '/meal-plan'
     | '/shop'
     | '/simple'
+    | '/api/aisles'
     | '/api/algorithm'
     | '/api/baskets'
     | '/api/blueprint-library'
@@ -482,6 +492,7 @@ export interface FileRouteTypes {
     | '/meal-plan'
     | '/shop'
     | '/simple'
+    | '/api/aisles'
     | '/api/algorithm'
     | '/api/baskets'
     | '/api/blueprint-library'
@@ -529,6 +540,7 @@ export interface FileRouteTypes {
     | '/meal-plan'
     | '/shop'
     | '/simple'
+    | '/api/aisles'
     | '/api/algorithm'
     | '/api/baskets'
     | '/api/blueprint-library'
@@ -577,6 +589,7 @@ export interface RootRouteChildren {
   MealPlanRoute: typeof MealPlanRoute
   ShopRoute: typeof ShopRoute
   SimpleRoute: typeof SimpleRoute
+  ApiAislesRoute: typeof ApiAislesRoute
   ApiAlgorithmRoute: typeof ApiAlgorithmRoute
   ApiBasketsRoute: typeof ApiBasketsRouteWithChildren
   ApiBlueprintLibraryRoute: typeof ApiBlueprintLibraryRoute
@@ -651,6 +664,13 @@ declare module '@tanstack/react-router' {
       path: '/simple'
       fullPath: '/simple'
       preLoaderRoute: typeof SimpleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/aisles': {
+      id: '/api/aisles'
+      path: '/api/aisles'
+      fullPath: '/api/aisles'
+      preLoaderRoute: typeof ApiAislesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/algorithm': {
@@ -977,6 +997,7 @@ const rootRouteChildren: RootRouteChildren = {
   MealPlanRoute: MealPlanRoute,
   ShopRoute: ShopRoute,
   SimpleRoute: SimpleRoute,
+  ApiAislesRoute: ApiAislesRoute,
   ApiAlgorithmRoute: ApiAlgorithmRoute,
   ApiBasketsRoute: ApiBasketsRouteWithChildren,
   ApiBlueprintLibraryRoute: ApiBlueprintLibraryRoute,

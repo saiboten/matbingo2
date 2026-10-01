@@ -2,7 +2,7 @@ import { json } from '@tanstack/react-start'
 import { createFileRoute } from '@tanstack/react-router'
 import { prisma } from '../../lib/prisma'
 import { resolveAisles, ingredientKey } from '../../lib/ingredients'
-import { AISLE_ORDER, type Aisle } from '../../lib/aisle'
+import { isFamilyAisle } from '../../lib/family-aisles'
 
 export const Route = createFileRoute('/api/ingredient-aisles')({
   server: {
@@ -43,8 +43,11 @@ export const Route = createFileRoute('/api/ingredient-aisles')({
         try {
           const { familyId, id, aisle } = await request.json()
 
-          if (!familyId || !id || !AISLE_ORDER.includes(aisle as Aisle)) {
+          if (!familyId || !id || !aisle) {
             return json({ error: 'Mangler påkrevde parametere' }, { status: 400 })
+          }
+          if (!(await isFamilyAisle(familyId, aisle))) {
+            return json({ error: 'Ugyldig hylle' }, { status: 400 })
           }
 
           const result = await prisma.ingredient.updateMany({

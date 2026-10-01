@@ -45,17 +45,20 @@ export function useFamilyList({ onError }: { onError?: (message: string) => void
   // An item that was already on the list comes back (unchecked) instead of being added twice
   const addItem = (item: ShoppingListItem) => setItems(prev => [...prev.filter(row => row.id !== item.id), item])
 
-  // Adds an item by name at once and saves it in the background: a stand-in row is shown right away
-  // (on the shelf given, else the family's or a guess) and swapped for the saved one, or taken off
-  // again if saving fails. `aisle` is sent to the server only when `sendAisle` is set, so a known
-  // ingredient keeps the family's shelf. Returns false if it failed.
+  // Adds an item by name at once and saves it in the background. One already added by hand gets one
+  // more; otherwise a stand-in row is shown right away (on the shelf given, else the family's or a
+  // guess) and swapped for the saved one, or taken off again if saving fails. `aisle` is sent to the
+  // server only when `sendAisle` is set, so a known ingredient keeps the family's shelf. Returns false
+  // if it failed.
   const addByName = async ({ name, aisle, sendAisle = false }: { name: string; aisle?: Aisle; sendAisle?: boolean }) => {
     const key = nameKey(name)
-    if (items.some(item => !item.checked && nameKey(item.name) === key)) return true
-    const temp = unsavedItem(name, aisle ?? items.find(item => nameKey(item.name) === key)?.aisle)
+    const byHand = items.find(item => !item.checked && !item.mealDate && nameKey(item.name) === key)
+    const temp = byHand
+      ? { ...byHand, quantity: (byHand.quantity ?? 1) + 1 }
+      : unsavedItem(name, aisle ?? items.find(item => nameKey(item.name) === key)?.aisle)
     const tempId = temp.id
     // A checked row of the same name comes back unchecked on the server; hide it meanwhile
-    setItems(prev => [...prev.filter(item => nameKey(item.name) !== key || !item.checked), temp])
+    setItems(prev => [...prev.filter(item => item.id !== tempId && (nameKey(item.name) !== key || !item.checked)), temp])
     try {
       const response = await fetch('/api/shopping-list', {
         method: 'POST',
@@ -69,7 +72,7 @@ export function useFamilyList({ onError }: { onError?: (message: string) => void
       return true
     } catch (error) {
       console.error('Error adding item:', error)
-      setItems(prev => prev.filter(item => item.id !== tempId))
+      setItems(prev => (byHand ? prev.map(item => (item.id === tempId ? byHand : item)) : prev.filter(item => item.id !== tempId)))
       onError?.(error instanceof Error ? error.message : 'Kunne ikke legge til varen')
       await load()
       return false
@@ -94,7 +97,27 @@ export function useFamilyList({ onError }: { onError?: (message: string) => void
     }
   }
 
-  return { familyId, ready: !isPending && !loading, items, setItems, failed, load, addItem, addByName, removeRows }
+  // Sets how many of an item added by hand to buy (at once; put back if saving fails). Below one
+  // takes it off the list.
+  const changeQuantity = async (row: ShoppingListItem, quantity: number) => {
+    if (quantity < 1) return removeRows([row])
+    const set = (value: number) => setItems(prev => prev.map(item => (item.id === row.id ? { ...item, quantity: value } : item)))
+    set(quantity)
+    try {
+      const response = await fetch('/api/shopping-list', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ itemId: row.id, quantity }),
+      })
+      if (!response.ok) throw new Error((await response.json().catch(() => ({}))).error)
+    } catch (error) {
+      console.error('Error changing quantity:', error)
+      set(row.quantity ?? 1)
+      onError?.(error instanceof Error && error.message ? error.message : 'Kunne ikke endre antallet')
+    }
+  }
+
+  return { familyId, ready: !isPending && !loading, items, setItems, failed, load, addItem, addByName, removeRows, changeQuantity }
 }
 
 // Rows shown before the server has saved them; they cannot be changed until it has

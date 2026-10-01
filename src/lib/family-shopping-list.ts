@@ -1,5 +1,6 @@
 import { prisma } from './prisma'
-import { AISLE_ORDER, aisleRank, guessAisle, type Aisle } from './aisle'
+import { aisleOptions, aisleRank, guessAisle, isBuiltInAisle, type Aisle } from './aisle'
+import { isFamilyAisle, listFamilyAisles } from './family-aisles'
 import { ingredientKey, resolveAisles } from './ingredients'
 import { buildShoppingItems } from './shopping-list'
 import { EXTRA_SOURCE, MAX_EXTRA_NAME_LENGTH } from './shopping-extras'
@@ -12,7 +13,7 @@ export class ShoppingListError extends Error {
   }
 }
 
-type Db = Pick<typeof prisma, 'shoppingList' | 'shoppingListItem' | 'mealPlan' | 'ingredient'>
+type Db = Pick<typeof prisma, 'shoppingList' | 'shoppingListItem' | 'mealPlan' | 'ingredient' | 'familyAisle'>
 
 interface Row {
   id: string
@@ -24,6 +25,7 @@ interface Row {
 }
 
 const MAX_IDS = 100
+export const MAX_QUANTITY = 99
 
 // The family's one list, made the first time it is needed
 export async function getFamilyList(familyId: string, userId: string, db: Db = prisma) {
@@ -102,26 +104,31 @@ export async function readFamilyList(familyId: string, userId: string, db: Db = 
   await syncRecipeItems(familyId, list.id, current, today, db)
 
   const items = await db.shoppingListItem.findMany({ where: { shoppingListId: list.id } })
-  items.sort((a, b) => aisleRank(a.aisle) - aisleRank(b.aisle) || a.name.localeCompare(b.name, 'nb'))
+  const options = aisleOptions(items.some(item => !isBuiltInAisle(item.aisle)) ? await listFamilyAisles(familyId, db) : [])
+  items.sort((a, b) => aisleRank(a.aisle, options) - aisleRank(b.aisle, options) || a.name.localeCompare(b.name, 'nb'))
   return { ...list, items }
 }
 
-// Adds an item by hand. An item that is already there is put back on the list (unchecked) instead of
-// being added twice. A name the family has a shelf for uses that shelf; for a new name the `aisle`
-// given is used (else a guess), and the name is remembered with it.
+// Adds an item by hand. One already added by hand gets one more instead of a second row; one that was
+// checked off is put back on the list (unchecked). An ingredient that is only there for a dinner gets
+// a row by hand next to it, so one more is bought. A name the family has a shelf for uses that shelf;
+// for a new name the `aisle` given is used (else a guess), and the name is remembered with it.
 export async function addListItem(familyId: string, userId: string, rawName: unknown, db: Db = prisma, aisleHint?: unknown) {
   const name = typeof rawName === 'string' ? rawName.replace(/\s+/g, ' ').trim() : ''
   if (!name) throw new ShoppingListError('Skriv inn navnet på varen', 400)
   if (name.length > MAX_EXTRA_NAME_LENGTH) throw new ShoppingListError('Navnet er for langt', 400)
-  if (aisleHint !== undefined && !AISLE_ORDER.includes(aisleHint as Aisle)) throw new ShoppingListError('Ugyldig hylle', 400)
+  if (aisleHint !== undefined && !(await isFamilyAisle(familyId, aisleHint, db))) throw new ShoppingListError('Ugyldig hylle', 400)
 
   const list = await getFamilyList(familyId, userId, db)
   const same = list.items.filter(item => ingredientKey(item.name) === ingredientKey(name))
-  const open = same.find(item => !item.checked)
-  if (open) return open
-  const existing = same.find(item => !item.mealDate) ?? same[0]
-  if (existing) {
-    return db.shoppingListItem.update({ where: { id: existing.id }, data: { checked: false, checkedAt: null } })
+  const byHand = same.find(item => !item.mealDate && !item.checked) ?? same.find(item => !item.mealDate)
+  if (byHand && !byHand.checked) {
+    return db.shoppingListItem.update({ where: { id: byHand.id }, data: { quantity: Math.min(byHand.quantity + 1, MAX_QUANTITY) } })
+  }
+  // Bought earlier: back on the list, one of it
+  const bought = byHand ?? (same.some(item => !item.checked) ? undefined : same[0])
+  if (bought) {
+    return db.shoppingListItem.update({ where: { id: bought.id }, data: { checked: false, checkedAt: null, quantity: 1 } })
   }
 
   const aisles = await resolveAisles(familyId, [name], { hints: aisleHint ? { [ingredientKey(name)]: aisleHint as Aisle } : {} }, db)
@@ -150,7 +157,7 @@ export async function addListItems(familyId: string, userId: string, names: stri
   }
 
   if (uncheck.length > 0) {
-    await db.shoppingListItem.updateMany({ where: { id: { in: uncheck } }, data: { checked: false, checkedAt: null } })
+    await db.shoppingListItem.updateMany({ where: { id: { in: uncheck } }, data: { checked: false, checkedAt: null, quantity: 1 } })
   }
   if (create.length > 0) {
     const aisles = await resolveAisles(familyId, create, {}, db)
@@ -175,6 +182,16 @@ export async function setItemsChecked(familyId: string, itemIds: unknown, checke
     where: { id: { in: ids }, shoppingList: { familyId } },
     data: { checked, checkedAt: checked ? now : null }
   })
+  if (count === 0) throw new ShoppingListError('Fant ikke varen', 404)
+}
+
+// Sets how many of an item added by hand to buy; recipe items follow the meal plan instead
+export async function setItemQuantity(familyId: string, itemId: unknown, quantity: unknown, db: Db = prisma) {
+  if (typeof itemId !== 'string' || !itemId) throw new ShoppingListError('Mangler påkrevde parametere', 400)
+  if (typeof quantity !== 'number' || !Number.isInteger(quantity) || quantity < 1 || quantity > MAX_QUANTITY) {
+    throw new ShoppingListError('Ugyldig antall', 400)
+  }
+  const { count } = await db.shoppingListItem.updateMany({ where: { id: itemId, mealDate: null, shoppingList: { familyId } }, data: { quantity } })
   if (count === 0) throw new ShoppingListError('Fant ikke varen', 404)
 }
 

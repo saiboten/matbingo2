@@ -14,6 +14,8 @@ function makeDb(options: { seeded?: boolean; ingredients?: Record<string, unknow
     (where.common === undefined || row.common === where.common) &&
     (!where.nameKey?.in || where.nameKey.in.includes(row.nameKey))
   const db = {
+    // The family has none of its own aisles
+    familyAisle: { count: vi.fn(async () => 0) },
     family: {
       updateMany: vi.fn(async ({ data }: any) => {
         if (family.commonItemsSeeded) return { count: 0 }

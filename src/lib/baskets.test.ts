@@ -63,7 +63,7 @@ describe('addBasketToList', () => {
     } as never
 
     expect(await addBasketToList('f', 'u', 'B', db)).toBe(2)
-    expect(updateMany.mock.calls[0][0]).toEqual({ where: { id: { in: ['b'] } }, data: { checked: false, checkedAt: null } })
+    expect(updateMany.mock.calls[0][0]).toEqual({ where: { id: { in: ['b'] } }, data: { checked: false, checkedAt: null, quantity: 1 } })
     expect(createMany.mock.calls[0][0].data).toEqual([
       { shoppingListId: 'L', name: 'Yoghurt', sources: ['Ekstra'], aisle: 'CHILLED' },
     ])

@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { AISLE_LABELS, type Aisle } from '../lib/aisle'
+import { useAisles } from '../lib/use-aisles'
 import { cn } from '../lib/utils'
 
 interface KnownIngredient {
@@ -43,6 +44,7 @@ export function AddListItemForm({ onAdd, placeholder = 'Legg til en vare ...', l
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(0)
   const containerRef = useRef<HTMLFormElement>(null)
+  const { labelOf } = useAisles()
 
   useEffect(() => {
     let cancelled = false
@@ -151,7 +153,7 @@ export function AddListItemForm({ onAdd, placeholder = 'Legg til en vare ...', l
               className={cn('flex min-h-11 cursor-pointer items-center justify-between gap-3 px-3 py-2', index === active && 'bg-accent')}
             >
               <span className="min-w-0 break-words font-medium">{item.name}</span>
-              <span className="shrink-0 text-xs text-muted-foreground">{AISLE_LABELS[item.aisle]}</span>
+              <span className="shrink-0 text-xs text-muted-foreground">{labelOf(item.aisle)}</span>
             </li>
           ))}
           {showAddRow && (

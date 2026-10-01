@@ -82,6 +82,7 @@ model Family {
   shoppingList  ShoppingList?
   baskets       Basket[]
   ingredients   Ingredient[]
+  aisles        FamilyAisle[]
   recipes       Recipe[]
   members       User[]
 }
@@ -231,7 +232,8 @@ model Ingredient {
   familyId  String
   name      String
   nameKey   String
-  aisle     Aisle    @default(OTHER)
+  // A built-in aisle (PRODUCE, MEAT, ...) or the id of one of the family's own (FamilyAisle)
+  aisle     String   @default("OTHER")
   // Offered as a one-tap extra when making a shopping list
   common    Boolean  @default(false)
   createdAt DateTime @default(now())
@@ -246,7 +248,9 @@ model ShoppingListItem {
   shoppingListId String
   name           String
   sources        String[]
-  aisle          Aisle        @default(OTHER)
+  aisle          String       @default("OTHER")
+  // How many to buy. A recipe row is always 1 (one per dinner); an item added by hand can be more
+  quantity       Int          @default(1)
   checked        Boolean      @default(false)
   checkedAt      DateTime?
   // The dinner a recipe item is for; null for an item added by hand
@@ -282,16 +286,16 @@ model Verification {
   @@map("verification")
 }
 
-enum Aisle {
-  PRODUCE
-  MEAT
-  FISH
-  FROZEN
-  CHILLED
-  COLD_CUTS
-  BAKERY
-  DRY
-  OTHER
+// An aisle a family has made itself, in addition to the built-in ones (see lib/aisle.ts)
+model FamilyAisle {
+  id        String   @id @default(uuid())
+  familyId  String
+  name      String
+  nameKey   String
+  createdAt DateTime @default(now())
+  family    Family   @relation(fields: [familyId], references: [id], onDelete: Cascade)
+
+  @@unique([familyId, nameKey])
 }
 
 enum DishType {

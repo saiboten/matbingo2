@@ -5,7 +5,8 @@ import { Checkbox } from '../components/ui/checkbox'
 import { Skeleton } from '../components/ui/skeleton'
 import { useToast } from '../components/ui/toast'
 import { AddListItemForm } from '../components/add-list-item-form'
-import { AISLE_LABELS, AISLE_ORDER } from '../lib/aisle'
+import { groupByAisle } from '../lib/aisle'
+import { useAisles } from '../lib/use-aisles'
 import { describeLine, toLines, type Line } from '../lib/shopping-lines'
 import { isUnsaved, useFamilyList } from '../lib/use-family-list'
 import { useSimpleMode } from '../lib/use-simple-mode'
@@ -23,6 +24,7 @@ export function ShopPage() {
   const { ready, items, setItems, failed, load, addByName } = useFamilyList({ onError: message => toast(message, 'error') })
   const simple = useSimpleMode()
   const [showChecked, setShowChecked] = useState(false)
+  const { options } = useAisles()
 
   const handleToggle = async (line: Line, checked: boolean) => {
     // A row the server has not saved yet (just added) is left as it is
@@ -113,13 +115,11 @@ export function ShopPage() {
         <p className="text-muted-foreground">Alle varer er krysset av.</p>
       ) : (
         <div>
-          {AISLE_ORDER.map(aisle => {
-            const aisleLines = visible.filter(line => line.aisle === aisle)
-            if (aisleLines.length === 0) return null
+          {groupByAisle(visible, options).map(({ option, items: aisleLines }) => {
             return (
-              <section key={aisle}>
+              <section key={option.value}>
                 <h2 className="sticky top-0 z-10 -mx-4 flex items-center justify-between bg-muted px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:mx-0 sm:rounded-md">
-                  {AISLE_LABELS[aisle]}
+                  {option.label}
                   <span className="font-normal">{aisleLines.length}</span>
                 </h2>
                 <ul className="divide-y">
@@ -137,6 +137,17 @@ export function ShopPage() {
                             <p className="break-words text-base font-medium">{line.name}</p>
                             {description && <p className="text-xs text-muted-foreground">{description}</p>}
                           </div>
+                          {line.quantity > 1 && (
+                            <span
+                              aria-label={`Antall: ${line.quantity}`}
+                              className={cn(
+                                'ml-auto shrink-0 rounded-full bg-muted px-2.5 py-0.5 text-sm font-semibold tabular-nums',
+                                line.checked && 'text-muted-foreground'
+                              )}
+                            >
+                              {line.quantity} stk
+                            </span>
+                          )}
                         </label>
                       </li>
                     )

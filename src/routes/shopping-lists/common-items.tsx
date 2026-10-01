@@ -3,10 +3,12 @@ import { useEffect, useState } from 'react'
 import { useSession } from '../../lib/auth-client'
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
+import { SelectItem } from '../../components/ui/select'
 import { Skeleton } from '../../components/ui/skeleton'
 import { useToast } from '../../components/ui/toast'
-import { AISLE_LABELS, AISLE_ORDER, type Aisle } from '../../lib/aisle'
+import { AisleSelect } from '../../components/aisle-select'
+import { groupByAisle, type Aisle } from '../../lib/aisle'
+import { useAisles } from '../../lib/use-aisles'
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
 
 export const Route = createFileRoute('/shopping-lists/common-items')({
@@ -30,6 +32,7 @@ export function CommonItemsPage() {
   const [loading, setLoading] = useState(true)
   const [name, setName] = useState('')
   const [aisle, setAisle] = useState<Aisle | 'AUTO'>('AUTO')
+  const { options } = useAisles()
 
   useEffect(() => {
     if (!isPending && !session) {
@@ -143,19 +146,13 @@ export function CommonItemsPage() {
         }}
       >
         <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ny vare ..." aria-label="Ny vare" maxLength={100} />
-        <Select value={aisle} onValueChange={(value) => setAisle(value as Aisle | 'AUTO')}>
-          <SelectTrigger className="sm:w-56" aria-label="Hylle for ny vare">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="AUTO">Velg hylle automatisk</SelectItem>
-            {AISLE_ORDER.map(option => (
-              <SelectItem key={option} value={option}>
-                {AISLE_LABELS[option]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <AisleSelect
+          value={aisle}
+          onValueChange={setAisle}
+          ariaLabel="Hylle for ny vare"
+          className="sm:w-56"
+          leading={<SelectItem value="AUTO">Velg hylle automatisk</SelectItem>}
+        />
         <Button type="submit" disabled={!name.trim()}>
           <Plus className="mr-1 h-4 w-4" />
           Legg til
@@ -166,13 +163,11 @@ export function CommonItemsPage() {
         <p className="text-muted-foreground">Ingen vanlige varer. Legg til noen ovenfor.</p>
       ) : (
         <div>
-          {AISLE_ORDER.map(group => {
-            const groupItems = items.filter(item => item.aisle === group)
-            if (groupItems.length === 0) return null
+          {groupByAisle(items, options).map(({ option: group, items: groupItems }) => {
             return (
-              <section key={group}>
+              <section key={group.value}>
                 <h2 className="sticky top-0 z-10 -mx-4 flex items-center justify-between bg-muted px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:mx-0 sm:rounded-md">
-                  {AISLE_LABELS[group]}
+                  {group.label}
                   <span className="font-normal">{groupItems.length}</span>
                 </h2>
                 <ul className="divide-y">
@@ -180,18 +175,12 @@ export function CommonItemsPage() {
                     <li key={item.id} className="flex min-h-14 items-center justify-between gap-2 py-2">
                       <span className="min-w-0 break-words font-medium">{item.name}</span>
                       <div className="flex shrink-0 items-center gap-1">
-                        <Select value={item.aisle} onValueChange={(value) => handleChangeAisle(item.id, value as Aisle)}>
-                          <SelectTrigger className="w-40 sm:w-52" aria-label={`Hylle for ${item.name}`}>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {AISLE_ORDER.map(option => (
-                              <SelectItem key={option} value={option}>
-                                {AISLE_LABELS[option]}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <AisleSelect
+                          value={item.aisle}
+                          onValueChange={(value) => handleChangeAisle(item.id, value)}
+                          ariaLabel={`Hylle for ${item.name}`}
+                          className="w-40 sm:w-52"
+                        />
                         <Button type="button" variant="ghost" size="icon" onClick={() => handleRemove(item)}>
                           <Trash2 className="h-4 w-4" />
                           <span className="sr-only">Fjern {item.name}</span>

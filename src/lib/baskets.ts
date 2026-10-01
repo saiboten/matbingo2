@@ -3,7 +3,7 @@ import { ingredientKey } from './ingredients'
 import { addListItems } from './family-shopping-list'
 import { MAX_EXTRA_NAME_LENGTH } from './shopping-extras'
 
-type Db = Pick<typeof prisma, 'basket' | 'shoppingList' | 'shoppingListItem' | 'mealPlan' | 'ingredient'>
+type Db = Pick<typeof prisma, 'basket' | 'shoppingList' | 'shoppingListItem' | 'mealPlan' | 'ingredient' | 'familyAisle'>
 
 // An error that is safe to show the user, with the HTTP status the API route should answer with
 export class BasketError extends Error {

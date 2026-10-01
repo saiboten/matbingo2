@@ -2,8 +2,9 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { useSession } from '../../lib/auth-client'
 import { Input } from '../../components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
-import { AISLE_ORDER, AISLE_LABELS, type Aisle } from '../../lib/aisle'
+import { AisleSelect } from '../../components/aisle-select'
+import { groupByAisle, type Aisle } from '../../lib/aisle'
+import { useAisles } from '../../lib/use-aisles'
 import { Search } from 'lucide-react'
 import { Spinner } from '../../components/ui/spinner'
 
@@ -23,6 +24,7 @@ function IngredientsPage() {
   const [ingredients, setIngredients] = useState<IngredientRow[]>([])
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
+  const { options } = useAisles()
 
   useEffect(() => {
     if (!isPending && !session) {
@@ -103,34 +105,23 @@ function IngredientsPage() {
         </p>
       ) : (
         <div>
-          {AISLE_ORDER.map(aisle => {
-            const aisleItems = visible.filter(i => i.aisle === aisle)
-            if (aisleItems.length === 0) return null
+          {groupByAisle(visible, options).map(({ option, items: aisleItems }) => {
             return (
-              <section key={aisle}>
+              <section key={option.value}>
                 <h2 className="sticky top-0 z-10 -mx-4 flex items-center justify-between bg-muted px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:mx-0 sm:rounded-md">
-                  {AISLE_LABELS[aisle]}
+                  {option.label}
                   <span className="font-normal">{aisleItems.length}</span>
                 </h2>
                 <ul className="divide-y">
                   {aisleItems.map(item => (
                     <li key={item.id} className="flex min-h-14 items-center justify-between gap-3 py-2">
                       <span className="min-w-0 break-words font-medium">{item.name}</span>
-                      <Select
+                      <AisleSelect
                         value={item.aisle}
-                        onValueChange={(value) => handleChangeAisle(item.id, value as Aisle)}
-                      >
-                        <SelectTrigger className="w-44 shrink-0 sm:w-56" aria-label={`Hylle for ${item.name}`}>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {AISLE_ORDER.map(option => (
-                            <SelectItem key={option} value={option}>
-                              {AISLE_LABELS[option]}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        onValueChange={(value) => handleChangeAisle(item.id, value)}
+                        ariaLabel={`Hylle for ${item.name}`}
+                        className="w-44 shrink-0 sm:w-56"
+                      />
                     </li>
                   ))}
                 </ul>

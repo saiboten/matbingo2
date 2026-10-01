@@ -127,6 +127,8 @@ export interface ShoppingListItem {
   name: string
   sources: string[]
   aisle: Aisle
+  // How many to buy; missing counts as 1
+  quantity?: number
   checked: boolean
   checkedAt?: string | null
   // The dinner a recipe item is for; null for an item added by hand

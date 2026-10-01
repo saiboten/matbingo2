@@ -6,7 +6,8 @@ import { Input } from './ui/input'
 import { Label } from './ui/label'
 import { Skeleton } from './ui/skeleton'
 import { useToast } from './ui/toast'
-import { AISLE_LABELS, AISLE_ORDER, type Aisle } from '../lib/aisle'
+import { groupByAisle, type Aisle } from '../lib/aisle'
+import { useAisles } from '../lib/use-aisles'
 import { cn } from '../lib/utils'
 import { ArrowLeft, Check, Plus, Trash2, X } from 'lucide-react'
 
@@ -29,6 +30,7 @@ export function BasketEditor({ basketId }: { basketId?: string }) {
   const [missing, setMissing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const { options } = useAisles()
 
   useEffect(() => {
     if (!isPending && !session) {
@@ -172,12 +174,10 @@ export function BasketEditor({ basketId }: { basketId?: string }) {
         {commonItems.length === 0 && (
           <p className="text-sm text-muted-foreground">Ingen vanlige varer ennå. Skriv inn varene nedenfor.</p>
         )}
-        {AISLE_ORDER.map(aisle => {
-          const group = commonItems.filter(item => item.aisle === aisle)
-          if (group.length === 0) return null
+        {groupByAisle(commonItems, options).map(({ option, items: group }) => {
           return (
-            <div key={aisle} className="space-y-2">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{AISLE_LABELS[aisle]}</h3>
+            <div key={option.value} className="space-y-2">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{option.label}</h3>
               <div className="flex flex-wrap gap-2">
                 {group.map(item => {
                   const selected = picked.has(keyOf(item.name))

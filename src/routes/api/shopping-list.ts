@@ -5,6 +5,7 @@ import {
   addListItem,
   readFamilyList,
   removeListItem,
+  setItemQuantity,
   setItemsChecked
 } from '../../lib/family-shopping-list'
 import { getFamilyUser } from '../../lib/session'
@@ -45,8 +46,9 @@ export const Route = createFileRoute('/api/shopping-list')({
         const who = await getFamilyUser(request)
         if (who.error) return who.error
         try {
-          const { itemIds, checked } = await request.json()
-          await setItemsChecked(who.familyId, itemIds, checked)
+          const { itemIds, checked, itemId, quantity } = await request.json()
+          if (quantity !== undefined) await setItemQuantity(who.familyId, itemId, quantity)
+          else await setItemsChecked(who.familyId, itemIds, checked)
           return json({ success: true })
         } catch (error) {
           return fail(error, 'Kunne ikke oppdatere varen')
