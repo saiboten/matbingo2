@@ -15,12 +15,13 @@ interface AisleSelectProps {
   onValueChange: (aisle: Aisle) => void
   ariaLabel: string
   className?: string
+  disabled?: boolean
   // Options shown before the aisles (e.g. «Velg hylle automatisk»), as SelectItems
   leading?: ReactNode
 }
 
 // Picks one of the family's aisles. The last option makes a new aisle, which is then picked.
-export function AisleSelect({ value, onValueChange, ariaLabel, className, leading }: AisleSelectProps) {
+export function AisleSelect({ value, onValueChange, ariaLabel, className, disabled, leading }: AisleSelectProps) {
   const { options } = useAisles()
   const toast = useToast()
   const [creating, setCreating] = useState(false)
@@ -47,6 +48,7 @@ export function AisleSelect({ value, onValueChange, ariaLabel, className, leadin
     <>
       <Select
         value={value}
+        disabled={disabled}
         onValueChange={(next) => (next === NEW_AISLE ? setCreating(true) : onValueChange(next))}
       >
         <SelectTrigger className={className} aria-label={ariaLabel}>
