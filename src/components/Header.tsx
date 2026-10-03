@@ -14,7 +14,6 @@ import {
   X,
   CalendarDays,
   BookOpen,
-  ShoppingCart,
   ClipboardList,
   Carrot,
   ShieldCheck,
@@ -24,7 +23,6 @@ import {
 
 const NAV_ITEMS = [
   { to: '/', label: 'Handleliste', icon: ClipboardList },
-  { to: '/shop', label: 'I butikken', icon: ShoppingCart },
   { to: '/meal-plan', label: 'Ukesmeny', icon: CalendarDays },
   { to: '/recipes', label: 'Oppskrifter', icon: BookOpen },
   { to: '/ingredients', label: 'Ingredienser', icon: Carrot },
@@ -33,7 +31,6 @@ const NAV_ITEMS = [
 // The pages in the simple mode (everyone but the family owner): planning and doing the shopping
 const SIMPLE_NAV_ITEMS = [
   { to: '/', label: 'Handleliste', icon: ClipboardList },
-  { to: '/shop', label: 'I butikken', icon: ShoppingCart },
 ] as const
 
 // Only shown to the super admin
@@ -46,7 +43,8 @@ const HEADER_BUTTON =
 const SETTINGS_ITEM = { to: '/settings', label: 'Innstillinger', icon: Settings } as const
 
 function isActive(to: string, pathname: string): boolean {
-  if (to === '/') return pathname === '/'
+  // The shop page is opened from the shopping list, so it counts as part of it
+  if (to === '/') return pathname === '/' || pathname === '/shop'
   return pathname.startsWith(to)
 }
 
