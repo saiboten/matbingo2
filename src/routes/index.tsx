@@ -166,9 +166,9 @@ export function ShoppingListPage() {
             Lag en kurv med det du kjøper hver uke, så legger du alt i handlelisten med ett trykk.
           </p>
         ) : (
-          <ul className="grid gap-2 sm:grid-cols-2">
+          <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {baskets.map(basket => (
-              <li key={basket.id} className="flex items-stretch rounded-lg border">
+              <li key={basket.id} className="flex min-w-0 items-stretch rounded-lg border">
                 <button
                   type="button"
                   aria-label={`Legg ${basket.name} i handlelisten`}
@@ -177,7 +177,7 @@ export function ShoppingListPage() {
                 >
                   <ShoppingBasket className="h-5 w-5 shrink-0 text-primary" />
                   <span className="min-w-0">
-                    <span className="block font-medium">{basket.name}</span>
+                    <span className="block break-words font-medium">{basket.name}</span>
                     <span className="block truncate text-xs text-muted-foreground">{basket.items.join(', ')}</span>
                   </span>
                   <Plus className="ml-auto h-5 w-5 shrink-0 text-muted-foreground" />
