@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import { Skeleton } from '../components/ui/skeleton'
 import { IngredientMultiSelect } from '../components/ingredient-multi-select'
-import { formatDate, dateKey, mondayOf, utcMidnight } from '../lib/utils'
+import { formatDate, dateKey, osloToday } from '../lib/utils'
 import { recipeImageUrl } from '../lib/recipe-image'
 import { Plus, Sparkles, Utensils, Filter, Trash2, ChevronLeft, ChevronRight, Pencil, CookingPot, Loader2 } from 'lucide-react'
 import type { MealPlan, Recipe, PlanOption, DishType } from '../types'
@@ -63,21 +63,16 @@ function WeekSkeleton() {
   )
 }
 
-const DAY_NAMES_FULL = ['Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag', 'Søndag']
+// Indexed by getUTCDay(): 0 = Sunday
+const DAY_NAMES_FULL = ['Søndag', 'Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag']
 
-// Monday of the week `weekOffset` weeks from the current week (UTC calendar days).
-function getWeekStart(weekOffset: number): Date {
-  const now = new Date()
-  const monday = mondayOf(utcMidnight(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
-  monday.setUTCDate(monday.getUTCDate() + weekOffset * 7)
-  return monday
-}
-
+// The seven days starting today, moved `weekOffset` weeks (UTC calendar days).
 function getWeekDays(weekOffset: number): Date[] {
-  const monday = getWeekStart(weekOffset)
+  const start = osloToday()
+  start.setUTCDate(start.getUTCDate() + weekOffset * 7)
   return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(monday)
-    d.setUTCDate(monday.getUTCDate() + i)
+    const d = new Date(start)
+    d.setUTCDate(start.getUTCDate() + i)
     return d
   })
 }
@@ -100,7 +95,7 @@ function MealPlanPage() {
   const navigate = useNavigate()
 
   const weekDays = getWeekDays(weekOffset)
-  const todayKey = dateKey(new Date())
+  const todayKey = dateKey(osloToday())
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -379,11 +374,11 @@ function MealPlanPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
-        {weekDays.map((date, index) => {
+        {weekDays.map(date => {
           const plan = getPlanForDate(date)
           const key = dateKey(date)
           const isToday = key === todayKey
-          const dayName = DAY_NAMES_FULL[index]
+          const dayName = DAY_NAMES_FULL[date.getUTCDay()]
 
           return (
             <Card key={key} className={isToday ? 'border-primary' : ''}>
