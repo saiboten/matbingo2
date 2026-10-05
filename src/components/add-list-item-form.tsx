@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Plus } from 'lucide-react'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
-import { AISLE_LABELS, type Aisle } from '../lib/aisle'
+import { AisleSelect } from './aisle-select'
+import { type Aisle } from '../lib/aisle'
 import { useAisles } from '../lib/use-aisles'
 import { cn } from '../lib/utils'
 
@@ -37,12 +38,13 @@ interface AddListItemFormProps {
 
 // One-line form that adds an item to the family's shopping list. While typing, the ingredients the family
 // knows are offered, so the item lands on the right shelf. The last option adds the text as typed,
-// on the «Annet» shelf.
+// on the shelf picked next to the field («Annet» unless another is picked, or a new one is made).
 export function AddListItemForm({ onAdd, placeholder = 'Legg til en vare ...', label = 'Ny vare' }: AddListItemFormProps) {
   const [name, setName] = useState('')
   const [known, setKnown] = useState<KnownIngredient[]>([])
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(0)
+  const [newAisle, setNewAisle] = useState<Aisle>('OTHER')
   const containerRef = useRef<HTMLFormElement>(null)
   const { labelOf } = useAisles()
 
@@ -86,6 +88,7 @@ export function AddListItemForm({ onAdd, placeholder = 'Legg til en vare ...', l
     if (!itemName) return
     setName('')
     setOpen(false)
+    setNewAisle('OTHER')
     onAdd({ name: itemName, aisle, sendAisle }).then(saved => {
       if (!saved) return
       // A new name is now known to the family, with its shelf
@@ -95,11 +98,11 @@ export function AddListItemForm({ onAdd, placeholder = 'Legg til en vare ...', l
   }
 
   // A known ingredient is added by name (the server uses the family's shelf, shown meanwhile);
-  // anything else goes to «Annet»
+  // anything else goes on the shelf picked for it
   const choose = (index: number) => {
     const picked = suggestions[index]
     if (picked) add(picked.name, picked.aisle, false)
-    else add(typed, 'OTHER', true)
+    else add(typed, newAisle, true)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -135,10 +138,19 @@ export function AddListItemForm({ onAdd, placeholder = 'Legg til en vare ...', l
         aria-label={label}
         autoComplete="off"
         maxLength={100}
+        className="min-w-0"
       />
-      <Button type="submit" disabled={!typed}>
-        <Plus className="mr-1 h-4 w-4" />
-        Legg til
+      {showAddRow && (
+        <AisleSelect
+          value={newAisle}
+          onValueChange={setNewAisle}
+          ariaLabel="Hylle for ny vare"
+          className="w-32 shrink-0 sm:w-48"
+        />
+      )}
+      <Button type="submit" disabled={!typed} className="shrink-0">
+        <Plus className="h-4 w-4 sm:mr-1" />
+        <span className="sr-only sm:not-sr-only">Legg til</span>
       </Button>
 
       {open && rowCount > 0 && (
@@ -169,7 +181,7 @@ export function AddListItemForm({ onAdd, placeholder = 'Legg til en vare ...', l
               )}
             >
               <span className="min-w-0 break-words font-medium">Legg til «{typed}»</span>
-              <span className="shrink-0 text-xs text-muted-foreground">{AISLE_LABELS.OTHER}</span>
+              <span className="shrink-0 text-xs text-muted-foreground">{labelOf(newAisle)}</span>
             </li>
           )}
         </ul>
