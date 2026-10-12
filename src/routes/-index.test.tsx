@@ -1,7 +1,10 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { Mock } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { ToastProvider } from '../components/ui/toast'
+
+type FetchMock = Mock<(url: string, init?: RequestInit) => Promise<unknown>>
 
 const navigate = vi.fn()
 let pathname = '/'
@@ -169,7 +172,7 @@ describe('planning the shopping', () => {
   it('shows a typed item at once, before the server has answered', async () => {
     const calls = mockServer()
     let answer!: (value: unknown) => void
-    const fetchMock = globalThis.fetch as unknown as ReturnType<typeof vi.fn>
+    const fetchMock = globalThis.fetch as unknown as FetchMock
     const server = fetchMock.getMockImplementation()!
     fetchMock.mockImplementation((url: string, init?: RequestInit) => {
       if (init?.method === 'POST') {
@@ -195,7 +198,7 @@ describe('planning the shopping', () => {
 
   it('takes an everyday item off again, and says so, when it cannot be saved', async () => {
     mockServer()
-    const fetchMock = globalThis.fetch as unknown as ReturnType<typeof vi.fn>
+    const fetchMock = globalThis.fetch as unknown as FetchMock
     const server = fetchMock.getMockImplementation()!
     fetchMock.mockImplementation((url: string, init?: RequestInit) =>
       init?.method === 'POST' ? Promise.resolve({ ok: false, status: 500, json: async () => ({ error: 'Kunne ikke legge til varen' }) }) : server(url, init)
@@ -211,7 +214,7 @@ describe('planning the shopping', () => {
 
   it('shows the items of a basket at once', async () => {
     mockServer()
-    const fetchMock = globalThis.fetch as unknown as ReturnType<typeof vi.fn>
+    const fetchMock = globalThis.fetch as unknown as FetchMock
     const server = fetchMock.getMockImplementation()!
     fetchMock.mockImplementation((url: string, init?: RequestInit) =>
       init?.method === 'POST' ? new Promise(() => {}) : server(url, init)

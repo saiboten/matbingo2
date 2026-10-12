@@ -1,7 +1,7 @@
 import 'dotenv/config'
 import fs from 'node:fs'
 import path from 'node:path'
-import sharp from 'sharp'
+import sharp, { type OverlayOptions } from 'sharp'
 import { prisma } from '../src/lib/prisma'
 import { storeImage } from '../src/lib/image-storage'
 
@@ -187,7 +187,7 @@ async function sheet() {
   const PER_SHEET = 8
   for (let s = 0; s * PER_SHEET < done.length; s++) {
     const group = done.slice(s * PER_SHEET, (s + 1) * PER_SHEET)
-    const layers: sharp.OverlayOptions[] = []
+    const layers: OverlayOptions[] = []
     for (let row = 0; row < group.length; row++) {
       const photos = cache[group[row]]
       for (let col = 0; col < photos.length; col++) {
